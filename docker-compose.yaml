@@ -1,6 +1,17 @@
 services:
   healthadvocate:
     build: .
-    ports:
-      - "8080:8080"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.healthadvocate.rule=PathPrefix(`/healthadvocate`)"
+      - "traefik.http.routers.healthadvocate.entrypoints=web"
+      - "traefik.http.services.healthadvocate.loadbalancer.server.port=8080"
+      - "traefik.http.middlewares.healthadvocate-stripprefix.stripprefix.prefixes=/healthadvocate"
+      - "traefik.http.routers.healthadvocate.middlewares=healthadvocate-stripprefix"
+    networks:
+      - traefik
     restart: unless-stopped
+
+networks:
+  traefik:
+    external: true

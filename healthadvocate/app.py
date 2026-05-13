@@ -8,9 +8,9 @@ from contextlib import asynccontextmanager
 from pathlib import Path
 from typing import Optional
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from starlette.concurrency import run_in_threadpool
@@ -75,38 +75,55 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+
+@app.exception_handler(Exception)
+async def global_exception_handler(request: Request, exc: Exception):
+    logger.exception("Unhandled error on %s %s", request.method, request.url.path)
+    return JSONResponse(
+        status_code=500,
+        content={"detail": "An internal error occurred. Please try again."},
+    )
+
 # ---------------------------------------------------------------------------
 # Request models
 # ---------------------------------------------------------------------------
 
 class SymptomRequest(BaseModel):
     symptoms: str
+    profile_id: Optional[str] = None
 
 class DocumentRequest(BaseModel):
     text: str
     lang: str = "en"
+    profile_id: Optional[str] = None
 
 class BillRequest(BaseModel):
     bill_text: str
+    profile_id: Optional[str] = None
 
 class DenialRequest(BaseModel):
     denial_text: str
     patient_info: str = ""
+    profile_id: Optional[str] = None
 
 class DrugRequest(BaseModel):
     drug_name: str
+    profile_id: Optional[str] = None
 
 class AppointmentRequest(BaseModel):
     symptoms: str
     concern: str = ""
+    profile_id: Optional[str] = None
 
 class DischargeRequest(BaseModel):
     text: str
     lang: str = "en"
+    profile_id: Optional[str] = None
 
 class SecondOpinionRequest(BaseModel):
     records: str
     lang: str = "en"
+    profile_id: Optional[str] = None
 
 class CommunityRequest(BaseModel):
     text: str
@@ -146,7 +163,7 @@ async def health_check():
 async def assess_symptoms(request: SymptomRequest):
     _validate_length(request.symptoms, "Symptoms")
     result = await run_in_threadpool(
-        symptom_assessor.assess_symptoms, engine, request.symptoms
+        symptom_assessor.assess_symptoms, engine, request.symptoms, request.profile_id
     )
     return result
 
@@ -154,7 +171,7 @@ async def assess_symptoms(request: SymptomRequest):
 async def decode_document(request: DocumentRequest):
     _validate_length(request.text, "Document text")
     result = await run_in_threadpool(
-        document_decoder.decode_document, engine, request.text, request.lang
+        document_decoder.decode_document, engine, request.text, request.lang, request.profile_id
     )
     return result
 
@@ -162,7 +179,7 @@ async def decode_document(request: DocumentRequest):
 async def decode_bill(request: BillRequest):
     _validate_length(request.bill_text, "Bill text")
     result = await run_in_threadpool(
-        bill_decoder.decode_bill, engine, request.bill_text
+        bill_decoder.decode_bill, engine, request.bill_text, request.profile_id
     )
     return result
 
@@ -170,14 +187,14 @@ async def decode_bill(request: BillRequest):
 async def fight_denial(request: DenialRequest):
     _validate_length(request.denial_text, "Denial text")
     result = await run_in_threadpool(
-        insurance_fighter.fight_denial, engine, request.denial_text, request.patient_info
+        insurance_fighter.fight_denial, engine, request.denial_text, request.patient_info, request.profile_id
     )
     return result
 
 @app.post("/api/drugs/check")
 async def check_drug(request: DrugRequest):
     result = await run_in_threadpool(
-        drug_checker.check_drug, engine, request.drug_name
+        drug_checker.check_drug, engine, request.drug_name, request.profile_id
     )
     return result
 
@@ -185,7 +202,7 @@ async def check_drug(request: DrugRequest):
 async def prepare_appointment(request: AppointmentRequest):
     _validate_length(request.symptoms, "Symptoms")
     result = await run_in_threadpool(
-        appointment_prep.prepare_appointment, engine, request.symptoms, request.concern
+        appointment_prep.prepare_appointment, engine, request.symptoms, request.concern, request.profile_id
     )
     return result
 
@@ -193,7 +210,7 @@ async def prepare_appointment(request: AppointmentRequest):
 async def translate_discharge(request: DischargeRequest):
     _validate_length(request.text, "Discharge text")
     result = await run_in_threadpool(
-        discharge_translator.translate_discharge, engine, request.text, request.lang
+        discharge_translator.translate_discharge, engine, request.text, request.lang, request.profile_id
     )
     return result
 
@@ -201,7 +218,7 @@ async def translate_discharge(request: DischargeRequest):
 async def create_second_opinion(request: SecondOpinionRequest):
     _validate_length(request.records, "Medical records")
     result = await run_in_threadpool(
-        second_opinion.create_brief, engine, request.records, request.lang
+        second_opinion.create_brief, engine, request.records, request.lang, request.profile_id
     )
     return result
 

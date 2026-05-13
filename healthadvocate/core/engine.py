@@ -172,3 +172,29 @@ class HealthEngine:
         except Exception as exc:
             logger.error("deidentify failed: %s", exc)
             return text
+
+    def deidentify_for_llm(self, text: str, method: str = "mask") -> tuple[str, dict[str, str]]:
+        try:
+            result = openmed.deidentify(text, method=method, loader=self.loader, keep_mapping=True)
+            pii_map = getattr(result, "mapping", {}) or {}
+            return result.deidentified_text, pii_map
+        except Exception as exc:
+            logger.error("deidentify_for_llm failed: %s", exc)
+            return text, {}
+
+
+def format_entities_with_confidence(entities: list[EntityMatch]) -> str:
+    if not entities:
+        return "No medical entities detected by NER."
+    parts = []
+    for e in entities:
+        if e.confidence >= 0.85:
+            cert = "very high certainty"
+        elif e.confidence >= 0.70:
+            cert = "high certainty"
+        elif e.confidence >= 0.50:
+            cert = "moderate certainty, may need verification"
+        else:
+            cert = "low certainty, possibly incidental"
+        parts.append(f"'{e.text}' ({e.label}, {e.confidence:.0%} confidence - {cert})")
+    return "; ".join(parts)

@@ -135,3 +135,23 @@ def get_family_summary() -> dict:
                       "medication_count": len(p.get("medications", []))}
                      for p in profiles],
     }
+
+
+def format_family_context(profile: dict) -> str:
+    if "error" in profile:
+        return ""
+    conditions = ", ".join(c["name"] for c in profile.get("conditions", [])) or "none"
+    meds = ", ".join(
+        f"{m['name']} ({m['dosage']})" if m.get("dosage") else m["name"]
+        for m in profile.get("medications", [])
+    ) or "none"
+    allergies = ", ".join(profile.get("allergies", [])) or "none"
+    notes = profile.get("notes", "") or "none"
+    return (
+        f"Patient Profile ({profile['name']}, {profile['relationship']}):\n"
+        f"- Known Conditions: {conditions}\n"
+        f"- Current Medications: {meds}\n"
+        f"- Known Allergies: {allergies}\n"
+        f"- Notes: {notes}\n"
+        "Consider this profile when checking for interactions or relevant advice."
+    )

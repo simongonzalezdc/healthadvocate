@@ -1,93 +1,57 @@
-"""Community health scanner — analyze public health bulletins and alerts."""
+"""Community health scanner — NER + structured LLM bulletin analysis."""
 
 from __future__ import annotations
 
-from .engine import HealthEngine
-
-_ALERT_KEYWORDS = {
-    "outbreak", "epidemic", "pandemic", "recall", "warning", "alert",
-    "emergency", "contamination", "infection", "exposure", "hazardous",
-    "toxic", "poisoning", "contagious", "quarantine", "isolat",
-}
-
-
-def _get_context(text: str, start: int, end: int, window: int = 40) -> str:
-    """Extract text around an entity with context window."""
-    ctx_start = max(0, start - window)
-    ctx_end = min(len(text), end + window)
-    prefix = "..." if ctx_start > 0 else ""
-    suffix = "..." if ctx_end < len(text) else ""
-    return f"{prefix}{text[ctx_start:ctx_end]}{suffix}"
-
-
-def _detect_alerts(text: str) -> list[str]:
-    """Detect health alert signals in the text."""
-    text_lower = text.lower()
-    alerts: list[str] = []
-    seen: set[str] = set()
-    for keyword in _ALERT_KEYWORDS:
-        if keyword in text_lower:
-            for sentence in text.replace('\n', '.').split('.'):
-                if keyword in sentence.lower() and sentence.strip():
-                    cleaned = sentence.strip()
-                    if cleaned not in seen:
-                        alerts.append(cleaned)
-                        seen.add(cleaned)
-                    break
-    return alerts
+from .engine import HealthEngine, format_entities_with_confidence
+from .llm_client import chat_structured
+from .cross_validation import cross_validate
 
 
 def scan_bulletin(engine: HealthEngine, text: str) -> dict:
-    """Analyze a health bulletin or alert for conditions, treatments, and warnings."""
     if not text or not text.strip():
-        return {
-            "findings": [],
-            "health_alerts": [],
-            "affected_conditions": [],
-            "mentioned_treatments": [],
-        }
+        return {"explanation": "No bulletin text provided.", "action_items": [], "red_flags": [], "validation": None}
 
     diseases = engine.extract_diseases(text, confidence=0.5)
     drugs = engine.extract_drugs(text, confidence=0.5)
 
-    errors = [r.error for r in (diseases, drugs) if r.error]
-    if errors and not any((diseases.entities, drugs.entities)):
-        return {
-            "findings": [],
-            "health_alerts": [],
-            "affected_conditions": [],
-            "mentioned_treatments": [],
-            "error": "; ".join(errors),
-        }
+    all_entities = list(diseases.entities) + list(drugs.entities)
+    entity_desc = format_entities_with_confidence(all_entities)
 
-    # Build findings with context
-    findings = []
-    for entity in diseases.entities:
-        findings.append({
-            "entity": entity.text,
-            "type": "condition",
-            "label": entity.label,
-            "confidence": round(entity.confidence, 2),
-            "context": _get_context(text, entity.start, entity.end),
-        })
-    for entity in drugs.entities:
-        findings.append({
-            "entity": entity.text,
-            "type": "treatment",
-            "label": entity.label,
-            "confidence": round(entity.confidence, 2),
-            "context": _get_context(text, entity.start, entity.end),
-        })
+    safe_text, pii_map = engine.deidentify_for_llm(text, method="mask")
 
-    # Detect health alerts
-    health_alerts = _detect_alerts(text)
+    prompt = (
+        f"A patient found this health bulletin or alert:\n\n{safe_text}\n\n"
+        f"NER Analysis:\n{entity_desc}\n\n"
+        "As a health advocate, help the patient understand whether this is a real health concern "
+        "or potentially misleading information. Be balanced and evidence-based."
+    )
 
-    affected_conditions = [{"name": e.text, "label": e.label} for e in diseases.entities]
-    mentioned_treatments = [{"name": e.text, "label": e.label} for e in drugs.entities]
+    system = (
+        "You are a patient health advocate analyzing health bulletins and alerts. "
+        "Help patients distinguish real health risks from hype. "
+        "Be balanced, evidence-based, and practical."
+    )
+
+    llm_output = chat_structured(prompt, module_type="bulletin_analysis", system=system)
+    validation = cross_validate(all_entities, llm_output)
 
     return {
-        "findings": findings,
-        "health_alerts": health_alerts,
-        "affected_conditions": affected_conditions,
-        "mentioned_treatments": mentioned_treatments,
+        "conditions_detected": [{"name": e.text, "label": e.label, "confidence": round(e.confidence, 2)} for e in diseases.entities],
+        "treatments_detected": [{"name": e.text, "label": e.label, "confidence": round(e.confidence, 2)} for e in drugs.entities],
+        "explanation": llm_output.get("summary", ""),
+        "urgency": llm_output.get("urgency", "medium"),
+        "action_items": llm_output.get("action_items", []),
+        "red_flags": llm_output.get("red_flags", []),
+        "credibility": llm_output.get("credibility", "medium"),
+        "scientific_context": llm_output.get("scientific_context", ""),
+        "recommended_action": llm_output.get("recommended_action", ""),
+        "pii_scrubbed": len(pii_map) > 0,
+        "structured_output": llm_output,
+        "validation": {
+            "confirmed": validation.confirmed,
+            "ner_only": validation.ner_only,
+            "llm_only": validation.llm_only,
+            "reliability": validation.reliability,
+            "urgency_disagreement": validation.urgency_disagreement,
+        },
     }

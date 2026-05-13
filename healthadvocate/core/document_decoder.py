@@ -1,116 +1,80 @@
-"""Document decoder — extract and explain medical entities from documents."""
+"""Document decoder — PII-safe NER + structured LLM explanation."""
 
 from __future__ import annotations
 
-from .engine import HealthEngine
-
-LABEL_EXPLANATIONS = {
-    "DISEASE": "A medical condition or illness that may require treatment",
-    "CONDITION": "A health condition that may need monitoring or treatment",
-    "PATHOLOGY": "A disease process or abnormality found in tissues",
-    "CHEM": "A chemical compound used in medical treatment",
-    "DRUG": "A medication prescribed or being taken",
-    "MEDICATION": "A medicine or pharmaceutical preparation",
-    "Organ": "An organ in the body (e.g., heart, liver, lungs)",
-    "Tissue": "A type of body tissue (e.g., muscle, nerve, connective)",
-    "ANATOMY": "A part of the body's physical structure",
-    "first_name": "A person's first name (PII detected)",
-    "last_name": "A person's last name (PII detected)",
-    "email": "An email address (PII detected)",
-    "phone_number": "A phone number (PII detected)",
-    "ssn": "A Social Security Number (PII detected)",
-    "date_of_birth": "A date of birth (PII detected)",
-    "street_address": "A street address (PII detected)",
-}
+from .engine import HealthEngine, format_entities_with_confidence
+from .llm_client import chat_structured
+from .cross_validation import cross_validate
+from . import family_tracker
 
 
-def _explain_entity(entity) -> dict:
-    """Build an explained entity dict."""
-    label = entity.label
-    explanation = LABEL_EXPLANATIONS.get(label, f"A detected entity of type: {label}")
-    return {
-        "text": entity.text,
-        "label": label,
-        "category": entity.category,
-        "confidence": round(entity.confidence, 2),
-        "explanation": explanation,
-        "position": {"start": entity.start, "end": entity.end},
-    }
-
-
-def decode_document(engine: HealthEngine, text: str, lang: str = "en") -> dict:
-    """Extract and explain all medical entities in a document."""
+def decode_document(engine: HealthEngine, text: str, lang: str = "en", profile_id: str | None = None) -> dict:
     if not text or not text.strip():
-        return {
-            "entities": [],
-            "pii_found": [],
-            "summary": "No document text provided.",
-            "entity_counts": {"diseases": 0, "drugs": 0, "anatomy": 0, "pii": 0},
-        }
+        return {"entities": [], "explanation": "No document text provided.", "action_items": [], "red_flags": [], "validation": None}
 
     diseases = engine.extract_diseases(text)
     drugs = engine.extract_drugs(text)
     anatomy = engine.extract_anatomy(text)
     pii = engine.extract_pii(text, lang=lang)
 
-    errors = [r.error for r in (diseases, drugs, anatomy, pii) if r.error]
-    if errors and not any((diseases.entities, drugs.entities, anatomy.entities, pii.entities)):
-        return {
-            "entities": [],
-            "pii_found": [],
-            "summary": f"Analysis failed: {'; '.join(errors)}",
-            "entity_counts": {"diseases": 0, "drugs": 0, "anatomy": 0, "pii": 0},
-            "error": "; ".join(errors),
-        }
+    # Deidentify before sending to LLM
+    safe_text, pii_map = engine.deidentify_for_llm(text, method="mask")
 
-    all_entities = []
-    pii_entities = []
+    entities = []
+    for e in diseases.entities:
+        entities.append({"text": e.text, "category": "disease", "confidence": round(e.confidence, 2)})
+    for e in drugs.entities:
+        entities.append({"text": e.text, "category": "drug", "confidence": round(e.confidence, 2)})
+    for e in anatomy.entities:
+        entities.append({"text": e.text, "category": "anatomy", "confidence": round(e.confidence, 2)})
 
-    for entity in diseases.entities + drugs.entities + anatomy.entities:
-        all_entities.append(_explain_entity(entity))
+    all_ner_entities = list(diseases.entities) + list(drugs.entities) + list(anatomy.entities)
+    entity_desc = format_entities_with_confidence(all_ner_entities)
 
-    for entity in pii.entities:
-        pii_entities.append(_explain_entity(entity))
+    family_block = ""
+    if profile_id:
+        profile = family_tracker.get_profile(profile_id)
+        family_block = "\n\n" + family_tracker.format_family_context(profile)
 
-    n_diseases = len(diseases.entities)
-    n_drugs = len(drugs.entities)
-    n_anatomy = len(anatomy.entities)
-    n_pii = len(pii.entities)
+    prompt = (
+        f"A patient shared this medical document:\n\n{safe_text[:2000]}\n\n"
+        f"NER Analysis:\n{entity_desc}\n\n"
+        f"{family_block}\n\n"
+        "Explain this document to the patient in plain language. "
+        "Explain medical terms, highlight concerns, and suggest follow-up questions."
+    )
 
-    parts = []
-    if n_diseases:
-        parts.append(f"{n_diseases} condition{'s' if n_diseases != 1 else ''}")
-    if n_drugs:
-        parts.append(f"{n_drugs} medication{'s' if n_drugs != 1 else ''}")
-    if n_anatomy:
-        parts.append(f"{n_anatomy} body part{'s' if n_anatomy != 1 else ''}")
+    system = (
+        "You are a patient health advocate explaining medical documents. "
+        "Translate medical jargon into plain language. Help the patient understand "
+        "what the document means for their health and what actions to take."
+    )
 
-    if parts:
-        summary = f"This document mentions {' and '.join(parts)}."
-    else:
-        summary = "No specific medical entities were detected in this document."
-
-    if n_pii:
-        summary += f" {n_pii} piece{'s' if n_pii != 1 else ''} of personal information were found."
+    llm_output = chat_structured(prompt, module_type="document_explanation", system=system)
+    validation = cross_validate(all_ner_entities, llm_output)
 
     return {
-        "entities": all_entities,
-        "pii_found": pii_entities,
-        "summary": summary,
+        "entities": entities,
+        "pii_found": [{"text": e.text, "category": "pii"} for e in pii.entities],
+        "explanation": llm_output.get("summary", ""),
+        "urgency": llm_output.get("urgency", "medium"),
+        "action_items": llm_output.get("action_items", []),
+        "red_flags": llm_output.get("red_flags", []),
+        "medical_terms_explained": llm_output.get("medical_terms_explained", []),
+        "follow_up_needed": llm_output.get("follow_up_needed", False),
+        "structured_output": llm_output,
+        "validation": {
+            "confirmed": validation.confirmed,
+            "ner_only": validation.ner_only,
+            "llm_only": validation.llm_only,
+            "reliability": validation.reliability,
+            "urgency_disagreement": validation.urgency_disagreement,
+        },
         "entity_counts": {
-            "diseases": n_diseases,
-            "drugs": n_drugs,
-            "anatomy": n_anatomy,
-            "pii": n_pii,
+            "diseases": len(diseases.entities),
+            "drugs": len(drugs.entities),
+            "anatomy": len(anatomy.entities),
+            "pii": len(pii.entities),
         },
-        "models_used": {
-            "diseases": diseases.model_used,
-            "drugs": drugs.model_used,
-            "anatomy": anatomy.model_used,
-        },
-        "processing_time": {
-            "diseases": diseases.processing_time,
-            "drugs": drugs.processing_time,
-            "anatomy": anatomy.processing_time,
-        },
+        "pii_scrubbed": len(pii_map) > 0,
     }

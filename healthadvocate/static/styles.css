@@ -27,7 +27,7 @@
 
   --text-1: #2a2a28;
   --text-2: #6d6862;
-  --text-3: #9e9892;
+  --text-3: #7d7872;
   --border: #e5e1da;
   --border-light: #edebe6;
 
@@ -78,7 +78,7 @@
 
   --text-1: #e8e4de;
   --text-2: #a39e98;
-  --text-3: #6d6965;
+  --text-3: #8e8a85;
   --border: #353230;
   --border-light: #2c2a28;
 
@@ -91,6 +91,19 @@
 /* ─── Reset ─── */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 html { scroll-behavior: smooth; }
+
+/* Screen-reader only utility */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
 body {
   font-family: var(--font);
   font-size: 15px;
@@ -406,11 +419,11 @@ main {
 /* ─── Forms ─── */
 .field-label {
   display: block;
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.06em;
-  color: var(--text-3);
+  color: var(--text-2);
   margin-bottom: 8px;
 }
 
@@ -645,11 +658,17 @@ textarea { resize: vertical; min-height: 100px; line-height: 1.55; }
   letter-spacing: -0.02em;
 }
 .stat-label {
-  font-size: 10px;
-  color: var(--text-3);
+  font-size: 11px;
+  color: var(--text-2);
   text-transform: uppercase;
   letter-spacing: 0.07em;
   margin-top: 2px;
+}
+
+.bill-total {
+  font-size: 30px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
 }
 
 /* ─── Loading Skeleton ─── */

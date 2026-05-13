@@ -3,12 +3,43 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>HealthAdvocate</title>
-  <meta name="description" content="Navigate the medical system, fight insurance denials, decode bills, and advocate for your family's health.">
+  <title>HealthAdvocate — Patient Health Advocacy Tool</title>
+  <meta name="description" content="Navigate the medical system, fight insurance denials, decode bills, and advocate for your family's health. Free, private, patient-first.">
+  <meta name="keywords" content="health advocate, patient advocacy, medical bills, insurance denial, symptom checker, drug information, health literacy">
+  <meta name="author" content="OpenMed Project">
+  <meta property="og:title" content="HealthAdvocate — Patient Health Advocacy Tool">
+  <meta property="og:description" content="Navigate the medical system, fight insurance denials, decode bills, and advocate for your family's health.">
+  <meta property="og:type" content="website">
+  <meta name="twitter:card" content="summary">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/static/styles.css">
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebApplication",
+    "name": "HealthAdvocate",
+    "description": "Navigate the medical system, fight insurance denials, decode bills, and advocate for your family's health. Free, private, patient-first.",
+    "applicationCategory": "HealthApplication",
+    "operatingSystem": "Any",
+    "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+    "author": { "@type": "Organization", "name": "OpenMed Project" },
+    "featureList": [
+      "Symptom assessment",
+      "Medical document decoding",
+      "Medical bill analysis",
+      "Insurance denial appeal drafting",
+      "Drug information checking",
+      "Appointment preparation",
+      "Discharge instruction translation",
+      "Second opinion brief creation",
+      "Community health bulletin scanning",
+      "Family health profile management",
+      "Health concern tracking"
+    ]
+  }
+  </script>
 </head>
 <body>
   <a href="#app-content" class="skip-link">Skip to main content</a>
@@ -23,26 +54,26 @@
         <span class="logo-text">HealthAdvocate</span>
       </div>
       <div class="header-actions">
-        <button class="icon-btn" id="btn-home" aria-label="Home" title="Home">
+        <button type="button" class="icon-btn" id="btn-home" aria-label="Home" title="Home">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
         </button>
-        <button class="icon-btn" id="btn-theme" aria-label="Toggle theme" title="Toggle theme">
+        <button type="button" class="icon-btn" id="btn-theme" aria-label="Toggle theme" title="Toggle theme">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" id="theme-icon"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
         </button>
       </div>
     </div>
     <nav id="main-nav" aria-label="Feature navigation">
-      <button data-view="symptoms" class="nav-btn">Symptoms</button>
-      <button data-view="documents" class="nav-btn">Documents</button>
-      <button data-view="bills" class="nav-btn">Bills</button>
-      <button data-view="insurance" class="nav-btn">Insurance</button>
-      <button data-view="drugs" class="nav-btn">Drugs</button>
-      <button data-view="appointments" class="nav-btn">Appointments</button>
-      <button data-view="discharge" class="nav-btn">Discharge</button>
-      <button data-view="secondopinion" class="nav-btn">2nd Opinion</button>
-      <button data-view="community" class="nav-btn">Scanner</button>
-      <button data-view="family" class="nav-btn">Family</button>
-      <button data-view="tracks" class="nav-btn">Tracks</button>
+      <button type="button" data-view="symptoms" class="nav-btn">Symptoms</button>
+      <button type="button" data-view="documents" class="nav-btn">Documents</button>
+      <button type="button" data-view="bills" class="nav-btn">Bills</button>
+      <button type="button" data-view="insurance" class="nav-btn">Insurance</button>
+      <button type="button" data-view="drugs" class="nav-btn">Drugs</button>
+      <button type="button" data-view="appointments" class="nav-btn">Appointments</button>
+      <button type="button" data-view="discharge" class="nav-btn">Discharge</button>
+      <button type="button" data-view="secondopinion" class="nav-btn">2nd Opinion</button>
+      <button type="button" data-view="community" class="nav-btn">Scanner</button>
+      <button type="button" data-view="family" class="nav-btn">Family</button>
+      <button type="button" data-view="tracks" class="nav-btn">Tracks</button>
     </nav>
   </header>
 
@@ -112,8 +143,8 @@
         </div>
         <label for="symptom-input" class="field-label">What are you experiencing?</label>
         <textarea id="symptom-input" rows="4" placeholder="e.g., I've been having chest pain and shortness of breath for the past hour..."></textarea>
-        <button class="btn-primary" onclick="HA.assessSymptoms()">Assess Symptoms</button>
-        <div id="symptom-results" class="results"></div>
+        <button type="button" class="btn-primary" onclick="HA.assessSymptoms()">Assess Symptoms</button>
+        <div id="symptom-results" class="results" aria-live="polite" role="status"></div>
       </div></div>
     </section>
 
@@ -131,8 +162,8 @@
         </div>
         <label for="doc-input" class="field-label">Paste your medical document text</label>
         <textarea id="doc-input" rows="6" placeholder="Paste lab results, visit notes, referral letters..."></textarea>
-        <button class="btn-primary" onclick="HA.decodeDocument()">Decode Document</button>
-        <div id="doc-results" class="results"></div>
+        <button type="button" class="btn-primary" onclick="HA.decodeDocument()">Decode Document</button>
+        <div id="doc-results" class="results" aria-live="polite" role="status"></div>
       </div></div>
     </section>
 
@@ -150,8 +181,8 @@
         </div>
         <label for="bill-input" class="field-label">Paste your bill text</label>
         <textarea id="bill-input" rows="6" placeholder="Paste your medical bill or explanation of benefits..."></textarea>
-        <button class="btn-primary" onclick="HA.decodeBill()">Analyze Bill</button>
-        <div id="bill-results" class="results"></div>
+        <button type="button" class="btn-primary" onclick="HA.decodeBill()">Analyze Bill</button>
+        <div id="bill-results" class="results" aria-live="polite" role="status"></div>
       </div></div>
     </section>
 
@@ -171,8 +202,8 @@
         <textarea id="denial-input" rows="6" placeholder="Paste the denial letter or explanation of benefits..."></textarea>
         <label for="denial-patient-info" class="field-label">Your medical context (optional)</label>
         <textarea id="denial-patient-info" rows="3" placeholder="Relevant medical history, prior treatments, why this service was needed..."></textarea>
-        <button class="btn-primary" onclick="HA.fightDenial()">Fight Denial</button>
-        <div id="denial-results" class="results"></div>
+        <button type="button" class="btn-primary" onclick="HA.fightDenial()">Fight Denial</button>
+        <div id="denial-results" class="results" aria-live="polite" role="status"></div>
       </div></div>
     </section>
 
@@ -190,8 +221,8 @@
         </div>
         <label for="drug-input" class="field-label">Drug name</label>
         <input type="text" id="drug-input" placeholder="e.g., Lipitor, Zoloft, Advair">
-        <button class="btn-primary" onclick="HA.checkDrug()">Check Drug</button>
-        <div id="drug-results" class="results"></div>
+        <button type="button" class="btn-primary" onclick="HA.checkDrug()">Check Drug</button>
+        <div id="drug-results" class="results" aria-live="polite" role="status"></div>
       </div></div>
     </section>
 
@@ -211,8 +242,8 @@
         <textarea id="appt-symptoms" rows="3" placeholder="Describe what you want to discuss with your doctor..."></textarea>
         <label for="appt-concern" class="field-label">Specific concern or question (optional)</label>
         <input type="text" id="appt-concern" placeholder="e.g., Is this medication still right for me?">
-        <button class="btn-primary" onclick="HA.prepareAppointment()">Prepare</button>
-        <div id="appt-results" class="results"></div>
+        <button type="button" class="btn-primary" onclick="HA.prepareAppointment()">Prepare</button>
+        <div id="appt-results" class="results" aria-live="polite" role="status"></div>
       </div></div>
     </section>
 
@@ -230,8 +261,8 @@
         </div>
         <label for="discharge-input" class="field-label">Paste discharge instructions</label>
         <textarea id="discharge-input" rows="6" placeholder="Paste your discharge summary or after-visit instructions..."></textarea>
-        <button class="btn-primary" onclick="HA.translateDischarge()">Translate</button>
-        <div id="discharge-results" class="results"></div>
+        <button type="button" class="btn-primary" onclick="HA.translateDischarge()">Translate</button>
+        <div id="discharge-results" class="results" aria-live="polite" role="status"></div>
       </div></div>
     </section>
 
@@ -249,8 +280,8 @@
         </div>
         <label for="secondop-input" class="field-label">Paste your medical records or notes</label>
         <textarea id="secondop-input" rows="6" placeholder="Paste medical records, test results, treatment history..."></textarea>
-        <button class="btn-primary" onclick="HA.createSecondOpinion()">Create Brief</button>
-        <div id="secondop-results" class="results"></div>
+        <button type="button" class="btn-primary" onclick="HA.createSecondOpinion()">Create Brief</button>
+        <div id="secondop-results" class="results" aria-live="polite" role="status"></div>
       </div></div>
     </section>
 
@@ -268,8 +299,8 @@
         </div>
         <label for="community-input" class="field-label">Paste a health bulletin or alert</label>
         <textarea id="community-input" rows="6" placeholder="Paste a news article, CDC alert, FDA recall, or health advisory..."></textarea>
-        <button class="btn-primary" onclick="HA.scanCommunity()">Scan</button>
-        <div id="community-results" class="results"></div>
+        <button type="button" class="btn-primary" onclick="HA.scanCommunity()">Scan</button>
+        <div id="community-results" class="results" aria-live="polite" role="status"></div>
       </div></div>
     </section>
 
@@ -286,7 +317,9 @@
           </div>
         </div>
         <div class="form-row">
+          <label for="family-name" class="sr-only">Family member name</label>
           <input type="text" id="family-name" placeholder="Family member name">
+          <label for="family-relationship" class="sr-only">Relationship</label>
           <select id="family-relationship">
             <option value="self">Self</option>
             <option value="spouse">Spouse/Partner</option>
@@ -295,9 +328,9 @@
             <option value="sibling">Sibling</option>
             <option value="other">Other</option>
           </select>
-          <button class="btn-primary btn-sm" onclick="HA.createFamilyProfile()">Add Member</button>
+          <button type="button" class="btn-primary btn-sm" onclick="HA.createFamilyProfile()">Add Member</button>
         </div>
-        <div id="family-list" class="results"></div>
+        <div id="family-list" class="results" aria-live="polite" role="status"></div>
       </div></div>
     </section>
 
@@ -314,7 +347,9 @@
           </div>
         </div>
         <div class="form-row">
+          <label for="track-concern" class="sr-only">What are you tracking?</label>
           <input type="text" id="track-concern" placeholder="What are you tracking?">
+          <label for="track-category" class="sr-only">Category</label>
           <select id="track-category">
             <option value="general">General</option>
             <option value="symptom">Symptom</option>
@@ -322,9 +357,9 @@
             <option value="treatment">Treatment</option>
             <option value="insurance">Insurance</option>
           </select>
-          <button class="btn-primary btn-sm" onclick="HA.createTrack()">Start Track</button>
+          <button type="button" class="btn-primary btn-sm" onclick="HA.createTrack()">Start Track</button>
         </div>
-        <div id="track-dashboard" class="results"></div>
+        <div id="track-dashboard" class="results" aria-live="polite" role="status"></div>
       </div></div>
     </section>
 

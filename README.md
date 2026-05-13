@@ -281,4 +281,4 @@ HealthAdvocate is built on:
 
 ## License
 
-HealthAdvocate is part of the OpenMed project and released under the [Apache-2.0 License](../LICENSE).
+This project is released under the [Apache-2.0 License](LICENSE). OpenMed is a separate project by Maziyar Panahi, used here as a dependency under its own Apache-2.0 license.

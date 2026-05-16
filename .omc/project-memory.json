@@ -1,0 +1,81 @@
+{
+  "version": "1.0.0",
+  "lastScanned": 1778897201821,
+  "projectRoot": "/Users/simongonzalezdecruz/Desktop/the-factory/.omc/repos/healthadvocate",
+  "techStack": {
+    "languages": [],
+    "frameworks": [],
+    "packageManager": null,
+    "runtime": null
+  },
+  "build": {
+    "buildCommand": null,
+    "testCommand": null,
+    "lintCommand": null,
+    "devCommand": null,
+    "scripts": {}
+  },
+  "conventions": {
+    "namingStyle": null,
+    "importStyle": null,
+    "testPattern": null,
+    "fileOrganization": null
+  },
+  "structure": {
+    "isMonorepo": false,
+    "workspaces": [],
+    "mainDirectories": [],
+    "gitBranches": {
+      "defaultBranch": "master",
+      "branchingStrategy": null
+    }
+  },
+  "customNotes": [],
+  "directoryMap": {
+    "healthadvocate": {
+      "path": "healthadvocate",
+      "purpose": null,
+      "fileCount": 3,
+      "lastAccessed": 1778897201785,
+      "keyFiles": [
+        "__init__.py",
+        "app.py",
+        "requirements.txt"
+      ]
+    },
+    "openmed": {
+      "path": "openmed",
+      "purpose": null,
+      "fileCount": 2,
+      "lastAccessed": 1778897201786,
+      "keyFiles": [
+        "__about__.py",
+        "__init__.py"
+      ]
+    },
+    "healthadvocate/static": {
+      "path": "healthadvocate/static",
+      "purpose": "Static files",
+      "fileCount": 3,
+      "lastAccessed": 1778897201792,
+      "keyFiles": [
+        "app.js",
+        "index.html",
+        "styles.css"
+      ]
+    },
+    "openmed/utils": {
+      "path": "openmed/utils",
+      "purpose": "Utility functions",
+      "fileCount": 4,
+      "lastAccessed": 1778897201797,
+      "keyFiles": [
+        "__init__.py",
+        "logging.py",
+        "profiling.py"
+      ]
+    }
+  },
+  "hotPaths": [],
+  "userDirectives": []
+}

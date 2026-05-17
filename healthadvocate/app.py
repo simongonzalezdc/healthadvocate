@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import sys
 import logging
+import os
 from contextlib import asynccontextmanager
 from pathlib import Path
 from typing import Optional
@@ -43,6 +44,17 @@ engine = HealthEngine()
 _MAX_INPUT_LENGTH = 50_000  # 50KB max input text
 
 
+def _cors_origins() -> list[str]:
+    """Return allowed browser origins; default stays local-only."""
+    raw = os.environ.get("HEALTHADVOCATE_ALLOW_ORIGINS", "")
+    if raw.strip():
+        return [origin.strip() for origin in raw.split(",") if origin.strip()]
+    return [
+        "http://127.0.0.1:8080",
+        "http://localhost:8080",
+    ]
+
+
 def _validate_length(text: str, field: str = "input") -> None:
     if len(text) > _MAX_INPUT_LENGTH:
         raise HTTPException(
@@ -70,7 +82,7 @@ app = FastAPI(
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=_cors_origins(),
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -301,4 +313,4 @@ async def index():
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run("healthadvocate.app:app", host="0.0.0.0", port=8080, reload=True)
+    uvicorn.run("healthadvocate.app:app", host="127.0.0.1", port=8080, reload=True)

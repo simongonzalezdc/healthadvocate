@@ -39,6 +39,16 @@ const HA = {
     return this._VALID_ENTITY_CLASSES.has(c) ? c : 'entity';
   },
 
+  safeUrgency(value) {
+    const u = (value || '').toLowerCase();
+    return ['low', 'medium', 'high'].includes(u) ? u : 'medium';
+  },
+
+  safeTrackStatus(value) {
+    const status = (value || '').toLowerCase();
+    return ['active', 'monitoring', 'resolved'].includes(status) ? status : 'active';
+  },
+
   escapeHtml(str) {
     if (typeof str !== 'string') return '';
     return str.replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
@@ -188,8 +198,7 @@ const HA = {
   },
 
   renderSymptoms(data, el) {
-    const VALID_URGENCY = ['low', 'medium', 'high'];
-    const u = VALID_URGENCY.includes(data.urgency) ? data.urgency : 'low';
+    const u = this.safeUrgency(data.urgency);
     let html = `
       <div class="result-section"><h3>Urgency Level</h3>
         <span class="urgency-badge urgency-${u}">${u.toUpperCase()}</span>
@@ -255,8 +264,9 @@ const HA = {
   renderDocument(data, el) {
     let html = `<div class="result-section"><h3>Summary</h3><p class="result-text">${this.escapeHtml(data.explanation)}</p></div>`;
     if (data.urgency) {
+      const urgency = this.safeUrgency(data.urgency);
       html += `<div class="result-section"><h3>Urgency</h3>
-        <span class="urgency-badge urgency-${this.escapeHtml(data.urgency)}">${data.urgency.toUpperCase()}</span></div>`;
+        <span class="urgency-badge urgency-${urgency}">${urgency.toUpperCase()}</span></div>`;
     }
     if (data.entities?.length) {
       html += `<div class="result-section"><h3>Medical Entities</h3><div class="entity-list">`;
@@ -305,8 +315,9 @@ const HA = {
     let html = '';
     if (data.total) html += `<div class="result-section"><h3>Total</h3><div class="bill-total">${this.escapeHtml(data.total)}</div></div>`;
     if (data.urgency) {
+      const urgency = this.safeUrgency(data.urgency);
       html += `<div class="result-section"><h3>Urgency</h3>
-        <span class="urgency-badge urgency-${this.escapeHtml(data.urgency)}">${data.urgency.toUpperCase()}</span></div>`;
+        <span class="urgency-badge urgency-${urgency}">${urgency.toUpperCase()}</span></div>`;
     }
     if (data.explanation) html += `<div class="result-section"><h3>Explanation</h3><p class="result-text">${this.escapeHtml(data.explanation)}</p></div>`;
     if (data.action_items?.length) {
@@ -352,8 +363,9 @@ const HA = {
   renderDenial(data, el) {
     let html = '';
     if (data.urgency) {
+      const urgency = this.safeUrgency(data.urgency);
       html += `<div class="result-section"><h3>Urgency</h3>
-        <span class="urgency-badge urgency-${this.escapeHtml(data.urgency)}">${data.urgency.toUpperCase()}</span></div>`;
+        <span class="urgency-badge urgency-${urgency}">${urgency.toUpperCase()}</span></div>`;
     }
     if (data.explanation) html += `<div class="result-section"><h3>What This Denial Means</h3><p class="result-text">${this.escapeHtml(data.explanation)}</p></div>`;
     if (data.denial_reason) html += `<div class="result-section"><h3>Denial Reason</h3><p class="result-text">${this.escapeHtml(data.denial_reason)}</p></div>`;
@@ -465,8 +477,9 @@ const HA = {
   renderDischarge(data, el) {
     let html = '';
     if (data.urgency) {
+      const urgency = this.safeUrgency(data.urgency);
       html += `<div class="result-section"><h3>Urgency</h3>
-        <span class="urgency-badge urgency-${this.escapeHtml(data.urgency)}">${data.urgency.toUpperCase()}</span></div>`;
+        <span class="urgency-badge urgency-${urgency}">${urgency.toUpperCase()}</span></div>`;
     }
     if (data.explanation) html += `<div class="result-section"><h3>Plain Language Summary</h3><div class="plain-language">${this.escapeHtml(data.explanation)}</div></div>`;
     if (data.medication_instructions?.length) {
@@ -520,8 +533,9 @@ const HA = {
   renderSecondOpinion(data, el) {
     let html = '';
     if (data.urgency) {
+      const urgency = this.safeUrgency(data.urgency);
       html += `<div class="result-section"><h3>Urgency</h3>
-        <span class="urgency-badge urgency-${this.escapeHtml(data.urgency)}">${data.urgency.toUpperCase()}</span></div>`;
+        <span class="urgency-badge urgency-${urgency}">${urgency.toUpperCase()}</span></div>`;
     }
     if (data.explanation) html += `<div class="result-section"><h3>Summary for Second Opinion</h3><p class="result-text">${this.escapeHtml(data.explanation)}</p></div>`;
     if (data.conditions?.length) {
@@ -576,8 +590,9 @@ const HA = {
   renderCommunity(data, el) {
     let html = '';
     if (data.urgency) {
+      const urgency = this.safeUrgency(data.urgency);
       html += `<div class="result-section"><h3>Urgency</h3>
-        <span class="urgency-badge urgency-${this.escapeHtml(data.urgency)}">${data.urgency.toUpperCase()}</span></div>`;
+        <span class="urgency-badge urgency-${urgency}">${urgency.toUpperCase()}</span></div>`;
     }
     if (data.explanation) html += `<div class="result-section"><h3>Summary</h3><p class="result-text">${this.escapeHtml(data.explanation)}</p></div>`;
     if (data.credibility) {
@@ -612,16 +627,18 @@ const HA = {
 
   /* ── Family Tracker ── */
 
-  async createFamilyProfile() {
+  async createFamilyProfile(event) {
+    const btn = event?.currentTarget;
     const name = document.getElementById('family-name').value;
     const relationship = document.getElementById('family-relationship').value;
     const el = document.getElementById('family-list');
     if (!name.trim()) return;
+    this._setBtnBusy(btn, true);
     try {
       await this.api('family/profiles', { name, relationship });
       document.getElementById('family-name').value = '';
       this.loadFamilyProfiles();
-    } catch (err) { this.showError(el, err.message); }
+    } catch (err) { this.showError(el, err.message); } finally { this._setBtnBusy(btn, false); }
   },
 
   async loadFamilyProfiles() {
@@ -672,16 +689,18 @@ const HA = {
 
   /* ── Health Tracks ── */
 
-  async createTrack() {
+  async createTrack(event) {
+    const btn = event?.currentTarget;
     const concern = document.getElementById('track-concern').value;
     const category = document.getElementById('track-category').value;
     const el = document.getElementById('track-dashboard');
     if (!concern.trim()) return;
+    this._setBtnBusy(btn, true);
     try {
       await this.api('tracks', { concern, category });
       document.getElementById('track-concern').value = '';
       this.loadTrackDashboard();
-    } catch (err) { if (el) this.showError(el, err.message); }
+    } catch (err) { if (el) this.showError(el, err.message); } finally { this._setBtnBusy(btn, false); }
   },
 
   async loadTrackDashboard() {
@@ -704,13 +723,14 @@ const HA = {
 
     if (data.tracks?.length) {
       for (const t of data.tracks) {
-        const safeStatus = this.escapeHtml(t.status);
+        const safeStatus = this.safeTrackStatus(t.status);
+        const statusClass = this.escapeHtml(safeStatus);
         html += `<div class="track-item">
           <div><span class="track-concern">${this.escapeHtml(t.concern)}</span><small style="color:var(--text-3);margin-left:6px">${this.escapeHtml(t.category)}</small></div>
           <div style="display:flex;align-items:center;gap:6px">
-            <span class="track-status ${safeStatus}">${safeStatus}</span>
-            ${t.status !== 'resolved' ? `<button class="btn-ghost btn-sm" data-action="update-track" data-track-id="${t.id}" data-status="resolved">Resolve</button>` : ''}
-            ${t.status === 'active' ? `<button class="btn-ghost btn-sm" data-action="update-track" data-track-id="${t.id}" data-status="monitoring">Monitor</button>` : ''}
+            <span class="track-status ${statusClass}">${statusClass}</span>
+            ${safeStatus !== 'resolved' ? `<button class="btn-ghost btn-sm" data-action="update-track" data-track-id="${t.id}" data-status="resolved">Resolve</button>` : ''}
+            ${safeStatus === 'active' ? `<button class="btn-ghost btn-sm" data-action="update-track" data-track-id="${t.id}" data-status="monitoring">Monitor</button>` : ''}
           </div>
         </div>`;
       }
@@ -757,12 +777,35 @@ document.addEventListener('DOMContentLoaded', () => {
     card.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); go(); } });
   });
 
-  /* Delegated click handler for data-action buttons (family conditions, track status) */
+  /* Delegated click handler for app actions. */
   document.addEventListener('click', (e) => {
     const btn = e.target.closest('[data-action]');
     if (!btn) return;
     const action = btn.dataset.action;
-    if (action === 'add-condition') {
+    const buttonEvent = { currentTarget: btn };
+    if (action === 'assess-symptoms') {
+      HA.assessSymptoms(buttonEvent);
+    } else if (action === 'decode-document') {
+      HA.decodeDocument(buttonEvent);
+    } else if (action === 'decode-bill') {
+      HA.decodeBill(buttonEvent);
+    } else if (action === 'fight-denial') {
+      HA.fightDenial(buttonEvent);
+    } else if (action === 'check-drug') {
+      HA.checkDrug(buttonEvent);
+    } else if (action === 'prepare-appointment') {
+      HA.prepareAppointment(buttonEvent);
+    } else if (action === 'translate-discharge') {
+      HA.translateDischarge(buttonEvent);
+    } else if (action === 'create-second-opinion') {
+      HA.createSecondOpinion(buttonEvent);
+    } else if (action === 'scan-community') {
+      HA.scanCommunity(buttonEvent);
+    } else if (action === 'create-family-profile') {
+      HA.createFamilyProfile(buttonEvent);
+    } else if (action === 'create-track') {
+      HA.createTrack(buttonEvent);
+    } else if (action === 'add-condition') {
       const profileId = btn.dataset.profileId;
       if (profileId) HA.addCondition(profileId);
     } else if (action === 'update-track') {

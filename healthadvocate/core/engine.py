@@ -11,7 +11,12 @@ from typing import Optional
 
 logger = logging.getLogger(__name__)
 
-# Ensure the openmed-fixes directory is on sys.path so `import openmed` works
+DEIDENTIFICATION_FAILED_PLACEHOLDER = (
+    "[Input withheld because de-identification failed. "
+    "Retry locally before sending this text to the LLM.]"
+)
+
+# Ensure this project root is on sys.path so the bundled/development OpenMed copy is importable.
 _PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 if str(_PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(_PROJECT_ROOT))
@@ -180,7 +185,7 @@ class HealthEngine:
             return result.deidentified_text, pii_map
         except Exception as exc:
             logger.error("deidentify_for_llm failed: %s", exc)
-            return text, {}
+            return DEIDENTIFICATION_FAILED_PLACEHOLDER, {"_deidentification_failed": str(exc)}
 
 
 def format_entities_with_confidence(entities: list[EntityMatch]) -> str:

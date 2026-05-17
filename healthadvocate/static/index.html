@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>HealthAdvocate — Free Patient Health Advocacy Tool</title>
   <meta name="description" content="Free, private health advocacy tool. Decode medical bills, fight insurance denials, assess symptoms, translate discharge papers, and prep for doctor visits. Runs locally — your data never leaves your device.">
-  <meta name="keywords" content="health advocate, patient advocacy, medical bill decoder, insurance denial appeal, symptom checker, drug information checker, medical document translator, discharge instructions, patient rights, free health tool, open source health, medical AI, health literacy, HIPAA compliant">
+  <meta name="keywords" content="health advocate, patient advocacy, medical bill decoder, insurance denial appeal, symptom checker, drug information checker, medical document translator, discharge instructions, patient rights, free health tool, open source health, medical AI, health literacy, privacy-preserving">
   <meta name="author" content="Simon Gonzalez de Cruz">
   <meta name="robots" content="index, follow">
   <meta property="og:title" content="HealthAdvocate — Your Health Deserves an Advocate">
@@ -148,7 +148,7 @@
         </div>
         <label for="symptom-input" class="field-label">What are you experiencing?</label>
         <textarea id="symptom-input" rows="4" placeholder="e.g., I've been having chest pain and shortness of breath for the past hour..."></textarea>
-        <button type="button" class="btn-primary" onclick="HA.assessSymptoms()">Assess Symptoms</button>
+        <button type="button" class="btn-primary" data-action="assess-symptoms">Assess Symptoms</button>
         <div id="symptom-results" class="results" aria-live="polite" role="status"></div>
       </div></div>
     </section>
@@ -167,7 +167,7 @@
         </div>
         <label for="doc-input" class="field-label">Paste your medical document text</label>
         <textarea id="doc-input" rows="6" placeholder="Paste lab results, visit notes, referral letters..."></textarea>
-        <button type="button" class="btn-primary" onclick="HA.decodeDocument()">Decode Document</button>
+        <button type="button" class="btn-primary" data-action="decode-document">Decode Document</button>
         <div id="doc-results" class="results" aria-live="polite" role="status"></div>
       </div></div>
     </section>
@@ -186,7 +186,7 @@
         </div>
         <label for="bill-input" class="field-label">Paste your bill text</label>
         <textarea id="bill-input" rows="6" placeholder="Paste your medical bill or explanation of benefits..."></textarea>
-        <button type="button" class="btn-primary" onclick="HA.decodeBill()">Analyze Bill</button>
+        <button type="button" class="btn-primary" data-action="decode-bill">Analyze Bill</button>
         <div id="bill-results" class="results" aria-live="polite" role="status"></div>
       </div></div>
     </section>
@@ -207,7 +207,7 @@
         <textarea id="denial-input" rows="6" placeholder="Paste the denial letter or explanation of benefits..."></textarea>
         <label for="denial-patient-info" class="field-label">Your medical context (optional)</label>
         <textarea id="denial-patient-info" rows="3" placeholder="Relevant medical history, prior treatments, why this service was needed..."></textarea>
-        <button type="button" class="btn-primary" onclick="HA.fightDenial()">Fight Denial</button>
+        <button type="button" class="btn-primary" data-action="fight-denial">Fight Denial</button>
         <div id="denial-results" class="results" aria-live="polite" role="status"></div>
       </div></div>
     </section>
@@ -226,7 +226,7 @@
         </div>
         <label for="drug-input" class="field-label">Drug name</label>
         <input type="text" id="drug-input" placeholder="e.g., Lipitor, Zoloft, Advair">
-        <button type="button" class="btn-primary" onclick="HA.checkDrug()">Check Drug</button>
+        <button type="button" class="btn-primary" data-action="check-drug">Check Drug</button>
         <div id="drug-results" class="results" aria-live="polite" role="status"></div>
       </div></div>
     </section>
@@ -247,7 +247,7 @@
         <textarea id="appt-symptoms" rows="3" placeholder="Describe what you want to discuss with your doctor..."></textarea>
         <label for="appt-concern" class="field-label">Specific concern or question (optional)</label>
         <input type="text" id="appt-concern" placeholder="e.g., Is this medication still right for me?">
-        <button type="button" class="btn-primary" onclick="HA.prepareAppointment()">Prepare</button>
+        <button type="button" class="btn-primary" data-action="prepare-appointment">Prepare</button>
         <div id="appt-results" class="results" aria-live="polite" role="status"></div>
       </div></div>
     </section>
@@ -266,7 +266,7 @@
         </div>
         <label for="discharge-input" class="field-label">Paste discharge instructions</label>
         <textarea id="discharge-input" rows="6" placeholder="Paste your discharge summary or after-visit instructions..."></textarea>
-        <button type="button" class="btn-primary" onclick="HA.translateDischarge()">Translate</button>
+        <button type="button" class="btn-primary" data-action="translate-discharge">Translate</button>
         <div id="discharge-results" class="results" aria-live="polite" role="status"></div>
       </div></div>
     </section>
@@ -285,7 +285,7 @@
         </div>
         <label for="secondop-input" class="field-label">Paste your medical records or notes</label>
         <textarea id="secondop-input" rows="6" placeholder="Paste medical records, test results, treatment history..."></textarea>
-        <button type="button" class="btn-primary" onclick="HA.createSecondOpinion()">Create Brief</button>
+        <button type="button" class="btn-primary" data-action="create-second-opinion">Create Brief</button>
         <div id="secondop-results" class="results" aria-live="polite" role="status"></div>
       </div></div>
     </section>
@@ -304,7 +304,7 @@
         </div>
         <label for="community-input" class="field-label">Paste a health bulletin or alert</label>
         <textarea id="community-input" rows="6" placeholder="Paste a news article, CDC alert, FDA recall, or health advisory..."></textarea>
-        <button type="button" class="btn-primary" onclick="HA.scanCommunity()">Scan</button>
+        <button type="button" class="btn-primary" data-action="scan-community">Scan</button>
         <div id="community-results" class="results" aria-live="polite" role="status"></div>
       </div></div>
     </section>
@@ -333,7 +333,7 @@
             <option value="sibling">Sibling</option>
             <option value="other">Other</option>
           </select>
-          <button type="button" class="btn-primary btn-sm" onclick="HA.createFamilyProfile()">Add Member</button>
+          <button type="button" class="btn-primary btn-sm" data-action="create-family-profile">Add Member</button>
         </div>
         <div id="family-list" class="results" aria-live="polite" role="status"></div>
       </div></div>
@@ -362,7 +362,7 @@
             <option value="treatment">Treatment</option>
             <option value="insurance">Insurance</option>
           </select>
-          <button type="button" class="btn-primary btn-sm" onclick="HA.createTrack()">Start Track</button>
+          <button type="button" class="btn-primary btn-sm" data-action="create-track">Start Track</button>
         </div>
         <div id="track-dashboard" class="results" aria-live="polite" role="status"></div>
       </div></div>

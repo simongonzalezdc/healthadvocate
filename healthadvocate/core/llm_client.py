@@ -9,7 +9,7 @@ import re
 
 logger = logging.getLogger(__name__)
 
-_LM_STUDIO_URL = os.environ.get("LM_STUDIO_URL", "http://172.26.0.1:1234/v1")
+_LM_STUDIO_URL = os.environ.get("LM_STUDIO_URL", "http://localhost:1234/v1")
 _MODEL_NAME = os.environ.get("MEDICAL_LLM_MODEL", "meditron3-8b")
 
 SYSTEM_PROMPT = (

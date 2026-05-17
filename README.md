@@ -33,7 +33,7 @@ It's a free, open-source tool that sits on your machine and helps you:
 - Check drug information, side effects, and cheaper alternatives
 - Separate real health advice from misinformation online
 
-**Your data never leaves your device.** No accounts, no cloud, no tracking, no telemetry. Ever.
+**Your data stays on your device by default.** No accounts, no cloud service, no tracking, no telemetry. Ever.
 
 ---
 
@@ -132,7 +132,7 @@ pip install openmed[hf]
 
 ```bash
 export LM_STUDIO_URL=http://localhost:1234/v1
-uvicorn healthadvocate.app:app --host 0.0.0.0 --port 8080
+uvicorn healthadvocate.app:app --host 127.0.0.1 --port 8080
 ```
 
 3. Open **http://localhost:8080** in your browser
@@ -143,8 +143,9 @@ That's it. No sign-up, no API keys, no cloud.
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `LM_STUDIO_URL` | `http://172.26.0.1:1234/v1` | Your LM Studio server URL |
+| `LM_STUDIO_URL` | `http://localhost:1234/v1` | Your LM Studio server URL |
 | `MEDICAL_LLM_MODEL` | `meditron3-8b` | Model name loaded in LM Studio |
+| `HEALTHADVOCATE_ALLOW_ORIGINS` | `http://127.0.0.1:8080,http://localhost:8080` | Comma-separated browser origins allowed by CORS |
 
 ---
 
@@ -224,25 +225,26 @@ Module-specific fields (like `suspicious_charges`, `draft_appeal`, `medication_i
 
 ## Privacy & Security
 
-HealthAdvocate is designed from the ground up for medical privacy:
+HealthAdvocate is designed as a privacy-preserving local-first health tool:
 
-- **All processing is local.** No data is sent to any cloud service. The NER models run on your machine via HuggingFace. The LLM runs on your machine via LM Studio.
-- **PII is stripped before reasoning.** Every patient-facing module deidentifies your text before it reaches the LLM. Names, dates, SSNs, phone numbers, emails, and addresses are masked using OpenMed's HIPAA-compliant PII detection.
+- **All processing is local by default.** No data is sent to a hosted HealthAdvocate service. The NER models run on your machine via HuggingFace. The LLM runs on your machine via LM Studio.
+- **PII is stripped before reasoning.** Every patient-facing module deidentifies your text before it reaches the LLM. Names, dates, SSNs, phone numbers, emails, and addresses are masked using OpenMed's privacy-preserving PII detection.
 - **No persistent storage.** Family profiles and health tracks are kept in memory only. When you stop the server, the data is gone. No database, no files, no data to breach.
 - **Zero telemetry.** No analytics, no tracking pixels, no error reporting to external services. We wouldn't know how to find your data even if we wanted to.
+- **Local network only by default.** The documented run command binds to `127.0.0.1`, and browser CORS defaults to localhost. If you expose the app on a network or public URL, add authentication and a tighter deployment review first.
 
 ---
 
 ## Accessibility
 
-The UI meets **WCAG 2.1 AA** standards because health tools should work for everyone:
+The UI uses accessibility-minded patterns because health tools should work for everyone:
 
 - Skip-to-content link as the first focusable element
 - `aria-live` regions on all result containers for screen reader announcements
 - Screen-reader-only labels on every form input
 - `:focus-visible` styles for keyboard navigation
 - `prefers-reduced-motion` media query support
-- Contrast ratios meet AA minimums (4.5:1 for all body text)
+- Color choices are selected for readable contrast in light and dark themes
 - `role="img"` on all decorative SVGs
 - Semantic HTML throughout (`<main>`, `<nav>`, `<header>`, `<footer>`)
 
@@ -267,7 +269,7 @@ healthadvocate/
   app.py                  FastAPI app, 17+ endpoints, request validation
   requirements.txt        Python dependencies (fastapi, openai, openmed)
   static/
-    index.html            SPA with WCAG 2.1 AA accessibility
+    index.html            SPA with accessibility-minded markup
     styles.css            Humanistic design system (light + dark themes)
     app.js                Frontend logic with loading states and XSS protection
   core/

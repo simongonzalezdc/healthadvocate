@@ -7,17 +7,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends build-essential
 # Install PyTorch CPU first (separate index)
 RUN pip install --no-cache-dir torch --index-url https://download.pytorch.org/whl/cpu
 
-# Install remaining dependencies
-RUN pip install --no-cache-dir \
-    transformers>=4.50 \
-    huggingface-hub>=0.30 \
-    accelerate>=0.29 \
-    tokenizers>=0.15 \
-    pysbd>=0.3.4 \
-    faker>=22.0 \
-    fastapi>=0.104.0 \
-    "uvicorn[standard]>=0.24.0" \
-    pydantic>=2.0.0
+# Install app and OpenMed runtime dependencies from the same file used locally.
+COPY healthadvocate/requirements.txt /tmp/requirements.txt
+RUN pip install --no-cache-dir -r /tmp/requirements.txt
 
 COPY openmed/ ./openmed/
 COPY healthadvocate/ ./healthadvocate/

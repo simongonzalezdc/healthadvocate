@@ -1,0 +1,31 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches:
+      - master
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6.0.2
+
+      - name: Setup Python
+        uses: actions/setup-python@v6.0.0
+        with:
+          python-version: "3.11"
+
+      - name: Run presentability tests
+        run: python -m unittest discover -s tests -p "test_*.py"
+
+      - name: Compile Python sources
+        run: python -m compileall -q healthadvocate openmed

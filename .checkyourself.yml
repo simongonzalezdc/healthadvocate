@@ -1,0 +1,10 @@
+version: 1
+suppress:
+  - id: CY-001
+    reason: "Reviewed false positive: token variables here are model/entity separator tokens, not secrets or credentials."
+    files:
+      - "openmed/mlx/inference.py"
+      - "openmed/ner/infer.py"
+    reviewed_by: simon
+    reviewed_at: "2026-05-29"
+

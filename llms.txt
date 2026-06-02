@@ -1,0 +1,12 @@
+# HealthAdvocate
+
+> Open-source patient-advocacy web app that turns confusing medical info into clear questions and next steps.
+
+## What it is
+A FastAPI web app with local-LLM support that helps patients turn confusing medical information into clear questions and next steps. Not medical advice.
+
+## Install / use
+Clone, install requirements, run the FastAPI app; supports local LLMs via LM Studio.
+
+## Links
+- Repository: https://github.com/simongonzalezdc/healthadvocate

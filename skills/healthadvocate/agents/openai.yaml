@@ -1,0 +1,7 @@
+interface:
+  display_name: "HealthAdvocate"
+  short_description: "Prepare patient advocacy next steps"
+  default_prompt: "Use $healthadvocate to prepare patient-friendly questions and next steps without diagnosing."
+
+policy:
+  allow_implicit_invocation: true

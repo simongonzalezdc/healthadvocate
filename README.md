@@ -327,6 +327,14 @@ If you reference this project in academic work, please cite OpenMed:
 
 ---
 
+## Links
+
+- **KyaniteLabs:** [kyanitelabs.tech](https://kyanitelabs.tech)
+- **AI / agent navigation:** [llms.txt](llms.txt)
+- **Sibling projects:** [Print-OS](https://github.com/simongonzalezdc/Print-OS) · [GameStory-Lab](https://github.com/simongonzalezdc/GameStory-Lab) · [voice-to-sculpture-app](https://github.com/simongonzalezdc/voice-to-scultpure-app) · [CyberWitches](https://github.com/simongonzalezdc/CyberWitches) · [grocery-flywheel](https://github.com/simongonzalezdc/grocery-flywheel)
+
+---
+
 ## License
 
 This project is licensed under the [Apache License 2.0](LICENSE).

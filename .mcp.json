@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "healthadvocate": {
+      "command": "python",
+      "args": ["-m", "healthadvocate.mcp_server"]
+    }
+  }
+}

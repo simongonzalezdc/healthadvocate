@@ -139,6 +139,35 @@ uvicorn healthadvocate.app:app --host 127.0.0.1 --port 8080
 
 That's it. No sign-up, no API keys, no cloud.
 
+### CLI, MCP, and Agent Skill
+
+HealthAdvocate also exposes safety-bounded agent surfaces for local preparation workflows:
+
+```bash
+python -m healthadvocate.cli brief
+python -m healthadvocate.cli visit-questions --concern "persistent dizziness"
+python -m healthadvocate.cli denial-checklist --denial-reason "not medically necessary"
+python -m healthadvocate.cli server-health --url http://127.0.0.1:8080
+python -m healthadvocate.mcp_server
+```
+
+- CLI: `python -m healthadvocate.cli` prepares visit questions, denial checklists, and server health checks.
+- MCP: `python -m healthadvocate.mcp_server` starts a stdio MCP server for compatible agent hosts.
+- Skill: [`skills/healthadvocate/SKILL.md`](skills/healthadvocate/SKILL.md) tells agents how to help patients prepare without diagnosing or replacing professional care.
+
+Example MCP config:
+
+```json
+{
+  "mcpServers": {
+    "healthadvocate": {
+      "command": "python",
+      "args": ["-m", "healthadvocate.mcp_server"]
+    }
+  }
+}
+```
+
 ### Configuration
 
 | Variable | Default | Description |

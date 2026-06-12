@@ -76,6 +76,13 @@
       ]
     }
   },
-  "hotPaths": [],
+  "hotPaths": [
+    {
+      "path": "CHANGELOG.md",
+      "accessCount": 1,
+      "lastAccessed": 1778903937008,
+      "type": "file"
+    }
+  ],
   "userDirectives": []
 }

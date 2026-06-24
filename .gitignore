@@ -16,6 +16,8 @@ venv/
 dist/
 build/
 *.egg-info/
+*.log
+*.pyc
 
 # OS/editor noise
 .DS_Store

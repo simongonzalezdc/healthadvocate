@@ -6,6 +6,6 @@ openmed[hf]>=1.5.2
 faker>=40.19.1
 pysbd>=0.3.4
 transformers>=5.10.1
-huggingface-hub>=0.30
+huggingface-hub>=1.24.0
 accelerate>=1.13.0
 tokenizers>=0.15

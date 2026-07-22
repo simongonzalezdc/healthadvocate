@@ -454,6 +454,48 @@ async def coverage_add_fact(case_id: str, request: CoverageFactRequest):
     except CaseStoreError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
 
+
+class MedLookupRequest(BaseModel):
+    name: str
+
+class ProviderLookupRequest(BaseModel):
+    query: str
+
+@app.post("/api/coverage/adapters/rxnorm")
+async def adapter_rxnorm(request: MedLookupRequest):
+    from healthadvocate.adapters.medications import normalize_medication_rxnorm_cpc
+    return normalize_medication_rxnorm_cpc(request.name).to_dict()
+
+@app.post("/api/coverage/adapters/dailymed")
+async def adapter_dailymed(request: MedLookupRequest):
+    from healthadvocate.adapters.medications import dailymed_label_evidence
+    return dailymed_label_evidence(request.name).to_dict()
+
+@app.post("/api/coverage/adapters/openfda")
+async def adapter_openfda(request: MedLookupRequest):
+    from healthadvocate.adapters.medications import openfda_safety_evidence
+    return openfda_safety_evidence(request.name).to_dict()
+
+@app.post("/api/coverage/adapters/clinical-verdict")
+async def adapter_clinical_verdict(request: MedLookupRequest):
+    from healthadvocate.adapters.medications import refuse_clinical_verdict
+    return refuse_clinical_verdict(request.name)
+
+@app.post("/api/coverage/adapters/nppes")
+async def adapter_nppes(request: ProviderLookupRequest):
+    from healthadvocate.adapters.providers import match_provider_nppes
+    return match_provider_nppes(request.query).to_dict()
+
+@app.post("/api/coverage/adapters/nadac")
+async def adapter_nadac(request: MedLookupRequest):
+    from healthadvocate.adapters.pricing import nadac_benchmark
+    return nadac_benchmark(request.name).to_dict()
+
+@app.post("/api/coverage/adapters/drugcentral")
+async def adapter_drugcentral(request: MedLookupRequest):
+    from healthadvocate.adapters.pricing import drugcentral_reference
+    return drugcentral_reference(request.name).to_dict()
+
 # ---------------------------------------------------------------------------
 # Family tracker endpoints
 # ---------------------------------------------------------------------------

@@ -79,6 +79,7 @@
       <button type="button" data-view="community" class="nav-btn">Scanner</button>
       <button type="button" data-view="family" class="nav-btn">Family</button>
       <button type="button" data-view="tracks" class="nav-btn">Tracks</button>
+      <button type="button" data-view="coverage" class="nav-btn">Coverage</button>
     </nav>
   </header>
 
@@ -340,6 +341,62 @@
     </section>
 
     <!-- Health Tracks -->
+    
+    <section id="view-coverage" class="view" aria-labelledby="coverage-heading">
+      <h2 id="coverage-heading">Coverage Continuity</h2>
+      <p class="view-desc">One calm place for your next coverage action. Local and private. No payments or submissions from this screen.</p>
+      <div class="card coverage-card">
+        <label for="coverage-title">Case title (synthetic)</label>
+        <input id="coverage-title" name="coverage-title" type="text" autocomplete="off" placeholder="e.g. Synthetic job-loss coverage case">
+        <button type="button" class="btn-primary" data-action="coverage-create">Create Coverage Case</button>
+        <p id="coverage-status" class="coverage-status" role="status" aria-live="polite"></p>
+      </div>
+      <div id="coverage-panel" class="coverage-panel" hidden>
+        <div class="coverage-primary">
+          <h3>Primary next action</h3>
+          <p id="coverage-primary-action" class="coverage-primary-action"></p>
+          <button type="button" class="btn-primary" data-action="coverage-focus-primary" id="coverage-primary-btn">Continue primary action</button>
+        </div>
+        <div class="coverage-risks" aria-label="Risks and deadlines">
+          <h3>Risks</h3>
+          <ul id="coverage-risk-list" class="risk-list"></ul>
+        </div>
+        <details class="coverage-secondary">
+          <summary>Evidence and contacts</summary>
+          <div id="coverage-evidence"></div>
+          <div id="coverage-contacts"></div>
+        </details>
+        <details class="coverage-secondary">
+          <summary>Continuity targets</summary>
+          <div id="coverage-targets"></div>
+        </details>
+        <div class="coverage-scripts">
+          <h3>Scripts (one at a time)</h3>
+          <div class="script-buttons" role="group" aria-label="Script types">
+            <button type="button" class="btn-secondary" data-action="coverage-script" data-script="county">County</button>
+            <button type="button" class="btn-secondary" data-action="coverage-script" data-script="provider">Provider</button>
+            <button type="button" class="btn-secondary" data-action="coverage-script" data-script="billing">Billing</button>
+            <button type="button" class="btn-secondary" data-action="coverage-script" data-script="pharmacy">Pharmacy</button>
+          </div>
+          <ol id="coverage-script-steps" class="script-steps"></ol>
+          <p id="coverage-script-note" class="muted"></p>
+        </div>
+        <div class="coverage-gate">
+          <h3>Commitment Gate check</h3>
+          <label for="coverage-intent">Intent to check</label>
+          <select id="coverage-intent">
+            <option value="payment">payment</option>
+            <option value="submission">submission</option>
+            <option value="outbound_message">outbound_message</option>
+            <option value="treatment_change">treatment_change</option>
+            <option value="generate_script">generate_script</option>
+          </select>
+          <button type="button" class="btn-secondary" data-action="coverage-gate">Check gate</button>
+          <p id="coverage-gate-result" role="status" aria-live="polite"></p>
+        </div>
+      </div>
+    </section>
+
     <section id="view-tracks" class="view">
       <div class="panel"><div class="panel-inner">
         <div class="panel-header">

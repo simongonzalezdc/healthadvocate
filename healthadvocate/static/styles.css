@@ -811,3 +811,38 @@ footer strong { color: var(--text-2); }
   }
   .reveal { opacity: 1; transform: none; filter: none; }
 }
+
+
+/* Coverage Continuity — low-energy workflow */
+.coverage-panel { margin-top: 1rem; }
+.coverage-primary {
+  border: 2px solid var(--accent, #0b6e4f);
+  border-radius: 8px;
+  padding: 1rem;
+  margin-bottom: 1rem;
+}
+.coverage-primary-action {
+  font-size: 1.15rem;
+  font-weight: 700;
+  margin: 0.5rem 0 1rem;
+}
+.risk-list { list-style: none; padding: 0; display: grid; gap: 0.5rem; }
+.risk-chip {
+  display: inline-block;
+  padding: 0.15rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+.risk-overdue { background: #3b0d0c; color: #ffb4a9; }
+.risk-approaching { background: #3b2f0c; color: #ffe08a; }
+.risk-unknown { background: #1c1c1c; color: #ddd; border: 1px dashed #888; }
+.risk-stale { background: #2a2230; color: #e0c6ff; }
+.risk-conflicted { background: #301820; color: #ffc2d4; }
+.risk-scheduled { background: #0f241c; color: #a6f0c6; }
+.script-steps { padding-left: 1.2rem; }
+.script-buttons { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.75rem; }
+.coverage-secondary { margin: 0.75rem 0; }
+@media (prefers-reduced-motion: reduce) {
+  .coverage-panel * { animation: none !important; transition: none !important; }
+}

@@ -308,6 +308,29 @@ async def coverage_status():
     }
 
 
+
+@app.get("/api/coverage/cases/{case_id}/view")
+async def coverage_case_view(case_id: str):
+    from healthadvocate.coverage import get_case
+    from healthadvocate.coverage.workflow import build_coverage_view
+    from healthadvocate.coverage.store import CaseStoreError
+    try:
+        case = get_case(case_id)
+    except CaseStoreError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    return build_coverage_view(case)
+
+@app.get("/api/coverage/cases/{case_id}/scripts/{kind}")
+async def coverage_case_script(case_id: str, kind: str):
+    from healthadvocate.coverage import get_case
+    from healthadvocate.coverage.workflow import script_for_case
+    from healthadvocate.coverage.store import CaseStoreError
+    try:
+        case = get_case(case_id)
+    except CaseStoreError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    return script_for_case(case, kind)
+
 @app.post("/api/coverage/commitment-gate")
 async def coverage_commitment_gate(request: CoverageCommitmentRequest):
     from healthadvocate.coverage.commitment_gate import request_commitment

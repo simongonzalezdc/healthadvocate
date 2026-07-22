@@ -27,5 +27,8 @@ jobs:
       - name: Run presentability tests
         run: python -m unittest discover -s tests -p "test_*.py"
 
+      - name: License and provenance gate
+        run: python -m healthadvocate.governance --project-root . --out build/receipts/license
+
       - name: Compile Python sources
         run: python -m compileall -q healthadvocate openmed

@@ -8,6 +8,14 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
+from healthadvocate.coverage.service import (
+    create_synthetic_case,
+    get_case,
+    list_cases,
+    resume_case,
+    update_case,
+)
+
 
 @dataclass(frozen=True)
 class ManualWorkflowStatus:
@@ -33,4 +41,12 @@ def manual_workflow_status() -> ManualWorkflowStatus:
     )
 
 
-__all__ = ["ManualWorkflowStatus", "manual_workflow_status"]
+__all__ = [
+    "ManualWorkflowStatus",
+    "manual_workflow_status",
+    "create_synthetic_case",
+    "get_case",
+    "list_cases",
+    "resume_case",
+    "update_case",
+]

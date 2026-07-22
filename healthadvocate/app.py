@@ -150,6 +150,41 @@ class SecondOpinionRequest(BaseModel):
 class CommunityRequest(BaseModel):
     text: str
 
+class CoverageCaseCreateRequest(BaseModel):
+    title: str
+    next_action: str = "Review coverage situation and list deadlines"
+
+class CoverageCaseUpdateRequest(BaseModel):
+    title: Optional[str] = None
+    next_action: Optional[str] = None
+    lifecycle: Optional[str] = None
+    deadlines: Optional[list[dict[str, str]]] = None
+
+class CoverageEvidenceRequest(BaseModel):
+    title: str
+    source: str
+    summary: str
+    claim_class: str = "user_reported"
+    checksum: str = ""
+
+class CoverageContactRequest(BaseModel):
+    channel: str
+    party: str
+    summary: str
+    outcome: str = ""
+
+class CoverageTargetRequest(BaseModel):
+    kind: str
+    name: str
+    risk_notes: str = ""
+
+class CoverageFactRequest(BaseModel):
+    label: str
+    value: str
+    status: str = "user-reported"
+    claim_class: str = "user_reported"
+    provenance: str = "user"
+
 class FamilyProfileRequest(BaseModel):
     name: str
     relationship: str = "self"
@@ -251,6 +286,141 @@ async def scan_community(request: CommunityRequest):
         community_health.scan_bulletin, engine, request.text
     )
     return result
+
+# ---------------------------------------------------------------------------
+# Coverage Continuity endpoints (synthetic cases only)
+# ---------------------------------------------------------------------------
+
+@app.get("/api/coverage/status")
+async def coverage_status():
+    from healthadvocate.coverage import manual_workflow_status
+    status = manual_workflow_status()
+    return {
+        "available": status.available,
+        "requires_model": status.requires_model,
+        "requires_optional_dataset": status.requires_optional_dataset,
+        "mode": status.mode,
+        "notes": status.notes,
+        "real_case_import_enabled": False,
+    }
+
+@app.post("/api/coverage/cases")
+async def coverage_create_case(request: CoverageCaseCreateRequest):
+    from healthadvocate.coverage import create_synthetic_case
+    from healthadvocate.coverage.store import CaseStoreError
+    try:
+        return create_synthetic_case(request.title, next_action=request.next_action)
+    except CaseStoreError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+@app.get("/api/coverage/cases")
+async def coverage_list_cases():
+    from healthadvocate.coverage import list_cases
+    return list_cases()
+
+@app.get("/api/coverage/cases/{case_id}")
+async def coverage_get_case(case_id: str):
+    from healthadvocate.coverage import get_case
+    from healthadvocate.coverage.store import CaseStoreError
+    try:
+        return get_case(case_id)
+    except CaseStoreError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+
+@app.patch("/api/coverage/cases/{case_id}")
+async def coverage_update_case(case_id: str, request: CoverageCaseUpdateRequest):
+    from healthadvocate.coverage import update_case
+    from healthadvocate.coverage.store import CaseStoreError
+    try:
+        return update_case(
+            case_id,
+            title=request.title,
+            next_action=request.next_action,
+            lifecycle=request.lifecycle,
+            deadlines=request.deadlines,
+        )
+    except CaseStoreError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+@app.post("/api/coverage/cases/{case_id}/resume")
+async def coverage_resume_case(case_id: str):
+    from healthadvocate.coverage import resume_case
+    from healthadvocate.coverage.store import CaseStoreError
+    try:
+        return resume_case(case_id)
+    except CaseStoreError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+
+@app.post("/api/coverage/cases/{case_id}/evidence")
+async def coverage_add_evidence(case_id: str, request: CoverageEvidenceRequest):
+    from healthadvocate.coverage.service import get_default_store
+    from healthadvocate.coverage.store import CaseStoreError
+    try:
+        store = get_default_store()
+        case = store.add_evidence(
+            case_id,
+            title=request.title,
+            source=request.source,
+            summary=request.summary,
+            claim_class=request.claim_class,
+            checksum=request.checksum,
+        )
+        return case.to_dict()
+    except CaseStoreError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+@app.post("/api/coverage/cases/{case_id}/contacts")
+async def coverage_add_contact(case_id: str, request: CoverageContactRequest):
+    from healthadvocate.coverage.service import get_default_store
+    from healthadvocate.coverage.store import CaseStoreError
+    try:
+        store = get_default_store()
+        case = store.add_contact(
+            case_id,
+            channel=request.channel,
+            party=request.party,
+            summary=request.summary,
+            outcome=request.outcome,
+        )
+        return case.to_dict()
+    except CaseStoreError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+@app.post("/api/coverage/cases/{case_id}/targets")
+async def coverage_add_target(case_id: str, request: CoverageTargetRequest):
+    from healthadvocate.coverage.service import get_default_store
+    from healthadvocate.coverage.store import CaseStoreError
+    try:
+        store = get_default_store()
+        case = store.add_target(
+            case_id,
+            kind=request.kind,
+            name=request.name,
+            risk_notes=request.risk_notes,
+        )
+        return case.to_dict()
+    except CaseStoreError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+@app.post("/api/coverage/cases/{case_id}/facts")
+async def coverage_add_fact(case_id: str, request: CoverageFactRequest):
+    from healthadvocate.coverage.service import get_default_store
+    from healthadvocate.coverage.store import CaseStoreError
+    try:
+        store = get_default_store()
+        case = store.add_fact(
+            case_id,
+            label=request.label,
+            value=request.value,
+            status=request.status,
+            claim_class=request.claim_class,
+            provenance=request.provenance,
+        )
+        return case.to_dict()
+    except CaseStoreError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
 
 # ---------------------------------------------------------------------------
 # Family tracker endpoints

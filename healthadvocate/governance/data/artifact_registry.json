@@ -26,7 +26,7 @@
       "provenance": "PyPI dependency declared in healthadvocate/requirements.txt",
       "checksum_policy": "pip hash checking when lockfile present; version pin in requirements",
       "redistribution": "permitted under MIT",
-      "attribution": "FastAPI by Sebastián Ramírez",
+      "attribution": "FastAPI by Sebasti\u00e1n Ram\u00edrez",
       "required_for_manual_workflow": true,
       "shipped_status": "shipped",
       "requirement_name": "fastapi"
@@ -174,6 +174,36 @@
       "shipped_status": "shipped",
       "requirement_name": "tokenizers",
       "notes": "Library package. Tokenizer files shipped with a model are model artifacts and must be inventoried separately."
+    },
+    {
+      "artifact_id": "pkg-cryptography",
+      "name": "cryptography",
+      "source": "https://github.com/pyca/cryptography",
+      "version": ">=46.0.0",
+      "license": "Apache-2.0",
+      "provenance": "PyPI dependency for AES-GCM case-store encryption",
+      "checksum_policy": "pip hash checking when lockfile present; version pin in requirements",
+      "redistribution": "Apache-2.0 AND BSD-3-Clause dual license; use Apache-2.0 attribution",
+      "attribution": "cryptography (pyca)",
+      "required_for_manual_workflow": true,
+      "shipped_status": "shipped",
+      "requirement_name": "cryptography",
+      "notes": "Used for encrypting Coverage Case SQLite payloads at rest."
+    },
+    {
+      "artifact_id": "pkg-keyring",
+      "name": "keyring",
+      "source": "https://github.com/jaraco/keyring",
+      "version": ">=25.0.0",
+      "license": "MIT",
+      "provenance": "PyPI dependency for OS credential store key custody",
+      "checksum_policy": "pip hash checking when lockfile present; version pin in requirements",
+      "redistribution": "permitted under MIT",
+      "attribution": "keyring by Jason R. Coombs",
+      "required_for_manual_workflow": false,
+      "shipped_status": "shipped",
+      "requirement_name": "keyring",
+      "notes": "Stores only the master key, never case content."
     }
   ],
   "model_runtimes": [
@@ -228,7 +258,7 @@
       "version": "0",
       "license": "MIT",
       "provenance": "placeholder documenting that no model weights, tokenizers, templates, conversions, or quantizations ship in the core path",
-      "checksum_policy": "n/a — no artifact bytes",
+      "checksum_policy": "n/a \u2014 no artifact bytes",
       "redistribution": "n/a",
       "attribution": "none",
       "required_for_manual_workflow": false,

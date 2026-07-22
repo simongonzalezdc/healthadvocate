@@ -185,6 +185,9 @@ class CoverageFactRequest(BaseModel):
     claim_class: str = "user_reported"
     provenance: str = "user"
 
+class CoverageCommitmentRequest(BaseModel):
+    intent: str
+
 class FamilyProfileRequest(BaseModel):
     name: str
     relationship: str = "self"
@@ -303,6 +306,12 @@ async def coverage_status():
         "notes": status.notes,
         "real_case_import_enabled": False,
     }
+
+
+@app.post("/api/coverage/commitment-gate")
+async def coverage_commitment_gate(request: CoverageCommitmentRequest):
+    from healthadvocate.coverage.commitment_gate import request_commitment
+    return request_commitment(request.intent)
 
 @app.post("/api/coverage/cases")
 async def coverage_create_case(request: CoverageCaseCreateRequest):

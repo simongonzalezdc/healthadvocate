@@ -4,9 +4,8 @@ from __future__ import annotations
 
 import re
 from .engine import HealthEngine, format_entities_with_confidence
-from .llm_client import chat_structured
 from .cross_validation import cross_validate
-from . import family_tracker
+from healthadvocate.privacy.gated_model import structured_model_call
 
 _PRICE_PATTERN = re.compile(r'\$\s?([\d,]+(?:\.\d{2})?)')
 
@@ -23,16 +22,10 @@ def decode_bill(engine: HealthEngine, bill_text: str, profile_id: str | None = N
 
     entity_desc = format_entities_with_confidence(list(diseases.entities) + list(drugs.entities))
 
-    family_block = ""
-    if profile_id:
-        profile = family_tracker.get_profile(profile_id)
-        family_block = "\n\n" + family_tracker.format_family_context(profile)
-
     prompt = (
         f"A patient received this medical bill:\n\n{safe_text[:2000]}\n\n"
         f"Charges found: {len(prices)} line items totaling ${sum(a for a, _ in prices):,.2f}\n\n"
         f"NER Analysis:\n{entity_desc}\n\n"
-        f"{family_block}\n\n"
         "Analyze this bill. Flag suspicious charges, explain what each charge is for, "
         "and tell them their rights."
     )
@@ -43,7 +36,10 @@ def decode_bill(engine: HealthEngine, bill_text: str, profile_id: str | None = N
         "Be thorough in identifying potential overcharges or incorrect items."
     )
 
-    llm_output = chat_structured(prompt, module_type="bill_analysis", system=system)
+    llm_output = structured_model_call(
+        engine, prompt, module_type="bill_analysis", system=system,
+        profile_id=profile_id,
+    )
     all_entities = list(diseases.entities) + list(drugs.entities)
     validation = cross_validate(all_entities, llm_output)
 

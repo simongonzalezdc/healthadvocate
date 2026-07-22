@@ -7,8 +7,8 @@ from typing import Any, Optional
 
 from healthadvocate.coverage.domain import CoverageCase
 from healthadvocate.coverage.keystore import (
-    InMemoryKeyStore,
     KeyStore,
+    KeyringKeyStore,
     default_data_dir,
 )
 from healthadvocate.coverage.store import CaseStore, CaseStoreError
@@ -31,7 +31,9 @@ def get_default_store(
         root = Path(data_dir or default_data_dir())
         root.mkdir(parents=True, exist_ok=True)
         path = root / "coverage_cases.haenc"
-        ks = keystore or InMemoryKeyStore()
+        # Production defaults must survive process restarts. Tests can inject
+        # InMemoryKeyStore explicitly.
+        ks = keystore or KeyringKeyStore()
         create = not path.exists()
         _DEFAULT_STORE = CaseStore(path, ks, create=create)
     return _DEFAULT_STORE

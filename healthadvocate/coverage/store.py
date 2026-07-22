@@ -95,13 +95,24 @@ class CaseStore:
 
     def _open_existing(self) -> None:
         try:
-            key = self.keystore.get_key()
+            candidate_keys = self.keystore.candidate_keys()
         except KeyStoreError as exc:
             raise CaseStoreError(
                 "unable to open case store; encryption key is missing"
             ) from exc
         blob = self.path.read_bytes()
-        plaintext = self._decrypt(blob, key)
+        plaintext = None
+        last_error: Optional[CaseStoreError] = None
+        for key in candidate_keys:
+            try:
+                plaintext = self._decrypt(blob, key)
+                break
+            except CaseStoreError as exc:
+                last_error = exc
+        if plaintext is None:
+            raise CaseStoreError(
+                "unable to decrypt case store with current or recovery key"
+            ) from last_error
         self._conn = sqlite3.connect(":memory:")
         self._conn.row_factory = sqlite3.Row
         self._conn.deserialize(plaintext)

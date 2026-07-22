@@ -6,6 +6,7 @@ import json
 import tempfile
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
 from healthadvocate.coverage.keystore import InMemoryKeyStore
 from healthadvocate.coverage.lifecycle_ops import (
@@ -67,6 +68,7 @@ class LifecycleOpsTests(unittest.TestCase):
             write_export(payload, dest, reviewed=False)
         write_export(payload, dest, reviewed=True)
         self.assertTrue(dest.is_file())
+        self.assertEqual(dest.stat().st_mode & 0o777, 0o600)
 
     def test_delete_reports_unowned_sources(self):
         unowned = ["/not/owned/source.pdf"]
@@ -88,6 +90,17 @@ class LifecycleOpsTests(unittest.TestCase):
         reopened = CaseStore(self.path, self.ks, create=False)
         loaded = reopened.get_case(case_id)
         self.assertEqual(loaded.case_id, case_id)
+        reopened.close()
+
+    def test_failed_key_rotation_retains_recovery_key(self):
+        case_id = self.case.case_id
+        with patch.object(self.store, "_persist", side_effect=OSError("disk full")):
+            with self.assertRaises(OSError):
+                rotate_store_key(self.store)
+
+        # The file still uses the previous key, retained until rotation succeeds.
+        reopened = CaseStore(self.path, self.ks, create=False)
+        self.assertEqual(reopened.get_case(case_id).case_id, case_id)
         reopened.close()
 
 

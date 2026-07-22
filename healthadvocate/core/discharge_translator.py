@@ -3,9 +3,8 @@
 from __future__ import annotations
 
 from .engine import HealthEngine, format_entities_with_confidence
-from .llm_client import chat_structured
 from .cross_validation import cross_validate
-from . import family_tracker
+from healthadvocate.privacy.gated_model import structured_model_call
 
 
 def translate_discharge(engine: HealthEngine, text: str, lang: str = "en", profile_id: str | None = None) -> dict:
@@ -22,15 +21,9 @@ def translate_discharge(engine: HealthEngine, text: str, lang: str = "en", profi
     all_entities = list(diseases.entities) + list(drugs.entities) + list(anatomy.entities)
     entity_desc = format_entities_with_confidence(all_entities)
 
-    family_block = ""
-    if profile_id:
-        profile = family_tracker.get_profile(profile_id)
-        family_block = "\n\n" + family_tracker.format_family_context(profile)
-
     prompt = (
         f"A patient received these discharge instructions:\n\n{safe_text[:2000]}\n\n"
         f"NER Analysis:\n{entity_desc}\n\n"
-        f"{family_block}\n\n"
         "Translate these discharge instructions into plain language. "
         "Be very clear about warning signs that require immediate medical attention."
     )
@@ -41,7 +34,10 @@ def translate_discharge(engine: HealthEngine, text: str, lang: str = "en", profi
         "that require immediate medical attention."
     )
 
-    llm_output = chat_structured(prompt, module_type="discharge_translation", system=system)
+    llm_output = structured_model_call(
+        engine, prompt, module_type="discharge_translation", system=system,
+        profile_id=profile_id,
+    )
     validation = cross_validate(all_entities, llm_output)
 
     return {

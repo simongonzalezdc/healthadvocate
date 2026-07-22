@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import os
 import re
 from pathlib import Path
 from typing import Any, Iterable, Optional
@@ -69,8 +70,16 @@ def write_export(
 ) -> Path:
     if not reviewed:
         raise CaseStoreError("export requires explicit review confirmation")
-    destination.parent.mkdir(parents=True, exist_ok=True)
-    destination.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
+    destination.parent.mkdir(parents=True, exist_ok=True, mode=0o700)
+    data = (json.dumps(payload, indent=2) + "\n").encode("utf-8")
+    fd = os.open(destination, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
+    try:
+        view = memoryview(data)
+        while view:
+            written = os.write(fd, view)
+            view = view[written:]
+    finally:
+        os.close(fd)
     return destination
 
 
@@ -100,4 +109,11 @@ def delete_case(
 def rotate_store_key(store: CaseStore) -> None:
     """Re-encrypt the store with a rotated key from the keystore."""
     new_key = store.keystore.rotate_key()
-    store._persist(key=new_key)
+    try:
+        store._persist(key=new_key)
+    except Exception:
+        # The previous key remains available, so the old on-disk file is still
+        # recoverable even if persistence fails or the process crashes.
+        raise
+    else:
+        store.keystore.discard_previous_key()

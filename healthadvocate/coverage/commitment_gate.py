@@ -234,13 +234,7 @@ def request_commitment(
         if execute is not None:
             result_payload = execute()
             executed = True
-    else:
-        # Explicitly do not call execute; assert zero outbound growth.
-        if execute is not None:
-            # Swallow: never run external work for blocked/review paths.
-            pass
-        # Do not record outbound calls for blocked intents.
-        _ = rec.count
+    # Non-allowed states deliberately do not call execute or mutate the recorder.
 
     payload = decision.to_dict()
     payload["executed"] = executed

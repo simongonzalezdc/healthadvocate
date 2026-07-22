@@ -3,9 +3,8 @@
 from __future__ import annotations
 
 from .engine import HealthEngine, format_entities_with_confidence
-from .llm_client import chat_structured
 from .cross_validation import cross_validate
-from . import family_tracker
+from healthadvocate.privacy.gated_model import structured_model_call
 
 
 def check_drug(engine: HealthEngine, drug_name: str, profile_id: str | None = None) -> dict:
@@ -17,17 +16,11 @@ def check_drug(engine: HealthEngine, drug_name: str, profile_id: str | None = No
 
     entity_desc = format_entities_with_confidence(ner_result.entities)
 
-    family_block = ""
-    if profile_id:
-        profile = family_tracker.get_profile(profile_id)
-        family_block = "\n\n" + family_tracker.format_family_context(profile)
-
     ner_note = "NER verified this is a recognized drug." if ner_verified else "NER could not verify this drug name — provide information cautiously."
 
     prompt = (
         f"A patient wants to know about the drug: {drug_name.strip()}\n\n"
         f"NER Analysis: {entity_desc}\n{ner_note}\n\n"
-        f"{family_block}\n\n"
         "Provide practical information as a health advocate. "
         "If the patient's current medications are listed, check for drug-drug interactions."
     )
@@ -37,7 +30,10 @@ def check_drug(engine: HealthEngine, drug_name: str, profile_id: str | None = No
         "Be accurate, concise, and practical. Use plain language, not medical jargon."
     )
 
-    llm_output = chat_structured(prompt, module_type="drug_info", system=system)
+    llm_output = structured_model_call(
+        engine, prompt, module_type="drug_info", system=system,
+        profile_id=profile_id,
+    )
     validation = cross_validate(ner_result.entities, llm_output)
 
     return {

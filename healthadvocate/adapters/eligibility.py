@@ -58,13 +58,17 @@ def unofficial_eligibility_estimate(
     # Deterministic toy band — not official eligibility.
     estimate = "unknown"
     if not missing:
-        size = float(inputs["household_size"])
-        income = float(inputs["monthly_income"])
-        fpl_proxy = 1000 * size
-        if income <= fpl_proxy:
-            estimate = "may_qualify_for_further_official_review"
+        try:
+            size = float(inputs["household_size"])
+            income = float(inputs["monthly_income"])
+        except (TypeError, ValueError):
+            missing.extend(["valid_numeric_household_size", "valid_numeric_monthly_income"])
         else:
-            estimate = "may_not_qualify_based_on_income_proxy_only"
+            fpl_proxy = 1000 * size
+            if income <= fpl_proxy:
+                estimate = "may_qualify_for_further_official_review"
+            else:
+                estimate = "may_not_qualify_based_on_income_proxy_only"
 
     return {
         "enabled": True,

@@ -12,6 +12,7 @@ from healthadvocate.governance.release_gate import (
 )
 
 ROOT = Path(__file__).resolve().parents[1]
+VERIFIED = {f"HA-E{number}": True for number in range(70, 77)}
 
 
 class ReleaseGateTests(unittest.TestCase):
@@ -43,6 +44,7 @@ class ReleaseGateTests(unittest.TestCase):
             ROOT,
             independent_verifier_approved=True,
             real_case_import_override=True,
+            verified_evidence=VERIFIED,
         )
         self.assertTrue(bundle["real_case_import_enabled"])
 
@@ -51,6 +53,7 @@ class ReleaseGateTests(unittest.TestCase):
             ROOT,
             independent_verifier_approved=True,
             real_case_import_override=True,
+            verified_evidence=VERIFIED,
         )
         for rec in bundle["receipts"]:
             if rec["evidence_id"] == "HA-E72":
@@ -62,6 +65,7 @@ class ReleaseGateTests(unittest.TestCase):
             ROOT,
             independent_verifier_approved=True,
             real_case_import_override=True,
+            verified_evidence=VERIFIED,
         )
         bundle["receipts"][0]["waived"] = True
         self.assertFalse(real_case_import_enabled(bundle))

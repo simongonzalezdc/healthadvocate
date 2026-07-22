@@ -81,10 +81,9 @@ class LoopbackPolicyTests(unittest.TestCase):
 
 
 class DockerfileComposeDefaultsTests(unittest.TestCase):
-    def test_dockerfile_binds_loopback(self):
+    def test_dockerfile_listens_on_container_interface(self):
         dockerfile = (ROOT / "Dockerfile").read_text(encoding="utf-8")
-        self.assertIn('--host", "127.0.0.1"', dockerfile)
-        self.assertNotIn("0.0.0.0", dockerfile)
+        self.assertIn('--host", "0.0.0.0"', dockerfile)
 
     def test_compose_is_loopback_without_traefik(self):
         compose = (ROOT / "docker-compose.yaml").read_text(encoding="utf-8")

@@ -13,7 +13,7 @@ from fastapi import FastAPI, HTTPException, Request
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from starlette.concurrency import run_in_threadpool
 
 # Ensure project root is on path
@@ -151,49 +151,52 @@ class CommunityRequest(BaseModel):
     text: str
 
 class CoverageCaseCreateRequest(BaseModel):
-    title: str
-    next_action: str = "Review coverage situation and list deadlines"
+    title: str = Field(max_length=_MAX_INPUT_LENGTH)
+    next_action: str = Field(
+        default="Review coverage situation and list deadlines",
+        max_length=_MAX_INPUT_LENGTH,
+    )
 
 class CoverageCaseUpdateRequest(BaseModel):
-    title: Optional[str] = None
-    next_action: Optional[str] = None
-    lifecycle: Optional[str] = None
+    title: Optional[str] = Field(default=None, max_length=_MAX_INPUT_LENGTH)
+    next_action: Optional[str] = Field(default=None, max_length=_MAX_INPUT_LENGTH)
+    lifecycle: Optional[str] = Field(default=None, max_length=_MAX_INPUT_LENGTH)
     deadlines: Optional[list[dict[str, str]]] = None
 
 class CoverageEvidenceRequest(BaseModel):
-    title: str
-    source: str
-    summary: str
-    claim_class: str = "user_reported"
-    checksum: str = ""
+    title: str = Field(max_length=_MAX_INPUT_LENGTH)
+    source: str = Field(max_length=_MAX_INPUT_LENGTH)
+    summary: str = Field(max_length=_MAX_INPUT_LENGTH)
+    claim_class: str = Field(default="user_reported", max_length=_MAX_INPUT_LENGTH)
+    checksum: str = Field(default="", max_length=_MAX_INPUT_LENGTH)
 
 class CoverageContactRequest(BaseModel):
-    channel: str
-    party: str
-    summary: str
-    outcome: str = ""
+    channel: str = Field(max_length=_MAX_INPUT_LENGTH)
+    party: str = Field(max_length=_MAX_INPUT_LENGTH)
+    summary: str = Field(max_length=_MAX_INPUT_LENGTH)
+    outcome: str = Field(default="", max_length=_MAX_INPUT_LENGTH)
 
 class CoverageTargetRequest(BaseModel):
-    kind: str
-    name: str
-    risk_notes: str = ""
+    kind: str = Field(max_length=_MAX_INPUT_LENGTH)
+    name: str = Field(max_length=_MAX_INPUT_LENGTH)
+    risk_notes: str = Field(default="", max_length=_MAX_INPUT_LENGTH)
 
 class CoverageFactRequest(BaseModel):
-    label: str
-    value: str
-    status: str = "user-reported"
-    claim_class: str = "user_reported"
-    provenance: str = "user"
+    label: str = Field(max_length=_MAX_INPUT_LENGTH)
+    value: str = Field(max_length=_MAX_INPUT_LENGTH)
+    status: str = Field(default="user-reported", max_length=_MAX_INPUT_LENGTH)
+    claim_class: str = Field(default="user_reported", max_length=_MAX_INPUT_LENGTH)
+    provenance: str = Field(default="user", max_length=_MAX_INPUT_LENGTH)
 
 class CoverageCommitmentRequest(BaseModel):
-    intent: str
+    intent: str = Field(max_length=_MAX_INPUT_LENGTH)
 
 class CoverageExportRequest(BaseModel):
     mode: str = "redacted"  # private | redacted
     reviewed: bool = False
 
 class CoverageDeleteRequest(BaseModel):
-    unowned_source_paths: list[str] = []
+    unowned_source_paths: list[str] = Field(default_factory=list)
 
 class FamilyProfileRequest(BaseModel):
     name: str
@@ -345,7 +348,6 @@ async def coverage_export(case_id: str, request: CoverageExportRequest):
     from healthadvocate.coverage.domain import CoverageCase
     from healthadvocate.coverage.lifecycle_ops import private_export, redacted_export, write_export
     from healthadvocate.coverage.store import CaseStoreError
-    import tempfile
     from pathlib import Path
     try:
         case = CoverageCase.from_dict(get_case(case_id))
@@ -360,7 +362,12 @@ async def coverage_export(case_id: str, request: CoverageExportRequest):
     # Do not write unless reviewed; return payload for client-side review flow.
     if not request.reviewed:
         return {**payload, "written": False, "message": "Confirm review to write an export file."}
-    dest = Path(tempfile.gettempdir()) / f"healthadvocate-export-{case_id}-{request.mode}.json"
+    from healthadvocate.coverage.keystore import default_data_dir
+    dest = (
+        Path(default_data_dir())
+        / "exports"
+        / f"healthadvocate-export-{case_id}-{request.mode}.json"
+    )
     write_export(payload, dest, reviewed=True)
     return {**payload, "written": True, "path_hint": str(dest.name)}
 
@@ -377,19 +384,15 @@ async def coverage_delete(case_id: str, request: CoverageDeleteRequest):
 
 @app.post("/api/coverage/import-real")
 async def coverage_import_real():
-    from pathlib import Path as _Path
-    from healthadvocate.governance.release_gate import build_release_bundle
-    root = _Path(__file__).resolve().parent.parent
-    bundle = build_release_bundle(root, independent_verifier_approved=False)
-    if not bundle.get("real_case_import_enabled"):
-        raise HTTPException(
-            status_code=403,
-            detail=(
-                "Real-case import is disabled. Release gate requires full receipts "
-                "and independent verifier approval for the exact build."
-            ),
-        )
-    raise HTTPException(status_code=501, detail="Import path not implemented while disabled.")
+    # This endpoint is deliberately read-only. Release receipts are generated
+    # offline; an unauthenticated request must never run git or write artifacts.
+    raise HTTPException(
+        status_code=403,
+        detail=(
+            "Real-case import is disabled. Release gate requires full receipts "
+            "and independent verifier approval for the exact build."
+        ),
+    )
 
 @app.post("/api/coverage/commitment-gate")
 async def coverage_commitment_gate(request: CoverageCommitmentRequest):
@@ -516,7 +519,10 @@ async def coverage_add_fact(case_id: str, request: CoverageFactRequest):
 
 
 class MedLookupRequest(BaseModel):
-    name: str
+    name: str = Field(max_length=_MAX_INPUT_LENGTH)
+
+class ClinicalVerdictRequest(BaseModel):
+    kind: str = Field(max_length=_MAX_INPUT_LENGTH)
 
 class ProviderLookupRequest(BaseModel):
     query: str
@@ -537,9 +543,9 @@ async def adapter_openfda(request: MedLookupRequest):
     return openfda_safety_evidence(request.name).to_dict()
 
 @app.post("/api/coverage/adapters/clinical-verdict")
-async def adapter_clinical_verdict(request: MedLookupRequest):
+async def adapter_clinical_verdict(request: ClinicalVerdictRequest):
     from healthadvocate.adapters.medications import refuse_clinical_verdict
-    return refuse_clinical_verdict(request.name)
+    return refuse_clinical_verdict(request.kind)
 
 @app.post("/api/coverage/adapters/nppes")
 async def adapter_nppes(request: ProviderLookupRequest):

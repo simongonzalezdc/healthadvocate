@@ -28,17 +28,4 @@ def validate_startup_bind_policy(
             f"(127.0.0.1 or ::1). Refusing to start: {exc}"
         ) from exc
 
-    allow_non_loopback = source.get("HEALTHADVOCATE_ALLOW_NON_LOOPBACK", "").strip() in {
-        "1",
-        "true",
-        "True",
-        "yes",
-    }
-    if allow_non_loopback:
-        auth = source.get("HEALTHADVOCATE_DEPLOYMENT_AUTH", "").strip()
-        if not auth:
-            raise SystemExit(
-                "Non-loopback deployment requested without "
-                "HEALTHADVOCATE_DEPLOYMENT_AUTH; refusing to start."
-            )
     return approved

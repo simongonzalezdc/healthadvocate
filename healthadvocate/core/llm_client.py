@@ -151,19 +151,24 @@ def _model_client():
 
     try:
         import httpx
-
+        client = httpx.Client(follow_redirects=False, timeout=60.0)
         return OpenAI(
             base_url=base_url,
             api_key="local",
             max_retries=0,
-            http_client=httpx.Client(follow_redirects=False, timeout=60.0),
+            http_client=client,
         )
-    except Exception:
-        return OpenAI(base_url=base_url, api_key="local", max_retries=0)
+    except Exception as exc:
+        raise PrivacyBoundaryError(
+            "Unable to construct a redirect-blocking model client"
+        ) from exc
 
 
 def chat(user_message: str, system: str = SYSTEM_PROMPT, max_tokens: int = 400, temperature: float = 0.6) -> str:
-    client = _model_client()
+    try:
+        client = _model_client()
+    except PrivacyBoundaryError:
+        return "The optional local model is unavailable or blocked by the privacy boundary."
     response = client.chat.completions.create(
         model=_MODEL_NAME,
         messages=[

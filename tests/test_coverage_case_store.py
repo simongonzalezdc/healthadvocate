@@ -124,6 +124,7 @@ class CoverageCaseStoreTests(unittest.TestCase):
             loaded.update_contact(event)
         with self.assertRaises(ValueError):
             loaded.add_contact(event)
+        store.close()
 
     def test_plaintext_canary_absent_from_encrypted_bytes(self):
         store = self._store()
@@ -172,6 +173,7 @@ class CoverageCaseStoreTests(unittest.TestCase):
         store = self._store()
         with self.assertRaises(CaseStoreError):
             store.create_case("real", synthetic=False)
+        store.close()
 
 
 class PublicServiceWorkflowTests(unittest.TestCase):

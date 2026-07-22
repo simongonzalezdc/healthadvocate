@@ -94,6 +94,7 @@ def build_release_bundle(
     independent_verifier_approved: bool = False,
     real_case_import_override: bool = False,
     extra_receipts: Optional[list[dict[str, Any]]] = None,
+    verified_evidence: Optional[dict[str, bool]] = None,
 ) -> dict[str, Any]:
     rev = _git_rev(project_root)
     now = _now()
@@ -126,13 +127,23 @@ def build_release_bundle(
         "pass" if license_report.passed else "fail",
         "License/provenance inventories generated from exact build.",
     )
-    add("HA-E70", "pass", "Domain lifecycle/provenance implemented with tests.")
-    add("HA-E71", "pass", "Encrypted store + key fail-closed tests pass.")
-    add("HA-E72", "pass", "Privacy boundary and loopback policy tests pass.")
-    add("HA-E73", "pass", "Commitment Gate zero-side-effect tests pass.")
-    add("HA-E74", "pass", "Low-energy workflow + script tests pass.")
-    add("HA-E75", "pass", "Adapter claim-contract tests pass.")
-    add("HA-E76", "pass", "Export/redact/delete tests pass.")
+    verified = verified_evidence or {}
+    evidence_notes = {
+        "HA-E70": "Domain lifecycle/provenance verification receipt.",
+        "HA-E71": "Encrypted store and key verification receipt.",
+        "HA-E72": "Privacy boundary and loopback verification receipt.",
+        "HA-E73": "Commitment Gate side-effect verification receipt.",
+        "HA-E74": "Low-energy workflow and script verification receipt.",
+        "HA-E75": "Adapter claim-contract verification receipt.",
+        "HA-E76": "Export, redaction, and deletion verification receipt.",
+    }
+    for evidence_id, notes in evidence_notes.items():
+        passed = verified.get(evidence_id) is True
+        add(
+            evidence_id,
+            "pass" if passed else "fail",
+            notes if passed else f"{notes} No verified result was supplied; failing closed.",
+        )
     # HA-E77 is the release gate itself — pass only with independent verifier.
     add(
         "HA-E77",

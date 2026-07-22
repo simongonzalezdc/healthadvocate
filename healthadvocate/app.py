@@ -377,10 +377,19 @@ async def coverage_delete(case_id: str, request: CoverageDeleteRequest):
 
 @app.post("/api/coverage/import-real")
 async def coverage_import_real():
-    raise HTTPException(
-        status_code=403,
-        detail="Real-case import is disabled until the release gate (issue 90) passes.",
-    )
+    from pathlib import Path as _Path
+    from healthadvocate.governance.release_gate import build_release_bundle
+    root = _Path(__file__).resolve().parent.parent
+    bundle = build_release_bundle(root, independent_verifier_approved=False)
+    if not bundle.get("real_case_import_enabled"):
+        raise HTTPException(
+            status_code=403,
+            detail=(
+                "Real-case import is disabled. Release gate requires full receipts "
+                "and independent verifier approval for the exact build."
+            ),
+        )
+    raise HTTPException(status_code=501, detail="Import path not implemented while disabled.")
 
 @app.post("/api/coverage/commitment-gate")
 async def coverage_commitment_gate(request: CoverageCommitmentRequest):

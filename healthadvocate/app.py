@@ -36,8 +36,13 @@ from healthadvocate.core import (
     health_tracks,
 )
 
+from healthadvocate.privacy.logging_redaction import install_redacting_log_filter
+from healthadvocate.privacy.startup import validate_startup_bind_policy
+
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+install_redacting_log_filter(logger=logger)
+install_redacting_log_filter(logger=logging.getLogger())
 
 engine = HealthEngine()
 
@@ -68,6 +73,11 @@ def _validate_length(text: str, field: str = "input") -> None:
 
 @asynccontextmanager
 async def lifespan(app):
+    try:
+        validate_startup_bind_policy()
+    except SystemExit:
+        logger.error("startup.bind_rejected code=non_loopback_bind")
+        raise
     logger.info("Pre-loading OpenMed models...")
     await run_in_threadpool(engine.preload)
     logger.info("Models loaded. HealthAdvocate ready.")

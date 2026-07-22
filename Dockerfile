@@ -14,6 +14,8 @@ RUN pip install --no-cache-dir -r /tmp/requirements.txt
 COPY openmed/ ./openmed/
 COPY healthadvocate/ ./healthadvocate/
 
+# Default deployment is loopback-only (issue 72/80). Do not publish a
+# non-loopback listener or unauthenticated reverse-proxy route by default.
 EXPOSE 8080
 
-CMD ["uvicorn", "healthadvocate.app:app", "--host", "0.0.0.0", "--port", "8080"]
+CMD ["uvicorn", "healthadvocate.app:app", "--host", "127.0.0.1", "--port", "8080"]

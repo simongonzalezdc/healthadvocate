@@ -11,9 +11,11 @@ from typing import Optional
 
 logger = logging.getLogger(__name__)
 
-DEIDENTIFICATION_FAILED_PLACEHOLDER = (
-    "[Input withheld because de-identification failed. "
-    "Retry locally before sending this text to the LLM.]"
+from healthadvocate.privacy.boundary import (
+    DEIDENTIFICATION_FAILED_PLACEHOLDER,
+    DeidentificationResult,
+    DeidentificationStatus,
+    PrivacyBoundary,
 )
 
 # Ensure this project root is on sys.path so the bundled/development OpenMed copy is importable.
@@ -175,17 +177,70 @@ class HealthEngine:
             result = openmed.deidentify(text, method=method, loader=self.loader)
             return result.deidentified_text
         except Exception as exc:
-            logger.error("deidentify failed: %s", exc)
-            return text
+            # Fail closed: never return raw text when deidentification fails.
+            logger.error("deidentify failed code=deidentify_exception type=%s", type(exc).__name__)
+            return DEIDENTIFICATION_FAILED_PLACEHOLDER
 
     def deidentify_for_llm(self, text: str, method: str = "mask") -> tuple[str, dict[str, str]]:
-        try:
-            result = openmed.deidentify(text, method=method, loader=self.loader, keep_mapping=True)
-            pii_map = getattr(result, "mapping", {}) or {}
-            return result.deidentified_text, pii_map
-        except Exception as exc:
-            logger.error("deidentify_for_llm failed: %s", exc)
-            return DEIDENTIFICATION_FAILED_PLACEHOLDER, {"_deidentification_failed": str(exc)}
+        """Return (safe_text, mapping). Mapping includes status keys for callers.
+
+        Status is explicit via `_deidentification_status`:
+        success | no_pii_found | failed
+        """
+        result = self.deidentify_for_llm_result(text, method=method)
+        mapping = dict(result.mapping)
+        mapping["_deidentification_status"] = result.status.value
+        if result.status == DeidentificationStatus.FAILED:
+            mapping["_deidentification_failed"] = result.error_code or "failed"
+        return result.safe_text, mapping
+
+    def deidentify_for_llm_result(
+        self,
+        text: str,
+        method: str = "mask",
+        *,
+        profile_context: str = "",
+        evidence_metadata: str = "",
+        notes: str = "",
+        canaries: list[str] | None = None,
+    ) -> DeidentificationResult:
+        """Deidentify the fully assembled model context through PrivacyBoundary."""
+
+        def _engine_deidentify(assembled: str) -> tuple[str, dict[str, str]]:
+            try:
+                raw = openmed.deidentify(
+                    assembled,
+                    method=method,
+                    loader=self.loader,
+                    keep_mapping=True,
+                )
+                pii_map = getattr(raw, "mapping", {}) or {}
+                return raw.deidentified_text, dict(pii_map)
+            except Exception as exc:
+                logger.error(
+                    "deidentify_for_llm failed code=deidentify_exception type=%s",
+                    type(exc).__name__,
+                )
+                return DEIDENTIFICATION_FAILED_PLACEHOLDER, {
+                    "_deidentification_failed": type(exc).__name__,
+                }
+
+        boundary = PrivacyBoundary(
+            deidentify_fn=_engine_deidentify,
+            canaries=canaries or [],
+        )
+        return boundary.prepare_model_input(
+            text,
+            profile_context=profile_context,
+            evidence_metadata=evidence_metadata,
+            notes=notes,
+        )
+
+    def privacy_boundary(self, canaries: list[str] | None = None) -> PrivacyBoundary:
+        def _engine_deidentify(assembled: str) -> tuple[str, dict[str, str]]:
+            return self.deidentify_for_llm(assembled)[:2]
+
+        return PrivacyBoundary(deidentify_fn=_engine_deidentify, canaries=canaries)
 
 
 def format_entities_with_confidence(entities: list[EntityMatch]) -> str:

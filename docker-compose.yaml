@@ -1,17 +1,11 @@
+# Default local profile: loopback-only. Public reverse proxies are not enabled.
+# Authenticated non-loopback profiles are out of scope and must not be the default.
 services:
   healthadvocate:
     build: .
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.healthadvocate.rule=PathPrefix(`/healthadvocate`)"
-      - "traefik.http.routers.healthadvocate.entrypoints=web"
-      - "traefik.http.services.healthadvocate.loadbalancer.server.port=8080"
-      - "traefik.http.middlewares.healthadvocate-stripprefix.stripprefix.prefixes=/healthadvocate"
-      - "traefik.http.routers.healthadvocate.middlewares=healthadvocate-stripprefix"
-    networks:
-      - traefik
+    ports:
+      - "127.0.0.1:8080:8080"
+    environment:
+      HEALTHADVOCATE_MODEL_ENABLED: "0"
+      HEALTHADVOCATE_MODEL_URL: "http://127.0.0.1:11434/v1"
     restart: unless-stopped
-
-networks:
-  traefik:
-    external: true

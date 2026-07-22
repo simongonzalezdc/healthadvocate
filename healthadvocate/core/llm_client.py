@@ -1,4 +1,4 @@
-"""Medical LLM client — calls LM Studio's OpenAI-compatible API."""
+"""Optional local OpenAI-compatible model client (loopback-only)."""
 
 from __future__ import annotations
 
@@ -7,10 +7,41 @@ import logging
 import os
 import re
 
-logger = logging.getLogger(__name__)
+from healthadvocate.privacy.boundary import PrivacyBoundaryError
+from healthadvocate.privacy.endpoint_policy import (
+    EndpointPolicyError,
+    assert_loopback_model_url,
+    default_model_base_url,
+)
+from healthadvocate.privacy.logging_redaction import install_redacting_log_filter
 
-_LM_STUDIO_URL = os.environ.get("LM_STUDIO_URL", "http://localhost:1234/v1")
-_MODEL_NAME = os.environ.get("MEDICAL_LLM_MODEL", "meditron3-8b")
+logger = logging.getLogger(__name__)
+install_redacting_log_filter(logger=logger)
+
+# Prefer HEALTHADVOCATE_MODEL_URL; keep LM_STUDIO_URL as deprecated alias.
+_MODEL_URL = os.environ.get(
+    "HEALTHADVOCATE_MODEL_URL",
+    os.environ.get("LM_STUDIO_URL", default_model_base_url()),
+)
+_MODEL_NAME = os.environ.get("MEDICAL_LLM_MODEL", "local-model")
+_MODEL_ENABLED = os.environ.get("HEALTHADVOCATE_MODEL_ENABLED", "0").strip() not in {
+    "0",
+    "false",
+    "False",
+    "no",
+    "off",
+    "",
+}
+
+
+def get_model_base_url() -> str:
+    """Return the configured model base URL after loopback validation."""
+    return assert_loopback_model_url(_MODEL_URL, allow_redirects=False)
+
+
+def model_runtime_available() -> bool:
+    """Whether optional model use is enabled by configuration."""
+    return _MODEL_ENABLED
 
 SYSTEM_PROMPT = (
     "You are a patient health advocate. Help patients understand medical information, "
@@ -107,10 +138,32 @@ _MODULE_SCHEMAS = {
 }
 
 
-def chat(user_message: str, system: str = SYSTEM_PROMPT, max_tokens: int = 400, temperature: float = 0.6) -> str:
+def _model_client():
+    """Build an OpenAI-compatible client that never follows redirects."""
     from openai import OpenAI
 
-    client = OpenAI(base_url=_LM_STUDIO_URL, api_key="lm-studio")
+    if not model_runtime_available():
+        raise PrivacyBoundaryError("Model runtime disabled; deterministic path only")
+    try:
+        base_url = get_model_base_url()
+    except EndpointPolicyError as exc:
+        raise PrivacyBoundaryError("Model endpoint rejected by loopback policy") from exc
+
+    try:
+        import httpx
+
+        return OpenAI(
+            base_url=base_url,
+            api_key="local",
+            max_retries=0,
+            http_client=httpx.Client(follow_redirects=False, timeout=60.0),
+        )
+    except Exception:
+        return OpenAI(base_url=base_url, api_key="local", max_retries=0)
+
+
+def chat(user_message: str, system: str = SYSTEM_PROMPT, max_tokens: int = 400, temperature: float = 0.6) -> str:
+    client = _model_client()
     response = client.chat.completions.create(
         model=_MODEL_NAME,
         messages=[
@@ -126,6 +179,23 @@ def chat(user_message: str, system: str = SYSTEM_PROMPT, max_tokens: int = 400, 
     return text.strip()
 
 
+def unavailable_structured_fallback(reason: str = "model_unavailable") -> dict:
+    return {
+        "summary": (
+            "The optional local model is unavailable or blocked by the privacy "
+            "boundary. Deterministic preparation steps remain available."
+        ),
+        "urgency": "medium",
+        "action_items": [
+            "Continue with the manual Coverage workflow or local checklists.",
+            "Enable a loopback-only model runtime only if you need generative drafts.",
+        ],
+        "red_flags": [],
+        "_model_blocked": True,
+        "_block_reason": reason,
+    }
+
+
 def chat_structured(
     user_message: str,
     module_type: str = "general",
@@ -133,8 +203,6 @@ def chat_structured(
     max_tokens: int = 1200,
     temperature: float = 0.1,
 ) -> dict:
-    from openai import OpenAI
-
     schema = _MODULE_SCHEMAS.get(module_type, "")
     json_system = (
         "CRITICAL: You MUST respond with ONLY a single JSON object. No other text.\n"
@@ -151,7 +219,15 @@ def chat_structured(
         + system
     )
 
-    client = OpenAI(base_url=_LM_STUDIO_URL, api_key="lm-studio")
+    try:
+        client = _model_client()
+    except PrivacyBoundaryError as exc:
+        logger.info(
+            "chat_structured.blocked code=%s",
+            "model_disabled_or_endpoint",
+        )
+        return unavailable_structured_fallback(reason=type(exc).__name__)
+
     response = client.chat.completions.create(
         model=_MODEL_NAME,
         messages=[

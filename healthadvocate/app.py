@@ -188,6 +188,13 @@ class CoverageFactRequest(BaseModel):
 class CoverageCommitmentRequest(BaseModel):
     intent: str
 
+class CoverageExportRequest(BaseModel):
+    mode: str = "redacted"  # private | redacted
+    reviewed: bool = False
+
+class CoverageDeleteRequest(BaseModel):
+    unowned_source_paths: list[str] = []
+
 class FamilyProfileRequest(BaseModel):
     name: str
     relationship: str = "self"
@@ -330,6 +337,50 @@ async def coverage_case_script(case_id: str, kind: str):
     except CaseStoreError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
     return script_for_case(case, kind)
+
+
+@app.post("/api/coverage/cases/{case_id}/export")
+async def coverage_export(case_id: str, request: CoverageExportRequest):
+    from healthadvocate.coverage import get_case
+    from healthadvocate.coverage.domain import CoverageCase
+    from healthadvocate.coverage.lifecycle_ops import private_export, redacted_export, write_export
+    from healthadvocate.coverage.store import CaseStoreError
+    import tempfile
+    from pathlib import Path
+    try:
+        case = CoverageCase.from_dict(get_case(case_id))
+    except CaseStoreError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    if request.mode == "private":
+        payload = private_export(case)
+    elif request.mode == "redacted":
+        payload = redacted_export(case)
+    else:
+        raise HTTPException(status_code=400, detail="mode must be private or redacted")
+    # Do not write unless reviewed; return payload for client-side review flow.
+    if not request.reviewed:
+        return {**payload, "written": False, "message": "Confirm review to write an export file."}
+    dest = Path(tempfile.gettempdir()) / f"healthadvocate-export-{case_id}-{request.mode}.json"
+    write_export(payload, dest, reviewed=True)
+    return {**payload, "written": True, "path_hint": str(dest.name)}
+
+@app.post("/api/coverage/cases/{case_id}/delete")
+async def coverage_delete(case_id: str, request: CoverageDeleteRequest):
+    from healthadvocate.coverage.service import get_default_store
+    from healthadvocate.coverage.lifecycle_ops import delete_case
+    from healthadvocate.coverage.store import CaseStoreError
+    try:
+        store = get_default_store()
+        return delete_case(store, case_id, unowned_source_paths=request.unowned_source_paths)
+    except CaseStoreError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+
+@app.post("/api/coverage/import-real")
+async def coverage_import_real():
+    raise HTTPException(
+        status_code=403,
+        detail="Real-case import is disabled until the release gate (issue 90) passes.",
+    )
 
 @app.post("/api/coverage/commitment-gate")
 async def coverage_commitment_gate(request: CoverageCommitmentRequest):

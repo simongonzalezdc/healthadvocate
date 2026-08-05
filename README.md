@@ -8,7 +8,7 @@ Navigate the medical system. Fight insurance denials. Decode bills. Understand y
 
 **Free. Private. Runs on your machine.**
 
-[![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
+[![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![GitHub stars](https://img.shields.io/github/stars/simongonzalezdc/healthadvocate?style=social)](https://github.com/simongonzalezdc/healthadvocate)
 
@@ -332,7 +332,7 @@ healthadvocate/
 
 HealthAdvocate is built on outstanding open-source work:
 
-- **[OpenMed](https://github.com/maziyarpanahi/openmed)** by [Maziyar Panahi](https://github.com/maziyarpanahi) — Apache 2.0 licensed medical NLP toolkit. Powers the NER entity extraction, PII detection, and deidentification layers. [[Paper](https://arxiv.org/abs/2508.01630)]
+- **[OpenMed](https://github.com/maziyarpanahi/openmed)** by [Maziyar Panahi](https://github.com/maziyarpanahi) — MIT licensed medical NLP toolkit. Powers the NER entity extraction, PII detection, and deidentification layers. [[Paper](https://arxiv.org/abs/2508.01630)]
 - **[Meditron3-8B](https://huggingface.co/epfl-llm/meditron-3)** by the EPFL LLM Team — open-weight clinical reasoning model. Powers the structured assessment layer.
 - **[LM Studio](https://lmstudio.ai/)** — free local LLM runtime with an OpenAI-compatible API.
 - **[FastAPI](https://fastapi.tiangolo.com/)** by [Sebastian Ramirez](https://github.com/tiangolo) — high-performance async Python web framework.
@@ -366,6 +366,6 @@ If you reference this project in academic work, please cite OpenMed:
 
 ## License
 
-This project is licensed under the [Apache License 2.0](LICENSE).
+This project is licensed under the [MIT License](LICENSE).
 
-OpenMed is a separate project by Maziyar Panahi, used here as a dependency under its own [Apache 2.0 license](https://github.com/maziyarpanahi/openmed/blob/main/LICENSE).
+OpenMed is a separate project by Maziyar Panahi, used here as a dependency under its own [MIT license](https://github.com/maziyarpanahi/openmed/blob/main/LICENSE).

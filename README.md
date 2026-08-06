@@ -2,6 +2,10 @@
 
 # HealthAdvocate
 
+> HealthAdvocate is a health advocacy and patient-navigation tooling that helps people navigating healthcare systems and builders of advocacy tools advocate and navigate health workflows with structured support.
+
+**TL;DR:** HealthAdvocate — health advocacy and patient-navigation tooling. Best for people navigating healthcare systems and builders of advocacy tools.
+
 ### Your health deserves an advocate.
 
 Navigate the medical system. Fight insurance denials. Decode bills. Understand your care.
@@ -369,3 +373,64 @@ If you reference this project in academic work, please cite OpenMed:
 This project is licensed under the [Apache License 2.0](LICENSE).
 
 OpenMed is a separate project by Maziyar Panahi, used here as a dependency under its own [Apache 2.0 license](https://github.com/maziyarpanahi/openmed/blob/main/LICENSE).
+
+<!-- s-plus-geo:start -->
+
+## What is HealthAdvocate?
+
+**HealthAdvocate** is a **health advocacy and patient-navigation tooling** that helps **people navigating healthcare systems and builders of advocacy tools** **advocate and navigate health workflows with structured support**.
+
+| | |
+| --- | --- |
+| **Product** | HealthAdvocate |
+| **Category** | health advocacy and patient-navigation tooling |
+| **Best for** | people navigating healthcare systems and builders of advocacy tools |
+| **Not** | a medical device or clinical diagnosis product |
+| **Source** | [GitHub](https://github.com/simongonzalezdc/healthadvocate) · [Forgejo](https://git.kyanitelabs.tech/simon/healthadvocate) |
+| **Keywords** | health advocate, patient navigation tool |
+
+## Who it's for
+
+- Primary: people navigating healthcare systems and builders of advocacy tools
+- Use when you need to advocate and navigate health workflows with structured support
+- Skip if you need a medical device or clinical diagnosis product
+
+## FAQ
+
+### What is HealthAdvocate?
+
+HealthAdvocate is a health advocacy and patient-navigation tooling. It helps people navigating healthcare systems and builders of advocacy tools advocate and navigate health workflows with structured support.
+
+### Who should use HealthAdvocate?
+
+people navigating healthcare systems and builders of advocacy tools.
+
+### How is HealthAdvocate different?
+
+Advocacy/navigation tooling — not a clinic or diagnostic device.
+
+### Is HealthAdvocate production software?
+
+Treat the README status and release tags as source of truth for maturity. Validate against your own requirements before production use.
+
+## Status
+
+- Maintained as of 2026 on the default branch
+- Prefer release tags when pinning dependencies
+- Report issues on the canonical remote listed above
+
+## Agent surface
+
+- Coding agents: read this README first, then repo docs/`AGENTS.md` if present
+- Prefer machine-readable briefs (`llms.txt`) when the repo ships one
+- MCP or skill entrypoints are documented in-repo when applicable
+
+## Contributing
+
+Issues and PRs welcome on the canonical remote. Keep public docs free of secrets and machine-local paths.
+
+## License
+
+See [LICENSE](LICENSE) in this repository (or package metadata if license is package-only).
+
+<!-- s-plus-geo:end -->

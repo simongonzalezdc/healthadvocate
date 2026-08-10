@@ -12,12 +12,12 @@ PROTOCOL_VERSION = "2024-11-05"
 
 TOOLS = {
     "healthadvocate_project_brief": {
-        "description": "Return HealthAdvocate identity, surfaces, and medical boundary.",
+        "description": "Return the HealthAdvocate project brief: identity, available surfaces, and the medical boundary. Returns a dict with name, summary, surfaces, and guardrail. Use when the agent must orient on what HealthAdvocate is and how it stays non-clinical. Takes no parameters.",
         "handler": lambda _args: project_brief(),
         "inputSchema": {"type": "object", "properties": {}},
     },
     "prepare_visit_questions": {
-        "description": "Create patient-friendly appointment questions for a stated concern.",
+        "description": "Prepare patient-friendly appointment questions for a stated concern. Returns a dict with concern, context, questions, prep_notes, and medical_boundary. Use when a patient is getting ready for an upcoming appointment. Pass concern (the main issue to discuss) from the patient; optionally pass context for background.",
         "handler": visit_questions,
         "inputSchema": {
             "type": "object",
@@ -29,7 +29,7 @@ TOOLS = {
         },
     },
     "insurance_denial_checklist": {
-        "description": "Create an appeal checklist for an insurance denial reason.",
+        "description": "Create an insurance-denial appeal checklist and appeal framing for a stated denial reason. Returns a dict with denial_reason, checklist, and appeal_frame. Use when a patient is preparing to appeal a denied claim. Pass denial_reason (the exact reason the claim was denied) from the denial letter or patient input.",
         "handler": denial_checklist,
         "inputSchema": {
             "type": "object",
@@ -38,7 +38,7 @@ TOOLS = {
         },
     },
     "healthadvocate_server_health": {
-        "description": "Check the local HealthAdvocate FastAPI health endpoint.",
+        "description": "Check whether a running HealthAdvocate web server is healthy. Returns a dict with url, ok (boolean), and either response (parsed health JSON) or error. Use when the agent must verify the web surface is up before pointing the user to it. Pass url (the server base URL) from configuration; defaults to http://127.0.0.1:8080.",
         "handler": server_health,
         "inputSchema": {
             "type": "object",
@@ -61,7 +61,7 @@ def _tool_list() -> list[dict[str, Any]]:
             "description": spec["description"],
             "inputSchema": spec["inputSchema"],
         }
-        for name, spec in TOOLS.items()
+        for name, spec in sorted(TOOLS.items())
     ]
 
 
@@ -89,7 +89,13 @@ def handle_message(message: dict[str, Any]) -> dict[str, Any] | None:
             },
         )
     if method == "tools/list":
-        return _response(message_id, {"tools": _tool_list()})
+        return _response(
+            message_id,
+            {
+                "tools": _tool_list(),
+                "_meta": {"ttlMs": 3600000, "cacheScope": "public"},
+            },
+        )
     if method == "tools/call":
         try:
             result = handle_tool_call(params.get("name", ""), params.get("arguments") or {})

@@ -2,9 +2,11 @@
 
 from __future__ import annotations
 
+import os
 import tempfile
 import unittest
 from pathlib import Path
+from unittest.mock import Mock, patch
 
 from healthadvocate.coverage.domain import (
     CaseLifecycle,
@@ -15,7 +17,11 @@ from healthadvocate.coverage.domain import (
     new_id,
     utc_now_iso,
 )
-from healthadvocate.coverage.keystore import InMemoryKeyStore, KeyStoreError
+from healthadvocate.coverage.keystore import (
+    InMemoryKeyStore,
+    KeyringKeyStore,
+    KeyStoreError,
+)
 from healthadvocate.coverage.store import CaseStore, CaseStoreError
 
 CANARY = "CANARY_PATIENT_ALPHA_9f3c"
@@ -150,6 +156,28 @@ class CoverageCaseStoreTests(unittest.TestCase):
         # Also ensure no obvious plaintext JSON markers of the canary label.
         self.assertNotIn(b"coverage_cases", raw)
 
+    def test_store_is_private_on_create_and_atomic_replacement(self):
+        previous_umask = os.umask(0o022)
+        try:
+            store = self._store()
+            self.assertEqual(self.path.stat().st_mode & 0o777, 0o600)
+            os.chmod(self.path, 0o644)
+            store.create_case("Permission repair case")
+            self.assertEqual(self.path.stat().st_mode & 0o777, 0o600)
+            store.close()
+            self.assertEqual(self.path.stat().st_mode & 0o777, 0o600)
+        finally:
+            os.umask(previous_umask)
+
+    def test_store_refuses_to_replace_symlink(self):
+        target = Path(self.tmp.name) / "unrelated"
+        target.write_text("preserve me", encoding="utf-8")
+        self.path.symlink_to(target)
+        with self.assertRaises(CaseStoreError):
+            CaseStore(self.path, self.keystore, create=True)
+        self.assertEqual(target.read_text(encoding="utf-8"), "preserve me")
+        self.assertTrue(self.path.is_symlink())
+
     def test_missing_key_fails_before_metadata(self):
         store = self._store()
         case = store.create_case("Key fail case", next_action="Do something")
@@ -174,6 +202,38 @@ class CoverageCaseStoreTests(unittest.TestCase):
         with self.assertRaises(CaseStoreError):
             store.create_case("real", synthetic=False)
         store.close()
+
+
+class KeyringKeyStoreTests(unittest.TestCase):
+    def test_confirmed_missing_key_is_created(self):
+        backend = Mock()
+        backend.get_password.return_value = None
+        store = KeyringKeyStore()
+        with patch.object(store, "_keyring", return_value=backend):
+            key = store.get_or_create_key()
+        self.assertEqual(len(key), 32)
+        backend.set_password.assert_called_once_with(
+            store.service, store.username, key.hex()
+        )
+
+    def test_malformed_existing_key_is_not_overwritten(self):
+        for raw in ("", "not-hex", "00" * 31, "00" * 33):
+            with self.subTest(raw=raw):
+                backend = Mock()
+                backend.get_password.return_value = raw
+                store = KeyringKeyStore()
+                with patch.object(store, "_keyring", return_value=backend):
+                    with self.assertRaises(KeyStoreError):
+                        store.get_or_create_key()
+                backend.set_password.assert_not_called()
+
+    def test_malformed_previous_key_is_rejected(self):
+        backend = Mock()
+        backend.get_password.side_effect = ["11" * 32, "22" * 31]
+        store = KeyringKeyStore()
+        with patch.object(store, "_keyring", return_value=backend):
+            with self.assertRaises(KeyStoreError):
+                store.candidate_keys()
 
 
 class PublicServiceWorkflowTests(unittest.TestCase):

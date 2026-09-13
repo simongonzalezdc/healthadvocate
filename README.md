@@ -262,9 +262,9 @@ HealthAdvocate is designed as a privacy-preserving local-first health tool:
 
 - **All processing is local by default.** No data is sent to a hosted HealthAdvocate service. The NER models run on your machine via HuggingFace. The LLM runs on your machine via LM Studio.
 - **PII is stripped before reasoning.** Every patient-facing module deidentifies your text before it reaches the LLM. Names, dates, SSNs, phone numbers, emails, and addresses are masked using OpenMed's privacy-preserving PII detection.
-- **No persistent storage.** Family profiles and health tracks are kept in memory only. When you stop the server, the data is gone. No database, no files, no data to breach.
+- **Private local persistence for Coverage Continuity.** Family profiles and health tracks remain in memory, while synthetic Coverage Continuity cases are stored locally as an encrypted file with a key held by the operating-system credential store. Real-case import remains disabled behind the release gate.
 - **Zero telemetry.** No analytics, no tracking pixels, no error reporting to external services. We wouldn't know how to find your data even if we wanted to.
-- **Local network only by default.** The documented run command binds to `127.0.0.1`, and browser CORS defaults to localhost. If you expose the app on a network or public URL, add authentication and a tighter deployment review first.
+- **Loopback deployment by default.** The documented local command binds to `127.0.0.1`, and the supported Compose profile publishes the container only on `127.0.0.1`. The image's internal server listens on its container interface so Compose port forwarding works; running or publishing the image outside that profile carries no loopback-exposure guarantee and requires a separate deployment review. Browser CORS defaults to localhost.
 
 ---
 

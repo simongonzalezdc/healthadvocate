@@ -78,22 +78,31 @@ class KeyringKeyStore:
             ) from exc
         return keyring
 
+    @staticmethod
+    def _decode_key(raw: str, *, label: str = "encryption key") -> bytes:
+        try:
+            key = bytes.fromhex(raw)
+        except ValueError as exc:
+            raise KeyStoreError(f"{label} is malformed") from exc
+        if len(key) != 32:
+            raise KeyStoreError(f"{label} is malformed")
+        return key
+
     def get_key(self) -> bytes:
         raw = self._keyring().get_password(self.service, self.username)
-        if not raw:
+        if raw is None:
             raise KeyStoreError("encryption key is missing from credential store")
-        try:
-            return bytes.fromhex(raw)
-        except ValueError as exc:
-            raise KeyStoreError("encryption key is malformed") from exc
+        return self._decode_key(raw)
 
     def get_or_create_key(self) -> bytes:
-        try:
-            return self.get_key()
-        except KeyStoreError:
-            key = secrets.token_bytes(32)
-            self._keyring().set_password(self.service, self.username, key.hex())
-            return key
+        keyring = self._keyring()
+        raw = keyring.get_password(self.service, self.username)
+        if raw is not None:
+            return self._decode_key(raw)
+
+        key = secrets.token_bytes(32)
+        keyring.set_password(self.service, self.username, key.hex())
+        return key
 
     def delete_key(self) -> None:
         for username in (self.username, self.previous_username):
@@ -116,11 +125,8 @@ class KeyringKeyStore:
     def candidate_keys(self) -> list[bytes]:
         keys = [self.get_key()]
         raw = self._keyring().get_password(self.service, self.previous_username)
-        if raw:
-            try:
-                keys.append(bytes.fromhex(raw))
-            except ValueError as exc:
-                raise KeyStoreError("previous encryption key is malformed") from exc
+        if raw is not None:
+            keys.append(self._decode_key(raw, label="previous encryption key"))
         return keys
 
     def discard_previous_key(self) -> None:

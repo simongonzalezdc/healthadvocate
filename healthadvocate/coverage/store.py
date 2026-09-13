@@ -6,6 +6,7 @@ import json
 import os
 import sqlite3
 import struct
+import tempfile
 from pathlib import Path
 from typing import Optional
 
@@ -87,11 +88,18 @@ class CaseStore:
 
     def _init_new(self) -> None:
         self.path.parent.mkdir(parents=True, exist_ok=True)
+        if self.path.is_symlink():
+            raise CaseStoreError("refusing to replace a symlinked case store")
         key = self.keystore.get_or_create_key()
         self._conn = sqlite3.connect(":memory:")
         self._conn.row_factory = sqlite3.Row
         self._create_schema()
-        self._persist(key=key)
+        try:
+            self._persist(key=key)
+        except Exception:
+            self._conn.close()
+            self._conn = None
+            raise
 
     def _open_existing(self) -> None:
         try:
@@ -132,9 +140,25 @@ class CaseStore:
         use_key = key if key is not None else self.keystore.get_key()
         payload = self._conn.serialize()
         encrypted = self._encrypt(payload, use_key)
-        tmp = self.path.with_suffix(self.path.suffix + ".tmp")
-        tmp.write_bytes(encrypted)
-        os.replace(tmp, self.path)
+        if self.path.is_symlink():
+            raise CaseStoreError("refusing to replace a symlinked case store")
+        fd, tmp_name = tempfile.mkstemp(
+            prefix=f".{self.path.name}.", suffix=".tmp", dir=self.path.parent
+        )
+        tmp = Path(tmp_name)
+        try:
+            os.fchmod(fd, 0o600)
+            with os.fdopen(fd, "wb") as handle:
+                fd = -1
+                handle.write(encrypted)
+                handle.flush()
+                os.fsync(handle.fileno())
+            os.replace(tmp, self.path)
+        except Exception:
+            if fd >= 0:
+                os.close(fd)
+            tmp.unlink(missing_ok=True)
+            raise
 
     def _create_schema(self) -> None:
         assert self._conn is not None

@@ -100,6 +100,97 @@ class PresentabilityTests(unittest.TestCase):
                 f".{class_name} buttons render without an author focus indicator",
             )
 
+    def test_theme_colors_meet_wcag_aa_contrast(self):
+        styles = (ROOT / "healthadvocate" / "static" / "styles.css").read_text()
+
+        def block(selector):
+            match = re.search(re.escape(selector) + r"\s*\{([^}]*)\}", styles, re.S)
+            self.assertIsNotNone(match, f"{selector} block missing from styles.css")
+            vars_ = {}
+            for name, value in re.findall(r"(--[\w-]+)\s*:\s*([^;]+);", match.group(1)):
+                vars_[name] = value.strip()
+            return vars_
+
+        def parse_color(value):
+            value = value.strip()
+            if value.startswith("#"):
+                return tuple(int(value[i : i + 2], 16) for i in (1, 3, 5)) + (1.0,)
+            m = re.match(r"rgba?\(([^)]+)\)", value)
+            parts = [p.strip() for p in m.group(1).split(",")]
+            rgb = tuple(float(p) for p in parts[:3])
+            alpha = float(parts[3]) if len(parts) > 3 else 1.0
+            return rgb + (alpha,)
+
+        def luminance(color):
+            def lin(v):
+                v /= 255
+                return v / 12.92 if v <= 0.04045 else ((v + 0.055) / 1.055) ** 2.4
+
+            r, g, b, _ = color
+            return 0.2126 * lin(r) + 0.7152 * lin(g) + 0.0722 * lin(b)
+
+        def contrast(fg, bg):
+            l1, l2 = luminance(fg), luminance(bg)
+            return (max(l1, l2) + 0.05) / (min(l1, l2) + 0.05)
+
+        def composited(tint_value, over):
+            tint = parse_color(tint_value)
+            a = tint[3] + over[3] * (1 - tint[3])
+            return tuple(
+                (tint[i] * tint[3] + over[i] * over[3] * (1 - tint[3])) / a
+                for i in range(3)
+            ) + (a,)
+
+        light = block(":root")
+        dark = block('[data-theme="dark"]')
+        white = parse_color("#ffffff")
+
+        surfaces = ("--bg-body", "--bg-surface", "--bg-elevated", "--bg-input")
+        for theme in (light, dark):
+            for text_var in ("--text-1", "--text-2", "--text-3"):
+                for surface_var in surfaces:
+                    ratio = contrast(
+                        parse_color(theme[text_var]), parse_color(theme[surface_var])
+                    )
+                    self.assertGreaterEqual(
+                        ratio,
+                        4.5,
+                        f"{text_var} on {surface_var} measures {ratio:.2f}:1"
+                        f" (needs 4.5:1)",
+                    )
+            # accent used as text on its own tint (nav pills, chips, eyebrows)
+            for surface_var in surfaces:
+                tinted = composited(
+                    theme["--accent-light"], parse_color(theme[surface_var])
+                )
+                ratio = contrast(parse_color(theme["--accent"]), tinted)
+                self.assertGreaterEqual(
+                    ratio,
+                    4.5,
+                    f"--accent text on --accent-light over {surface_var}"
+                    f" measures {ratio:.2f}:1 (needs 4.5:1)",
+                )
+
+        # filled controls: light theme keeps white ink; dark theme flips to
+        # bg-body ink because white on the lighter dark accent fails AA
+        self.assertGreaterEqual(contrast(white, parse_color(light["--accent"])), 4.5)
+        self.assertGreaterEqual(
+            contrast(white, parse_color(light["--accent-hover"])), 4.5
+        )
+        dark_ink = parse_color(dark["--bg-body"])
+        self.assertGreaterEqual(contrast(dark_ink, parse_color(dark["--accent"])), 4.5)
+        self.assertGreaterEqual(
+            contrast(dark_ink, parse_color(dark["--accent-hover"])), 4.5
+        )
+        self.assertIn('[data-theme="dark"] .btn-primary', styles)
+        self.assertIn('[data-theme="dark"] .skip-link', styles)
+        self.assertIn('[data-theme="dark"] .logo-icon', styles)
+
+        # skip link carries an author focus indicator that passes 1.4.11 in
+        # both themes (ring on the page background, offset clear of the chip)
+        self.assertIn(".skip-link:focus-visible", styles)
+        self.assertIn("outline: 2px solid var(--text-1)", styles)
+
 
 if __name__ == "__main__":
     unittest.main()

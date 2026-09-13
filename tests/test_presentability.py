@@ -89,6 +89,17 @@ class PresentabilityTests(unittest.TestCase):
         self.assertIn('"_deidentification_failed"', engine_py)
         self.assertNotIn("return text, {}", engine_py)
 
+    def test_every_button_class_has_a_visible_focus_indicator(self):
+        styles = (ROOT / "healthadvocate" / "static" / "styles.css").read_text()
+        html = (ROOT / "healthadvocate" / "static" / "index.html").read_text()
+
+        for class_name in set(re.findall(r'class="[^"]*?\b(btn-[\w-]+)', html)):
+            self.assertIn(
+                f".{class_name}:focus-visible",
+                styles,
+                f".{class_name} buttons render without an author focus indicator",
+            )
+
 
 if __name__ == "__main__":
     unittest.main()

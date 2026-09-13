@@ -13,7 +13,7 @@ from fastapi import FastAPI, HTTPException, Request
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from starlette.concurrency import run_in_threadpool
 
 # Ensure project root is on path
@@ -36,8 +36,13 @@ from healthadvocate.core import (
     health_tracks,
 )
 
+from healthadvocate.privacy.logging_redaction import install_redacting_log_filter
+from healthadvocate.privacy.startup import validate_startup_bind_policy
+
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+install_redacting_log_filter(logger=logger)
+install_redacting_log_filter(logger=logging.getLogger())
 
 engine = HealthEngine()
 
@@ -68,6 +73,11 @@ def _validate_length(text: str, field: str = "input") -> None:
 
 @asynccontextmanager
 async def lifespan(app):
+    try:
+        validate_startup_bind_policy()
+    except SystemExit:
+        logger.error("startup.bind_rejected code=non_loopback_bind")
+        raise
     logger.info("Pre-loading OpenMed models...")
     await run_in_threadpool(engine.preload)
     logger.info("Models loaded. HealthAdvocate ready.")
@@ -139,6 +149,54 @@ class SecondOpinionRequest(BaseModel):
 
 class CommunityRequest(BaseModel):
     text: str
+
+class CoverageCaseCreateRequest(BaseModel):
+    title: str = Field(max_length=_MAX_INPUT_LENGTH)
+    next_action: str = Field(
+        default="Review coverage situation and list deadlines",
+        max_length=_MAX_INPUT_LENGTH,
+    )
+
+class CoverageCaseUpdateRequest(BaseModel):
+    title: Optional[str] = Field(default=None, max_length=_MAX_INPUT_LENGTH)
+    next_action: Optional[str] = Field(default=None, max_length=_MAX_INPUT_LENGTH)
+    lifecycle: Optional[str] = Field(default=None, max_length=_MAX_INPUT_LENGTH)
+    deadlines: Optional[list[dict[str, str]]] = None
+
+class CoverageEvidenceRequest(BaseModel):
+    title: str = Field(max_length=_MAX_INPUT_LENGTH)
+    source: str = Field(max_length=_MAX_INPUT_LENGTH)
+    summary: str = Field(max_length=_MAX_INPUT_LENGTH)
+    claim_class: str = Field(default="user_reported", max_length=_MAX_INPUT_LENGTH)
+    checksum: str = Field(default="", max_length=_MAX_INPUT_LENGTH)
+
+class CoverageContactRequest(BaseModel):
+    channel: str = Field(max_length=_MAX_INPUT_LENGTH)
+    party: str = Field(max_length=_MAX_INPUT_LENGTH)
+    summary: str = Field(max_length=_MAX_INPUT_LENGTH)
+    outcome: str = Field(default="", max_length=_MAX_INPUT_LENGTH)
+
+class CoverageTargetRequest(BaseModel):
+    kind: str = Field(max_length=_MAX_INPUT_LENGTH)
+    name: str = Field(max_length=_MAX_INPUT_LENGTH)
+    risk_notes: str = Field(default="", max_length=_MAX_INPUT_LENGTH)
+
+class CoverageFactRequest(BaseModel):
+    label: str = Field(max_length=_MAX_INPUT_LENGTH)
+    value: str = Field(max_length=_MAX_INPUT_LENGTH)
+    status: str = Field(default="user-reported", max_length=_MAX_INPUT_LENGTH)
+    claim_class: str = Field(default="user_reported", max_length=_MAX_INPUT_LENGTH)
+    provenance: str = Field(default="user", max_length=_MAX_INPUT_LENGTH)
+
+class CoverageCommitmentRequest(BaseModel):
+    intent: str = Field(max_length=_MAX_INPUT_LENGTH)
+
+class CoverageExportRequest(BaseModel):
+    mode: str = "redacted"  # private | redacted
+    reviewed: bool = False
+
+class CoverageDeleteRequest(BaseModel):
+    unowned_source_paths: list[str] = Field(default_factory=list)
 
 class FamilyProfileRequest(BaseModel):
     name: str
@@ -241,6 +299,268 @@ async def scan_community(request: CommunityRequest):
         community_health.scan_bulletin, engine, request.text
     )
     return result
+
+# ---------------------------------------------------------------------------
+# Coverage Continuity endpoints (synthetic cases only)
+# ---------------------------------------------------------------------------
+
+@app.get("/api/coverage/status")
+async def coverage_status():
+    from healthadvocate.coverage import manual_workflow_status
+    status = manual_workflow_status()
+    return {
+        "available": status.available,
+        "requires_model": status.requires_model,
+        "requires_optional_dataset": status.requires_optional_dataset,
+        "mode": status.mode,
+        "notes": status.notes,
+        "real_case_import_enabled": False,
+    }
+
+
+
+@app.get("/api/coverage/cases/{case_id}/view")
+async def coverage_case_view(case_id: str):
+    from healthadvocate.coverage import get_case
+    from healthadvocate.coverage.workflow import build_coverage_view
+    from healthadvocate.coverage.store import CaseStoreError
+    try:
+        case = get_case(case_id)
+    except CaseStoreError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    return build_coverage_view(case)
+
+@app.get("/api/coverage/cases/{case_id}/scripts/{kind}")
+async def coverage_case_script(case_id: str, kind: str):
+    from healthadvocate.coverage import get_case
+    from healthadvocate.coverage.workflow import script_for_case
+    from healthadvocate.coverage.store import CaseStoreError
+    try:
+        case = get_case(case_id)
+    except CaseStoreError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    return script_for_case(case, kind)
+
+
+@app.post("/api/coverage/cases/{case_id}/export")
+async def coverage_export(case_id: str, request: CoverageExportRequest):
+    from healthadvocate.coverage import get_case
+    from healthadvocate.coverage.domain import CoverageCase
+    from healthadvocate.coverage.lifecycle_ops import private_export, redacted_export, write_export
+    from healthadvocate.coverage.store import CaseStoreError
+    from pathlib import Path
+    try:
+        case = CoverageCase.from_dict(get_case(case_id))
+    except CaseStoreError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    if request.mode == "private":
+        payload = private_export(case)
+    elif request.mode == "redacted":
+        payload = redacted_export(case)
+    else:
+        raise HTTPException(status_code=400, detail="mode must be private or redacted")
+    # Do not write unless reviewed; return payload for client-side review flow.
+    if not request.reviewed:
+        return {**payload, "written": False, "message": "Confirm review to write an export file."}
+    from healthadvocate.coverage.keystore import default_data_dir
+    dest = (
+        Path(default_data_dir())
+        / "exports"
+        / f"healthadvocate-export-{case_id}-{request.mode}.json"
+    )
+    write_export(payload, dest, reviewed=True)
+    return {**payload, "written": True, "path_hint": str(dest.name)}
+
+@app.post("/api/coverage/cases/{case_id}/delete")
+async def coverage_delete(case_id: str, request: CoverageDeleteRequest):
+    from healthadvocate.coverage.service import get_default_store
+    from healthadvocate.coverage.lifecycle_ops import delete_case
+    from healthadvocate.coverage.store import CaseStoreError
+    try:
+        store = get_default_store()
+        return delete_case(store, case_id, unowned_source_paths=request.unowned_source_paths)
+    except CaseStoreError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+
+@app.post("/api/coverage/import-real")
+async def coverage_import_real():
+    # This endpoint is deliberately read-only. Release receipts are generated
+    # offline; an unauthenticated request must never run git or write artifacts.
+    raise HTTPException(
+        status_code=403,
+        detail=(
+            "Real-case import is disabled. Release gate requires full receipts "
+            "and independent verifier approval for the exact build."
+        ),
+    )
+
+@app.post("/api/coverage/commitment-gate")
+async def coverage_commitment_gate(request: CoverageCommitmentRequest):
+    from healthadvocate.coverage.commitment_gate import request_commitment
+    return request_commitment(request.intent)
+
+@app.post("/api/coverage/cases")
+async def coverage_create_case(request: CoverageCaseCreateRequest):
+    from healthadvocate.coverage import create_synthetic_case
+    from healthadvocate.coverage.store import CaseStoreError
+    try:
+        return create_synthetic_case(request.title, next_action=request.next_action)
+    except CaseStoreError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+@app.get("/api/coverage/cases")
+async def coverage_list_cases():
+    from healthadvocate.coverage import list_cases
+    return list_cases()
+
+@app.get("/api/coverage/cases/{case_id}")
+async def coverage_get_case(case_id: str):
+    from healthadvocate.coverage import get_case
+    from healthadvocate.coverage.store import CaseStoreError
+    try:
+        return get_case(case_id)
+    except CaseStoreError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+
+@app.patch("/api/coverage/cases/{case_id}")
+async def coverage_update_case(case_id: str, request: CoverageCaseUpdateRequest):
+    from healthadvocate.coverage import update_case
+    from healthadvocate.coverage.store import CaseStoreError
+    try:
+        return update_case(
+            case_id,
+            title=request.title,
+            next_action=request.next_action,
+            lifecycle=request.lifecycle,
+            deadlines=request.deadlines,
+        )
+    except CaseStoreError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+@app.post("/api/coverage/cases/{case_id}/resume")
+async def coverage_resume_case(case_id: str):
+    from healthadvocate.coverage import resume_case
+    from healthadvocate.coverage.store import CaseStoreError
+    try:
+        return resume_case(case_id)
+    except CaseStoreError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+
+@app.post("/api/coverage/cases/{case_id}/evidence")
+async def coverage_add_evidence(case_id: str, request: CoverageEvidenceRequest):
+    from healthadvocate.coverage.service import get_default_store
+    from healthadvocate.coverage.store import CaseStoreError
+    try:
+        store = get_default_store()
+        case = store.add_evidence(
+            case_id,
+            title=request.title,
+            source=request.source,
+            summary=request.summary,
+            claim_class=request.claim_class,
+            checksum=request.checksum,
+        )
+        return case.to_dict()
+    except CaseStoreError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+@app.post("/api/coverage/cases/{case_id}/contacts")
+async def coverage_add_contact(case_id: str, request: CoverageContactRequest):
+    from healthadvocate.coverage.service import get_default_store
+    from healthadvocate.coverage.store import CaseStoreError
+    try:
+        store = get_default_store()
+        case = store.add_contact(
+            case_id,
+            channel=request.channel,
+            party=request.party,
+            summary=request.summary,
+            outcome=request.outcome,
+        )
+        return case.to_dict()
+    except CaseStoreError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+@app.post("/api/coverage/cases/{case_id}/targets")
+async def coverage_add_target(case_id: str, request: CoverageTargetRequest):
+    from healthadvocate.coverage.service import get_default_store
+    from healthadvocate.coverage.store import CaseStoreError
+    try:
+        store = get_default_store()
+        case = store.add_target(
+            case_id,
+            kind=request.kind,
+            name=request.name,
+            risk_notes=request.risk_notes,
+        )
+        return case.to_dict()
+    except CaseStoreError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+@app.post("/api/coverage/cases/{case_id}/facts")
+async def coverage_add_fact(case_id: str, request: CoverageFactRequest):
+    from healthadvocate.coverage.service import get_default_store
+    from healthadvocate.coverage.store import CaseStoreError
+    try:
+        store = get_default_store()
+        case = store.add_fact(
+            case_id,
+            label=request.label,
+            value=request.value,
+            status=request.status,
+            claim_class=request.claim_class,
+            provenance=request.provenance,
+        )
+        return case.to_dict()
+    except CaseStoreError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+
+class MedLookupRequest(BaseModel):
+    name: str = Field(max_length=_MAX_INPUT_LENGTH)
+
+class ClinicalVerdictRequest(BaseModel):
+    kind: str = Field(max_length=_MAX_INPUT_LENGTH)
+
+class ProviderLookupRequest(BaseModel):
+    query: str
+
+@app.post("/api/coverage/adapters/rxnorm")
+async def adapter_rxnorm(request: MedLookupRequest):
+    from healthadvocate.adapters.medications import normalize_medication_rxnorm_cpc
+    return normalize_medication_rxnorm_cpc(request.name).to_dict()
+
+@app.post("/api/coverage/adapters/dailymed")
+async def adapter_dailymed(request: MedLookupRequest):
+    from healthadvocate.adapters.medications import dailymed_label_evidence
+    return dailymed_label_evidence(request.name).to_dict()
+
+@app.post("/api/coverage/adapters/openfda")
+async def adapter_openfda(request: MedLookupRequest):
+    from healthadvocate.adapters.medications import openfda_safety_evidence
+    return openfda_safety_evidence(request.name).to_dict()
+
+@app.post("/api/coverage/adapters/clinical-verdict")
+async def adapter_clinical_verdict(request: ClinicalVerdictRequest):
+    from healthadvocate.adapters.medications import refuse_clinical_verdict
+    return refuse_clinical_verdict(request.kind)
+
+@app.post("/api/coverage/adapters/nppes")
+async def adapter_nppes(request: ProviderLookupRequest):
+    from healthadvocate.adapters.providers import match_provider_nppes
+    return match_provider_nppes(request.query).to_dict()
+
+@app.post("/api/coverage/adapters/nadac")
+async def adapter_nadac(request: MedLookupRequest):
+    from healthadvocate.adapters.pricing import nadac_benchmark
+    return nadac_benchmark(request.name).to_dict()
+
+@app.post("/api/coverage/adapters/drugcentral")
+async def adapter_drugcentral(request: MedLookupRequest):
+    from healthadvocate.adapters.pricing import drugcentral_reference
+    return drugcentral_reference(request.name).to_dict()
 
 # ---------------------------------------------------------------------------
 # Family tracker endpoints

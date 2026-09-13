@@ -67,12 +67,122 @@ const HA = {
 
     if (name === 'family') this.loadFamilyProfiles();
     if (name === 'tracks') this.loadTrackDashboard();
+    if (name === 'coverage') this.loadCoverageView();
     if (name === 'home') {
       this.loadDashStrip();
       this.initScrollReveal();
     }
 
     window.scrollTo({ top: 0, behavior: 'smooth' });
+  },
+
+  /* ── Coverage Continuity (low-energy workflow) ── */
+
+  _coverageCaseId: null,
+
+  setCoverageStatus(message) {
+    const el = document.getElementById('coverage-status');
+    if (el) el.textContent = message || '';
+  },
+
+  async createCoverageCase(e) {
+    const btn = e?.currentTarget;
+    const titleInput = document.getElementById('coverage-title');
+    const title = (titleInput?.value || '').trim() || 'Synthetic coverage case';
+    try {
+      if (btn) btn.disabled = true;
+      const caseData = await this.api('coverage/cases', {
+        title,
+        next_action: 'Review deadlines and list provider and medication targets',
+      });
+      this._coverageCaseId = caseData.case_id;
+      this.setCoverageStatus('Coverage Case created (synthetic only).');
+      await this.loadCoverageView();
+    } catch (err) {
+      this.setCoverageStatus(err.message || 'Could not create case.');
+    } finally {
+      if (btn) btn.disabled = false;
+    }
+  },
+
+  async loadCoverageView() {
+    const panel = document.getElementById('coverage-panel');
+    if (!this._coverageCaseId) {
+      if (panel) panel.hidden = true;
+      return;
+    }
+    try {
+      const view = await this.apiGet(`coverage/cases/${this._coverageCaseId}/view`);
+      if (panel) panel.hidden = false;
+      const primary = document.getElementById('coverage-primary-action');
+      if (primary) primary.textContent = view.primary_action?.label || '';
+      const riskList = document.getElementById('coverage-risk-list');
+      if (riskList) {
+        riskList.innerHTML = (view.risks || []).map(r => {
+          const status = this.safeRiskStatus(r.status);
+          return `<li><span class="risk-chip risk-${status}">${this.escapeHtml(status)}</span> ${this.escapeHtml(r.label)} ${this.escapeHtml(r.due || '')}</li>`;
+        }).join('') || '<li><span class="risk-chip risk-unknown">unknown</span> No risks recorded yet</li>';
+      }
+      const evidence = document.getElementById('coverage-evidence');
+      if (evidence) {
+        evidence.innerHTML = (view.evidence || []).map(ev =>
+          `<div class="muted">${this.escapeHtml(ev.title || '')}: ${this.escapeHtml(ev.summary || '')}</div>`
+        ).join('') || '<div class="muted">No evidence yet</div>';
+      }
+      const contacts = document.getElementById('coverage-contacts');
+      if (contacts) {
+        contacts.innerHTML = (view.contacts || []).map(c =>
+          `<div class="muted">${this.escapeHtml(c.occurred_at || '')} — ${this.escapeHtml(c.summary || '')}</div>`
+        ).join('') || '<div class="muted">No contacts yet</div>';
+      }
+      const targets = document.getElementById('coverage-targets');
+      if (targets) {
+        targets.innerHTML = (view.targets || []).map(t =>
+          `<div class="muted">${this.escapeHtml(t.kind || '')}: ${this.escapeHtml(t.name || '')}</div>`
+        ).join('') || '<div class="muted">No continuity targets yet</div>';
+      }
+    } catch (err) {
+      this.setCoverageStatus(err.message || 'Could not load coverage view.');
+    }
+  },
+
+  safeRiskStatus(value) {
+    const s = (value || '').toLowerCase();
+    return ['overdue', 'approaching', 'unknown', 'stale', 'conflicted', 'scheduled'].includes(s)
+      ? s
+      : 'unknown';
+  },
+
+  async loadCoverageScript(kind) {
+    if (!this._coverageCaseId) {
+      this.setCoverageStatus('Create a Coverage Case first.');
+      return;
+    }
+    try {
+      const script = await this.apiGet(`coverage/cases/${this._coverageCaseId}/scripts/${kind}`);
+      const steps = document.getElementById('coverage-script-steps');
+      const note = document.getElementById('coverage-script-note');
+      if (steps) {
+        steps.innerHTML = (script.steps || []).map(s => `<li>${this.escapeHtml(s)}</li>`).join('');
+      }
+      if (note) note.textContent = script.commitment_note || script.unknown_fields_policy || '';
+    } catch (err) {
+      this.setCoverageStatus(err.message || 'Could not load script.');
+    }
+  },
+
+  async checkCoverageGate() {
+    const select = document.getElementById('coverage-intent');
+    const intent = select?.value || 'payment';
+    const out = document.getElementById('coverage-gate-result');
+    try {
+      const result = await this.api('coverage/commitment-gate', { intent });
+      if (out) {
+        out.textContent = `${result.gate_state}: ${result.reason}`;
+      }
+    } catch (err) {
+      if (out) out.textContent = err.message || 'Gate check failed.';
+    }
   },
 
   /* ── Theme Toggle (default: light) ── */
@@ -805,6 +915,15 @@ document.addEventListener('DOMContentLoaded', () => {
       HA.createFamilyProfile(buttonEvent);
     } else if (action === 'create-track') {
       HA.createTrack(buttonEvent);
+    } else if (action === 'coverage-create') {
+      HA.createCoverageCase(buttonEvent);
+    } else if (action === 'coverage-focus-primary') {
+      HA.setCoverageStatus('Focus on the primary next action above. Secondary details stay collapsed.');
+      document.getElementById('coverage-primary-action')?.focus?.();
+    } else if (action === 'coverage-script') {
+      HA.loadCoverageScript(btn.dataset.script || 'county');
+    } else if (action === 'coverage-gate') {
+      HA.checkCoverageGate();
     } else if (action === 'add-condition') {
       const profileId = btn.dataset.profileId;
       if (profileId) HA.addCondition(profileId);

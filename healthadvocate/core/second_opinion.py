@@ -3,9 +3,8 @@
 from __future__ import annotations
 
 from .engine import HealthEngine, format_entities_with_confidence
-from .llm_client import chat_structured
 from .cross_validation import cross_validate
-from . import family_tracker
+from healthadvocate.privacy.gated_model import structured_model_call
 
 
 def create_brief(engine: HealthEngine, records: str, lang: str = "en", profile_id: str | None = None) -> dict:
@@ -22,16 +21,10 @@ def create_brief(engine: HealthEngine, records: str, lang: str = "en", profile_i
     all_entities = list(diseases.entities) + list(drugs.entities) + list(anatomy.entities)
     entity_desc = format_entities_with_confidence(all_entities)
 
-    family_block = ""
-    if profile_id:
-        profile = family_tracker.get_profile(profile_id)
-        family_block = "\n\n" + family_tracker.format_family_context(profile)
-
     prompt = (
         f"A patient is seeking a second opinion. Here are their de-identified records:\n\n"
         f"{deidentified_text[:2000]}\n\n"
         f"NER Analysis:\n{entity_desc}\n\n"
-        f"{family_block}\n\n"
         "Help them prepare for the second opinion with a clear brief, key questions, "
         "and what specific information to bring."
     )
@@ -42,7 +35,10 @@ def create_brief(engine: HealthEngine, records: str, lang: str = "en", profile_i
         "and make the most of their specialist visit."
     )
 
-    llm_output = chat_structured(prompt, module_type="second_opinion_brief", system=system)
+    llm_output = structured_model_call(
+        engine, prompt, module_type="second_opinion_brief", system=system,
+        profile_id=profile_id,
+    )
     validation = cross_validate(all_entities, llm_output)
 
     return {

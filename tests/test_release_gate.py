@@ -87,6 +87,17 @@ class ReleaseGateTests(unittest.TestCase):
 
         self.assertFalse(real_case_import_enabled(bundle))
 
+    def test_malformed_receipt_disables_import(self):
+        bundle = build_release_bundle(
+            ROOT,
+            independent_verifier_approved=True,
+            real_case_import_override=True,
+            verified_evidence=VERIFIED,
+        )
+        bundle["receipts"].append(None)
+
+        self.assertFalse(real_case_import_enabled(bundle))
+
 
 if __name__ == "__main__":
     unittest.main()

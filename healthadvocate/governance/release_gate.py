@@ -73,6 +73,8 @@ def real_case_import_enabled(bundle: dict[str, Any]) -> bool:
         return False
     receipts: dict[str, dict[str, Any]] = {}
     for receipt in bundle.get("receipts", []):
+        if not isinstance(receipt, dict):
+            return False
         evidence_id = receipt.get("evidence_id")
         if evidence_id in receipts:
             return False

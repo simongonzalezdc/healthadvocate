@@ -98,6 +98,26 @@ class ReleaseGateTests(unittest.TestCase):
 
         self.assertFalse(real_case_import_enabled(bundle))
 
+    def test_malformed_receipt_collection_and_ids_disable_import(self):
+        bundle = build_release_bundle(
+            ROOT,
+            independent_verifier_approved=True,
+            real_case_import_override=True,
+            verified_evidence=VERIFIED,
+        )
+        for malformed_collection in (None, {}, "HA-E70"):
+            with self.subTest(malformed_collection=malformed_collection):
+                candidate = dict(bundle)
+                candidate["receipts"] = malformed_collection
+                self.assertFalse(real_case_import_enabled(candidate))
+        for malformed_id in (None, "", [], {}):
+            with self.subTest(malformed_id=malformed_id):
+                candidate = dict(bundle)
+                candidate["receipts"] = bundle["receipts"] + [
+                    {"evidence_id": malformed_id, "result": "pass"}
+                ]
+                self.assertFalse(real_case_import_enabled(candidate))
+
 
 if __name__ == "__main__":
     unittest.main()

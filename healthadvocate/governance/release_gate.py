@@ -71,11 +71,16 @@ def real_case_import_enabled(bundle: dict[str, Any]) -> bool:
     """Import stays disabled unless every required receipt is present and pass."""
     if not bundle.get("independent_verifier_approved"):
         return False
+    raw_receipts = bundle.get("receipts", [])
+    if not isinstance(raw_receipts, list):
+        return False
     receipts: dict[str, dict[str, Any]] = {}
-    for receipt in bundle.get("receipts", []):
+    for receipt in raw_receipts:
         if not isinstance(receipt, dict):
             return False
         evidence_id = receipt.get("evidence_id")
+        if not isinstance(evidence_id, str) or not evidence_id:
+            return False
         if evidence_id in receipts:
             return False
         receipts[evidence_id] = receipt

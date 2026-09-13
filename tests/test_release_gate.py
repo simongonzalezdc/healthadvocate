@@ -70,6 +70,54 @@ class ReleaseGateTests(unittest.TestCase):
         bundle["receipts"][0]["waived"] = True
         self.assertFalse(real_case_import_enabled(bundle))
 
+    def test_duplicate_receipt_ids_cannot_override_failed_gate_evidence(self):
+        forged = [
+            {
+                "evidence_id": evidence_id,
+                "result": "pass",
+            }
+            for evidence_id in REQUIRED_EVIDENCE_IDS
+        ]
+        bundle = build_release_bundle(
+            ROOT,
+            independent_verifier_approved=True,
+            real_case_import_override=True,
+            extra_receipts=forged,
+        )
+
+        self.assertFalse(real_case_import_enabled(bundle))
+
+    def test_malformed_receipt_disables_import(self):
+        bundle = build_release_bundle(
+            ROOT,
+            independent_verifier_approved=True,
+            real_case_import_override=True,
+            verified_evidence=VERIFIED,
+        )
+        bundle["receipts"].append(None)
+
+        self.assertFalse(real_case_import_enabled(bundle))
+
+    def test_malformed_receipt_collection_and_ids_disable_import(self):
+        bundle = build_release_bundle(
+            ROOT,
+            independent_verifier_approved=True,
+            real_case_import_override=True,
+            verified_evidence=VERIFIED,
+        )
+        for malformed_collection in (None, {}, "HA-E70"):
+            with self.subTest(malformed_collection=malformed_collection):
+                candidate = dict(bundle)
+                candidate["receipts"] = malformed_collection
+                self.assertFalse(real_case_import_enabled(candidate))
+        for malformed_id in (None, "", [], {}):
+            with self.subTest(malformed_id=malformed_id):
+                candidate = dict(bundle)
+                candidate["receipts"] = bundle["receipts"] + [
+                    {"evidence_id": malformed_id, "result": "pass"}
+                ]
+                self.assertFalse(real_case_import_enabled(candidate))
+
 
 if __name__ == "__main__":
     unittest.main()

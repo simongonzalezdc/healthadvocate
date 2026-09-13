@@ -5,6 +5,9 @@
 *.key
 .omc/
 
+# Generated build receipts (regenerate via python -m healthadvocate.governance)
+build/
+
 # Python
 __pycache__/
 *.py[cod]

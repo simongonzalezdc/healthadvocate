@@ -3,9 +3,8 @@
 from __future__ import annotations
 
 from .engine import HealthEngine, format_entities_with_confidence
-from .llm_client import chat_structured
 from .cross_validation import cross_validate
-from . import family_tracker
+from healthadvocate.privacy.gated_model import structured_model_call
 
 
 def decode_document(engine: HealthEngine, text: str, lang: str = "en", profile_id: str | None = None) -> dict:
@@ -31,15 +30,9 @@ def decode_document(engine: HealthEngine, text: str, lang: str = "en", profile_i
     all_ner_entities = list(diseases.entities) + list(drugs.entities) + list(anatomy.entities)
     entity_desc = format_entities_with_confidence(all_ner_entities)
 
-    family_block = ""
-    if profile_id:
-        profile = family_tracker.get_profile(profile_id)
-        family_block = "\n\n" + family_tracker.format_family_context(profile)
-
     prompt = (
         f"A patient shared this medical document:\n\n{safe_text[:2000]}\n\n"
         f"NER Analysis:\n{entity_desc}\n\n"
-        f"{family_block}\n\n"
         "Explain this document to the patient in plain language. "
         "Explain medical terms, highlight concerns, and suggest follow-up questions."
     )
@@ -50,7 +43,10 @@ def decode_document(engine: HealthEngine, text: str, lang: str = "en", profile_i
         "what the document means for their health and what actions to take."
     )
 
-    llm_output = chat_structured(prompt, module_type="document_explanation", system=system)
+    llm_output = structured_model_call(
+        engine, prompt, module_type="document_explanation", system=system,
+        profile_id=profile_id,
+    )
     validation = cross_validate(all_ner_entities, llm_output)
 
     return {

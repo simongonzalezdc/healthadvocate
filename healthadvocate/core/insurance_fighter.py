@@ -3,9 +3,8 @@
 from __future__ import annotations
 
 from .engine import HealthEngine, format_entities_with_confidence
-from .llm_client import chat_structured
 from .cross_validation import cross_validate
-from . import family_tracker
+from healthadvocate.privacy.gated_model import structured_model_call
 
 
 def fight_denial(engine: HealthEngine, denial_text: str, patient_info: str = "", profile_id: str | None = None) -> dict:
@@ -28,17 +27,12 @@ def fight_denial(engine: HealthEngine, denial_text: str, patient_info: str = "",
 
     entity_desc = format_entities_with_confidence(list(diseases.entities) + list(drugs.entities))
 
-    family_block = ""
-    if profile_id:
-        profile = family_tracker.get_profile(profile_id)
-        family_block = "\n\n" + family_tracker.format_family_context(profile)
-
     patient_context = f"\n\nPatient context: {safe_patient.strip()[:400]}" if safe_patient else ""
 
     prompt = (
         f"An insurance company sent this denial letter:\n\n{safe_denial}\n\n"
         f"NER Analysis:\n{entity_desc}\n\n"
-        f"{patient_context}{family_block}\n\n"
+        f"{patient_context}\n\n"
         "As a patient health advocate, fight this denial. "
         "Explain what it means, why it may be wrong, and write a draft appeal letter."
     )
@@ -49,7 +43,10 @@ def fight_denial(engine: HealthEngine, denial_text: str, patient_info: str = "",
         "appeal processes, and patients' rights. Include a draft appeal letter."
     )
 
-    llm_output = chat_structured(prompt, module_type="appeal_strategy", system=system, max_tokens=2000)
+    llm_output = structured_model_call(
+        engine, prompt, module_type="appeal_strategy", system=system,
+        profile_id=profile_id, max_tokens=2000,
+    )
     all_entities = list(diseases.entities) + list(drugs.entities)
     validation = cross_validate(all_entities, llm_output)
 

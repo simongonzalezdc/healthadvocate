@@ -13,7 +13,7 @@ Navigate the medical system. Fight insurance denials. Decode bills. Understand y
 **Free. Private. Runs on your machine.**
 
 [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
-[![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
+[![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
 [![GitHub stars](https://img.shields.io/github/stars/simongonzalezdc/healthadvocate?style=social)](https://github.com/simongonzalezdc/healthadvocate)
 
 [Features](#features) · [How It Works](#how-it-works) · [Quick Start](#quick-start) · [API](#api-reference) · [Credits](#credits)
@@ -115,7 +115,7 @@ HealthAdvocate uses a **dual-layer AI architecture** where two independent syste
 
 ### What you need
 
-- **Python 3.10+**
+- **Python 3.11+**
 - **[LM Studio](https://lmstudio.ai/)** — free app to run LLMs locally. Download a medical model like [Meditron3-8B](https://huggingface.co/epfl-llm/meditron-3).
 - **[OpenMed](https://github.com/maziyarpanahi/openmed)** — medical NLP toolkit (installed automatically)
 

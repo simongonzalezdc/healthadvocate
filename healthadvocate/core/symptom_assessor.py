@@ -3,9 +3,8 @@
 from __future__ import annotations
 
 from .engine import HealthEngine, format_entities_with_confidence
-from .llm_client import chat_structured
 from .cross_validation import cross_validate
-from . import family_tracker
+from healthadvocate.privacy.gated_model import structured_model_call
 
 
 def assess_symptoms(engine: HealthEngine, symptoms: str, profile_id: str | None = None) -> dict:
@@ -19,20 +18,10 @@ def assess_symptoms(engine: HealthEngine, symptoms: str, profile_id: str | None 
     result = engine.extract_diseases(symptoms)
     conditions = [{"name": e.text, "confidence": round(e.confidence, 2), "label": e.label} for e in result.entities]
 
-    # Deidentify before sending to LLM
-    safe_symptoms, pii_map = engine.deidentify_for_llm(symptoms, method="mask")
-
     entity_desc = format_entities_with_confidence(result.entities)
-
-    family_block = ""
-    if profile_id:
-        profile = family_tracker.get_profile(profile_id)
-        family_block = "\n\n" + family_tracker.format_family_context(profile)
-
-    prompt = (
-        f"A patient reports these symptoms: {safe_symptoms}\n\n"
+    primary = (
+        f"A patient reports these symptoms: {symptoms}\n\n"
         f"NER Analysis:\n{entity_desc}\n\n"
-        f"{family_block}\n\n"
         "As a health advocate, provide a structured assessment. "
         "Assess urgency realistically — serious symptoms should be high. "
         "Mild and common symptoms should be low."
@@ -44,13 +33,21 @@ def assess_symptoms(engine: HealthEngine, symptoms: str, profile_id: str | None 
         "Always recommend seeing a healthcare provider for anything beyond minor issues."
     )
 
-    llm_output = chat_structured(prompt, module_type="symptom_assessment", system=system)
+    # Full assembled context (including family profile) is deidentified first.
+    llm_output = structured_model_call(
+        engine,
+        primary,
+        module_type="symptom_assessment",
+        system=system,
+        profile_id=profile_id,
+    )
     validation = cross_validate(result.entities, llm_output)
 
     urgency = llm_output.get("urgency", "medium")
     if validation.urgency_disagreement:
         urgency = "high"
 
+    status = llm_output.get("deidentification_status", "unknown")
     return {
         "conditions": conditions,
         "urgency": urgency,
@@ -69,5 +66,6 @@ def assess_symptoms(engine: HealthEngine, symptoms: str, profile_id: str | None 
         },
         "model_used": result.model_used,
         "processing_time": result.processing_time,
-        "pii_scrubbed": len(pii_map) > 0,
+        "deidentification_status": status,
+        "pii_scrubbed": status == "success",
     }

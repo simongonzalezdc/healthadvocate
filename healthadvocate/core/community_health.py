@@ -3,8 +3,8 @@
 from __future__ import annotations
 
 from .engine import HealthEngine, format_entities_with_confidence
-from .llm_client import chat_structured
 from .cross_validation import cross_validate
+from healthadvocate.privacy.gated_model import structured_model_call
 
 
 def scan_bulletin(engine: HealthEngine, text: str) -> dict:
@@ -32,7 +32,9 @@ def scan_bulletin(engine: HealthEngine, text: str) -> dict:
         "Be balanced, evidence-based, and practical."
     )
 
-    llm_output = chat_structured(prompt, module_type="bulletin_analysis", system=system)
+    llm_output = structured_model_call(
+        engine, prompt, module_type="bulletin_analysis", system=system,
+    )
     validation = cross_validate(all_entities, llm_output)
 
     return {

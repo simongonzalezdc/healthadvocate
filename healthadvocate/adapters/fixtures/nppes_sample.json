@@ -1,0 +1,1 @@
+{"release":"fixture-2026-07","providers":[{"npi":"1999999998","name":"Dr Synthetic Example","taxonomy":"207Q00000X","address_city":"Springfield","address_state":"IL","match_rationale":"exact_name"},{"npi":"1999999997","name":"Synthetic Family Clinic","taxonomy":"261QF0400X","address_city":"Springfield","address_state":"IL","match_rationale":"organization_name"}]}

@@ -86,6 +86,55 @@ class PresentabilityTests(unittest.TestCase):
             "this.focusInto(document.getElementById('coverage-panel'));", app_js
         )
 
+
+    def test_heading_outline_has_no_level_skips_and_tool_views_have_real_titles(self):
+        html = (ROOT / "healthadvocate" / "static" / "index.html").read_text()
+        styles = (ROOT / "healthadvocate" / "static" / "styles.css").read_text()
+
+        # WCAG 2.1 SC 1.3.1 advisories from the 2026-09-13 machine a11y pass:
+        # the home outline skipped h1 -> h3 (entry-card titles sit directly
+        # under the hero h1), and every tool view's visual title was a styled
+        # span.panel-eyebrow, so screen-reader heading navigation found
+        # nothing to orient on outside home and coverage. Tool views now
+        # follow the coverage pattern: a real h2 title (the panel-eyebrow
+        # class keeps the visual treatment) with the section named through
+        # aria-labelledby. Behavioral proof: tests/browser/ax-audit.js.
+        self.assertNotIn('<span class="panel-eyebrow">', html)
+
+        headings = re.findall(r"<h([1-6])[^>]*>", html)
+        self.assertEqual(headings.count("1"), 1)
+        for prev, level in zip(headings, headings[1:]):
+            self.assertLessEqual(
+                int(level) - int(prev),
+                1,
+                f"heading outline skips levels h{prev} -> h{level}",
+            )
+
+        for view_id, attrs, body in re.findall(
+            r'<section id="(view-[\w-]+)"([^>]*)>(.*?)</section>', html, re.S
+        ):
+            if view_id == "view-home":
+                continue  # titled by the page h1
+            first = re.search(r'<h([1-6])[^>]*id="([\w-]+)"', body)
+            self.assertIsNotNone(first, f"{view_id} has no programmatic heading")
+            self.assertEqual(
+                first.group(1),
+                "2",
+                f"{view_id}'s first heading must be its view-title h2",
+            )
+            self.assertIn(
+                f'aria-labelledby="{first.group(2)}"',
+                attrs,
+                f"{view_id} must be a named region via aria-labelledby to its h2",
+            )
+
+        # heading styles follow the promoted tags (entry cards h2, dash cards h3)
+        self.assertIn(".entry-card h2 {", styles)
+        self.assertIn(".entry-card:first-child h2 {", styles)
+        self.assertIn(".dash-card h3 {", styles)
+        self.assertNotIn(".entry-card h3 {", styles)
+        self.assertNotIn(".dash-card h4 {", styles)
+
     def test_copy_avoids_compliance_and_certification_overclaims(self):
         combined = "\n".join(
             [

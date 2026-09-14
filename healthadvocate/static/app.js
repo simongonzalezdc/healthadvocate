@@ -56,6 +56,17 @@ const HA = {
 
   /* ── View Routing ── */
 
+  /* Move focus into a revealed view or panel (WCAG 2.4.3): the control that
+     triggered the switch is hidden with the content it belonged to, which
+     would otherwise strand keyboard focus on document.body with the new
+     content unannounced. Prefer the first heading; fall back to the container. */
+  focusInto(container) {
+    if (!container) return;
+    const target = container.querySelector('h1, h2, h3') || container;
+    target.tabIndex = -1;
+    target.focus();
+  },
+
   showView(name) {
     document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
     const target = document.getElementById(`view-${name}`);
@@ -73,6 +84,7 @@ const HA = {
       this.initScrollReveal();
     }
 
+    this.focusInto(target);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   },
 
@@ -98,6 +110,7 @@ const HA = {
       this._coverageCaseId = caseData.case_id;
       this.setCoverageStatus('Coverage Case created (synthetic only).');
       await this.loadCoverageView();
+      this.focusInto(document.getElementById('coverage-panel'));
     } catch (err) {
       this.setCoverageStatus(err.message || 'Could not create case.');
     } finally {

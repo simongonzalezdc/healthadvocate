@@ -69,6 +69,23 @@ class PresentabilityTests(unittest.TestCase):
         self.assertNotRegex(app_js, re.compile(r'urgency-\\$\\{this\\.escapeHtml\\(data\\.urgency\\)\\}'))
         self.assertNotRegex(app_js, re.compile(r'class="track-status \\$\\{safeStatus\\}"'))
 
+    def test_view_switches_move_focus_into_the_revealed_content(self):
+        app_js = (ROOT / "healthadvocate" / "static" / "app.js").read_text()
+
+        # WCAG 2.1 SC 2.4.3 (Level A): the control that triggers a view switch
+        # or the coverage form→panel re-render is hidden with the content it
+        # belonged to, which strands keyboard focus on document.body with the
+        # new content unannounced. The switch itself must hand focus to the
+        # revealed content: first heading, else the container (tabindex=-1).
+        # Behavioral proof: tests/browser/focus-order-regression.js.
+        self.assertIn("focusInto(container)", app_js)
+        self.assertIn("container.querySelector('h1, h2, h3') || container", app_js)
+        self.assertIn("target.tabIndex = -1;", app_js)
+        self.assertIn("this.focusInto(target);", app_js)
+        self.assertIn(
+            "this.focusInto(document.getElementById('coverage-panel'));", app_js
+        )
+
     def test_copy_avoids_compliance_and_certification_overclaims(self):
         combined = "\n".join(
             [

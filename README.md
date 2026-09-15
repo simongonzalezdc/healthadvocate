@@ -69,7 +69,10 @@ Saw a health claim online? Paste it. HealthAdvocate evaluates credibility, provi
 ### Family Health Tracker
 Manage health profiles for your whole family — conditions, medications, allergies. This context flows into every other feature, so Drug Checker knows about interactions and Appointment Prep knows your history.
 
+### Coverage Continuity Track
+kb|Lose employer coverage? Build a local-first Coverage Case that organizes deadlines, providers, medications, evidence, contacts, and prepared scripts. Encrypted at rest with a key from your OS credential store. The Commitment Gate blocks any payment, submission, plan change, message, or treatment change — the app prepares, you decide. The manual workflow runs without any model or external dataset; open-data adapters (RxNorm, DailyMed, openFDA, NPPES, NADAC, DrugCentral) are optional and each declares exactly what it can and cannot claim. Real-case import stays disabled until an independent verifier approves the exact build.
 ### Health Tracks
+
 Track ongoing health concerns over time with status updates and notes. See what's active, what's being monitored, and what you've resolved.
 
 ---
@@ -226,6 +229,22 @@ curl -X POST http://localhost:8080/api/drugs/check \
 | `POST` | `/api/family/profiles/{id}/medications` | Add medication to profile |
 | `POST` | `/api/tracks` | Start tracking a health concern |
 | `GET` | `/api/tracks/dashboard` | Track dashboard overview |
+| `GET` | `/api/coverage/status` | Coverage Continuity Track manual workflow availability |
+| `GET` | `/api/coverage/cases` | List local Coverage Cases |
+| `POST` | `/api/coverage/cases` | Create a synthetic Coverage Case |
+| `GET` | `/api/coverage/cases/{id}` | Retrieve a Coverage Case |
+| `PATCH` | `/api/coverage/cases/{id}` | Update a Coverage Case title or next action |
+| `POST` | `/api/coverage/cases/{id}/resume` | Resume a Coverage Case across restarts |
+| `POST` | `/api/coverage/cases/{id}/view` | Build the low-energy Coverage view |
+| `POST` | `/api/coverage/cases/{id}/scripts/{kind}` | Deterministic county/provider/billing/pharmacy script |
+| `POST` | `/api/coverage/cases/{id}/export` | Private or redacted export of a Coverage Case |
+| `POST` | `/api/coverage/cases/{id}/delete` | Delete a Coverage Case and report unowned sources |
+| `POST` | `/api/coverage/commitment-gate` | Review-only gate for payment/submit/message/treatment intents |
+| `POST` | `/api/coverage/cases/{id}/evidence` | Add immutable Evidence Item (real-case import disabled by default) |
+| `POST` | `/api/coverage/cases/{id}/facts` | Add a typed Fact with Fact Status and provenance |
+| `POST` | `/api/coverage/cases/{id}/targets` | Add a Continuity Target (provider or medication) |
+| `POST` | `/api/coverage/cases/{id}/contacts` | Append a Contact Event |
+| `POST` | `/api/coverage/adapters/{rxnorm,dailymed,openfda,nppes,nadac,drugcentral}` | Optional open-data adapter with narrow claim contract |
 
 ### Response Format
 
@@ -261,6 +280,8 @@ HealthAdvocate is designed as a privacy-preserving local-first health tool:
 - **No persistent storage.** Family profiles and health tracks are kept in memory only. When you stop the server, the data is gone. No database, no files, no data to breach.
 - **Zero telemetry.** No analytics, no tracking pixels, no error reporting to external services. We wouldn't know how to find your data even if we wanted to.
 - **Local network only by default.** The documented run command binds to `127.0.0.1`, and browser CORS defaults to localhost. If you expose the app on a network or public URL, add authentication and a tighter deployment review first.
+nc|- **Coverage Cases are encrypted at rest.** Coverage data lives outside the source repository, encrypted with a key held in your OS credential store. Missing or wrong keys fail before any case metadata is returned. Deletion reports any unowned source files it could not remove.
+yc|- **Commitment Gate by design.** Pay, submit, withdraw, change plan, cancel, message, and treatment-change intents are review-only. The first release ships no capable outbound adapter for those actions.
 
 ---
 
@@ -316,6 +337,10 @@ healthadvocate/
     community_health.py   Health bulletin credibility scanner
     family_tracker.py     Family health profile management
     health_tracks.py      Health concern tracking over time
+qa|  coverage/                 Local-first Coverage Continuity Track (case, evidence, gate, scripts)
+qa|  privacy/                  Loopback-only defaults, gated model, PHI redaction
+qa|  governance/               Open license/provenance gate + real-case release gate
+qa|  adapters/                 Optional open-data adapters (RxNorm, DailyMed, openFDA, NPPES, NADAC, DrugCentral)
 ```
 
 ---

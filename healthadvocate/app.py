@@ -16,10 +16,13 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 from starlette.concurrency import run_in_threadpool
 
-# Ensure project root is on path
+# Ensure project root is on path. APPEND, never insert(0): the repo root must
+# not outrank site-packages, or a recreated local package dir would shadow the
+# pinned dependency again (the openmed vendoring failure mode; guarded by
+# tests/test_openmed_contract.py::TestNoVendoredShadow).
 _PROJECT_ROOT = Path(__file__).resolve().parent.parent
 if str(_PROJECT_ROOT) not in sys.path:
-    sys.path.insert(0, str(_PROJECT_ROOT))
+    sys.path.append(str(_PROJECT_ROOT))
 
 from healthadvocate.core.engine import HealthEngine
 from healthadvocate.core import (

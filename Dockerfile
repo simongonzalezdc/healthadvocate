@@ -11,7 +11,6 @@ RUN pip install --no-cache-dir torch --index-url https://download.pytorch.org/wh
 COPY healthadvocate/requirements.txt /tmp/requirements.txt
 RUN pip install --no-cache-dir -r /tmp/requirements.txt
 
-COPY openmed/ ./openmed/
 COPY healthadvocate/ ./healthadvocate/
 
 # Default deployment is loopback-only (issue 72/80). Do not publish a

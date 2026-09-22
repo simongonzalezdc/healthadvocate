@@ -2,7 +2,13 @@ fastapi>=0.136.3
 uvicorn[standard]>=0.49.0
 pydantic>=2.13.4
 openai>=2.41.0
-openmed[hf]>=1.5.2
+# openmed: the vendored repo-root openmed/ copy (fork of upstream v1.4.0 + 3
+# local patches) is the runtime copy today — repo-root cwd wins import
+# resolution. This pin governs the pip copy and the CI dependency audit:
+# exact ==1.5.2 (not 1.4.0: PYSEC-2026-2852, fixed 1.5.2; not >=: keep CI
+# reproducible). Stage 2 unifies runtime + pin at 2.5.0 — see
+# docs/OPENMED-UPSTREAM-LEVERAGE-2026-09-17.md §5.
+openmed[hf]==1.5.2
 faker>=40.19.1
 pysbd>=0.3.4
 transformers>=5.10.1

@@ -17,6 +17,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Renovate dependency automation configuration.
 
 ### Changed
+- **OpenMed vendoring retired** — the repo-root `openmed/` fork (upstream
+  v1.4.0 + 3 local patches, 67 files) is deleted; the runtime is the
+  PyPI-pinned package (`openmed[hf]==2.5.0`, exact pin; Renovate offers
+  bumps). The `engine.py` sys.path insert that let the vendored copy shadow
+  the pip pin is removed. Version-agnostic contract tests
+  (`tests/test_openmed_contract.py`) gate the surface HA consumes.
+  Rationale + full upstream update list:
+  `docs/OPENMED-UPSTREAM-LEVERAGE-2026-09-17.md`,
+  `docs/OPENMED-UPSTREAM-CHANGELOG-2026-09-22.md`. Our offset-safe
+  `reidentify` patch is superseded upstream (occurrence-aware); the config
+  thread-lock patch is dropped (HA never touches OpenMed global config).
 - Public repo hygiene hardening; tracked agent session state removed.
 - Docker Python base image tag updated to `3.14`.
 - README restored to full pre-wave2b content with S+ SEO/GEO public-face pass and

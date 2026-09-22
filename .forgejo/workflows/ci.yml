@@ -63,7 +63,7 @@ jobs:
 
       # --- Gate 3: compile ---
       - name: Compile
-        run: .venv/bin/python -m compileall -q healthadvocate openmed
+        run: .venv/bin/python -m compileall -q healthadvocate
 
       # --- Gate 4: dependency audit (pip-audit) ---
       # Reviewer-approved allowlist: add `--ignore-vuln <ID>` lines below ONLY

@@ -173,3 +173,23 @@ class TestHaAdapterExtractEntities:
         assert _extract_entities(None, "x") == []
         assert _extract_entities(42, "x") == []
         assert _extract_entities({}, "x") == []
+
+
+class TestNoVendoredShadow:
+    """Post-de-vendor invariant (Architect amendment 1, RALPLAN 2026-09-22):
+    the imported openmed must resolve OUTSIDE this repo — the repo root must
+    never shadow the pinned PyPI package again. app.py appends (never
+    inserts at 0) the project root; this test is the standing guard.
+    """
+
+    def test_openmed_not_imported_from_repo_root_copy(self):
+        from pathlib import Path
+
+        repo_root = Path(__file__).resolve().parent.parent
+        vendored = repo_root / "openmed"
+        resolved = Path(openmed.__file__).resolve()
+        assert not resolved.is_relative_to(vendored), (
+            f"openmed resolved from the repo-root copy ({resolved}) — a "
+            "local package dir is shadowing the pinned dependency (cwd on "
+            "sys.path still prefers it; the vendoring failure mode)"
+        )

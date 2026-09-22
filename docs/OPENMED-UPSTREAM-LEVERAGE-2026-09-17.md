@@ -148,9 +148,12 @@ with an sdist vendor + hash pin.
 
 - **Stage 0 — hygiene PR (pre-req)**: land Q1 changelog repair; remove the
   `engine.py` sys.path insert (lines 21-24) in the same PR so the pip copy
-  resolves; align `requirements.txt` to the CURRENT vendored behavior
-  (`openmed[hf]==1.4.0` + a TODO pointer to this doc) so reality and manifest
-  agree before the jump. Re-run the 85-test suite + governance receipt at this
+  resolves; align `requirements.txt` to an exact pin so reality and manifest
+  agree before the jump. AMENDED at execution (2026-09-22): the pin is
+  `openmed[hf]==1.5.2`, not ==1.4.0 — the PR-#20 pip-audit gate correctly
+  refuses 1.4.0 (PYSEC-2026-2852, fixed in 1.5.2). Runtime at this stage is
+  still the vendored 1.4.0+patches via repo-root cwd; the pin governs the
+  pip copy and CI; Stage 2 unifies both at 2.5.0. Re-run the 85-test suite + governance receipt at this
   intermediate state.
 - **Stage 1 — contract-test PR (make the bump red/green, not discovery)**: add
   adapter tests pinning the coupling contract at 1.4.0: `analyze_text` result

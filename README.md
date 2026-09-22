@@ -74,7 +74,7 @@ Saw a health claim online? Paste it. HealthAdvocate evaluates credibility, provi
 Manage health profiles for your whole family — conditions, medications, allergies. This context flows into every other feature, so Drug Checker knows about interactions and Appointment Prep knows your history.
 
 ### Coverage Continuity Track
-kb|Lose employer coverage? Build a local-first Coverage Case that organizes deadlines, providers, medications, evidence, contacts, and prepared scripts. Encrypted at rest with a key from your OS credential store. The Commitment Gate blocks any payment, submission, plan change, message, or treatment change — the app prepares, you decide. The manual workflow runs without any model or external dataset; open-data adapters (RxNorm, DailyMed, openFDA, NPPES, NADAC, DrugCentral) are optional and each declares exactly what it can and cannot claim. Real-case import stays disabled until an independent verifier approves the exact build.
+Lose employer coverage? Build a local-first Coverage Case that organizes deadlines, providers, medications, evidence, contacts, and prepared scripts. Encrypted at rest with a key from your OS credential store. The Commitment Gate blocks any payment, submission, plan change, message, or treatment change — the app prepares, you decide. The manual workflow runs without any model or external dataset; open-data adapters (RxNorm, DailyMed, openFDA, NPPES, NADAC, DrugCentral) are optional and each declares exactly what it can and cannot claim. Real-case import stays disabled until an independent verifier approves the exact build.
 ### Health Tracks
 
 Track ongoing health concerns over time with status updates and notes. See what's active, what's being monitored, and what you've resolved.
@@ -341,10 +341,10 @@ healthadvocate/
     community_health.py   Health bulletin credibility scanner
     family_tracker.py     Family health profile management
     health_tracks.py      Health concern tracking over time
-qa|  coverage/                 Local-first Coverage Continuity Track (case, evidence, gate, scripts)
-qa|  privacy/                  Loopback-only defaults, gated model, PHI redaction
-qa|  governance/               Open license/provenance gate + real-case release gate
-qa|  adapters/                 Optional open-data adapters (RxNorm, DailyMed, openFDA, NPPES, NADAC, DrugCentral)
+  coverage/                 Local-first Coverage Continuity Track (case, evidence, gate, scripts)
+  privacy/                  Loopback-only defaults, gated model, PHI redaction
+  governance/               Open license/provenance gate + real-case release gate
+  adapters/                 Optional open-data adapters (RxNorm, DailyMed, openFDA, NPPES, NADAC, DrugCentral)
 ```
 
 ---

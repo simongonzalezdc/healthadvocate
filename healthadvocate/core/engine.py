@@ -2,11 +2,9 @@
 
 from __future__ import annotations
 
-import sys
 import time
 import logging
 from dataclasses import dataclass, field
-from pathlib import Path
 from typing import Optional
 
 logger = logging.getLogger(__name__)
@@ -17,11 +15,6 @@ from healthadvocate.privacy.boundary import (
     DeidentificationStatus,
     PrivacyBoundary,
 )
-
-# Ensure this project root is on sys.path so the bundled/development OpenMed copy is importable.
-_PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
-if str(_PROJECT_ROOT) not in sys.path:
-    sys.path.insert(0, str(_PROJECT_ROOT))
 
 import openmed
 from openmed import ModelLoader, OpenMedConfig

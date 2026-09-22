@@ -22,10 +22,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - README restored to full pre-wave2b content with S+ SEO/GEO public-face pass and
   sibling-repo cross-links.
 - `.gitignore` completed (was missing its trailing entry).
-sg|- README documents the live Coverage Continuity Track (Features entry,
-sg|  project-structure lines for `coverage/`, `privacy/`, `governance/`,
-sg|  `adapters/`, the 16 `/api/coverage/*` endpoints in the All Endpoints
-sg|  table, and the encrypted-case + Commitment-Gate privacy bullets).
+- README documents the live Coverage Continuity Track (Features entry,
+  project-structure lines for `coverage/`, `privacy/`, `governance/`,
+  `adapters/`, the 16 `/api/coverage/*` endpoints in the All Endpoints
+  table, and the encrypted-case + Commitment-Gate privacy bullets).
 
 ### Fixed
 - Incomplete `.gitignore` entry that left local artifacts unignored.

@@ -76,6 +76,34 @@ types (healthadvocate/coverage/commitment_gate.py:10-36); (g) every NEEDS_HUMAN
 outcome carries the numbers plus deterministic allowed_next_steps
 (commitment_gate.py:192-196 pattern).
 
+**Round-2 amendment (Architect review of the landed design, applied 2026-09-22;
+the threshold-provenance half of the same round is written into the calibration
+honesty rule below and the J1/J2 stages in §5):**
+(h) the assessor allowlist is pinned by DERIVATION, not by name list: a second
+static gate tripwire AST-walks `healthadvocate/core/` collecting module-level
+public functions whose first positional parameter is `engine`, and asserts
+`derived == ALLOWLIST` as set equality. The frozen ALLOWLIST is the nine entry
+points that walk finds in this tree (AST-verified 2026-09-22):
+`assess_symptoms` (core/symptom_assessor.py:10), `fight_denial`
+(core/insurance_fighter.py:10), `decode_bill` (core/bill_decoder.py:13),
+`decode_document` (core/document_decoder.py:10), `prepare_appointment`
+(core/appointment_prep.py:10), `scan_bulletin` (core/community_health.py:10),
+`translate_discharge` (core/discharge_translator.py:10), `check_drug`
+(core/drug_checker.py:10), `create_brief` (core/second_opinion.py:10). The
+assertion fails on ANY addition — a new engine-consuming assessor cannot
+appear in `healthadvocate/core/` without an explicit design decision — and
+J2+ conversions REMOVE entries as surfaces move behind the receipt contract,
+so the ALLOWLIST only ever shrinks. Exclusion is by scope, never by exemption:
+`structured_model_call` (healthadvocate/privacy/gated_model.py:16) also takes
+the engine first but is model plumbing, not an assessment surface — the
+walk's scope (`healthadvocate/core/` only) excludes it; `evaluate_intent`
+(healthadvocate/coverage/commitment_gate.py:175) takes `raw_intent`, not an
+engine, so it never enters the derived set and needs no exemption. A
+name-based grep is not an acceptable derivation for this tripwire: only one
+of the nine names contains "assess", so a grep satisfies the letter while
+exempting nothing that matters — the prose-only-tripwire failure mode the
+mechanical-derivation requirement exists to close.
+
 **Question schemas (pydantic, typed, no prose):**
 - `ChoiceQuestion(id, options: list[str] (≤255), context_ref)` →
   `ChoiceAnswer(value: str, probability: float, confidence: float)`
@@ -95,7 +123,14 @@ point.
 a best guess — it is `NEEDS_HUMAN` with the calibrated numbers attached
 (audit trail, not silence). Thresholds per question class, stored as data
 (upstream's `calibration_thresholds_path` mechanism is the natural carrier
-post-2.5.0-bump).
+post-2.5.0-bump). Threshold provenance is a shipping condition: per-question-
+class thresholds must be derived from MEASURED confidence distributions on
+each converted surface before that surface's below-threshold leg goes live —
+a threshold invented from defaults is not a threshold. Until measured data
+exists for a surface, `threshold-data-missing-or-malformed` fails closed
+(structural leg (b)) and the surface answers `NEEDS_HUMAN` — never a default
+threshold. J1 accordingly ships NO production threshold defaults; thresholds
+exist only in synthetic test fixtures.
 
 **Runners (pluggable behind the existing model gate pattern):**
 1. `code` — deterministic rules where the four-question test says code wins
@@ -127,11 +162,17 @@ naive receipt would leak exactly what the privacy boundary exists to strip.
 - **J0 (this doc):** design staged; RALPLAN addendum recorded (CEO-ordered;
   gets its own Architect/Critic pass before code lands).
 - **J1:** schema + gate skeleton + contract tests (one small PR, synthetic
-  fixtures only), INCLUDING the canary PHI-free tripwire and the four
-  fail-closed legs above; the revised design doc lands on the branch with it.
+  fixtures only — and explicitly NO production threshold defaults: thresholds
+  appear in synthetic test fixtures and nowhere else), INCLUDING the canary
+  PHI-free tripwire, the assessor-allowlist pin (h), and the four fail-closed
+  legs above; the revised design doc lands on the branch with it.
 - **J2:** convert surfaces in (frequency × failure-cost × token-cost) order —
   first candidates: coverage Commitment Gate intents (already classified),
-  denial-reason Choice, symptom-triage Score.
+  denial-reason Choice, symptom-triage Score. Each conversion pays for its
+  below-threshold leg with measured data, never defaults: per-question-class
+  thresholds are derived from measured confidence distributions on that
+  surface BEFORE the leg goes live; a surface without measured data answers
+  NEEDS_HUMAN. Converting a surface removes it from the (h) ALLOWLIST.
 - **J3 (optional, CEO-gated):** hosted-jev runner behind the destination gate.
 
 ## 6. Guardrails

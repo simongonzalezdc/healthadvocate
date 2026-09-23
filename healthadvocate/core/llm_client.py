@@ -15,6 +15,7 @@ from healthadvocate.privacy.endpoint_policy import (
 )
 from healthadvocate.privacy.logging_redaction import install_redacting_log_filter
 
+import httpx
 import openai
 
 logger = logging.getLogger(__name__)
@@ -245,7 +246,7 @@ def chat_structured(
             max_tokens=max_tokens,
             temperature=temperature,
         )
-    except openai.APIError as exc:
+    except (openai.APIError, httpx.HTTPError) as exc:
         # Provider transport failure (timeout / connection / rate). The
         # single-slot loopback runtime can refuse under concurrency; this is
         # availability, not a product error — fail closed to the designed

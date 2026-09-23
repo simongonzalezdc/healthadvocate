@@ -47,3 +47,25 @@ def test_timeout_error_returns_fallback(monkeypatch):
     out = llm_client.chat_structured("synthetic symptoms")
     assert isinstance(out, dict)
     assert out.get("_block_reason") == "APITimeoutError"
+
+
+def test_raw_httpx_protocol_error_also_fails_closed(monkeypatch):
+    """Live finding #2: httpcore.RemoteProtocolError (server dropped the
+    connection mid-request, unwrapped by the openai SDK) escaped as a 500."""
+    import httpx
+    monkeypatch.setenv("HEALTHADVOCATE_MODEL_ENABLED", "1")
+    monkeypatch.setattr(llm_client, "model_runtime_available", lambda: True)
+
+    class DroppingCompletions:
+        def create(self, **_):
+            raise httpx.RemoteProtocolError("Server disconnected without sending a response.")
+
+    class DroppingClient:
+        def __init__(self):
+            self.chat = type("Chat", (), {})()
+            self.chat.completions = DroppingCompletions()
+
+    monkeypatch.setattr(llm_client, "_model_client", lambda: DroppingClient())
+    out = llm_client.chat_structured("synthetic symptoms")
+    assert isinstance(out, dict)
+    assert out.get("_block_reason") == "RemoteProtocolError"

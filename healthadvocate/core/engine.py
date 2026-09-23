@@ -20,6 +20,7 @@ from healthadvocate.privacy.boundary import (
 )
 from healthadvocate.privacy.policy_profiles import (
     resolve_permitted_policy,
+    run_policy_deidentify,
     verify_policy_audit_report,
 )
 
@@ -231,13 +232,23 @@ class HealthEngine:
 
         Wave 2a (RALPLAN row 4): ``policy`` is OPT-IN. ``None`` (default) keeps
         exactly the legacy openmed call and behavior. A permitted policy name
-        (healthadvocate.privacy.policy_profiles allowlist) is threaded to
-        ``openmed.deidentify(..., policy=...)`` and the run must be backed by a
-        verifiable ``AuditReport`` on the result — unknown policies, missing
-        audit reports, failed hash verification, or an unwritable governance
-        ledger all fail closed through the existing deid-failure path. A policy
-        can only add redaction/audit posture, never remove any.
+        (healthadvocate.privacy.policy_profiles allowlist) runs through the
+        openmed Pipeline with ``audit=True`` (the stock top-level API cannot
+        return text and evidence together) and the run must be backed by a
+        verifiable ``AuditReport`` bound to this run — unknown policies,
+        missing audit reports, failed hash verification, policy/text-binding
+        mismatches, or an unwritable governance ledger all fail closed
+        through the existing deid-failure path. A policy can only add
+        redaction/audit posture, never remove any.
         """
+
+        def _digest(value: object) -> str:
+            """Best-effort 16-hex digest; never raises (review finding 2)."""
+            try:
+                raw = value if isinstance(value, str) else repr(value)
+                return hashlib.sha256(raw.encode("utf-8")).hexdigest()[:16]
+            except Exception:  # noqa: BLE001 — digesting must never break the leg
+                return ""
 
         def _record_audit(
             policy_name: str,
@@ -246,6 +257,7 @@ class HealthEngine:
             repro_hash: str = "",
             error_code: str = "",
             requested_policy_digest: str = "",
+            run_input_digest: str = "",
         ) -> bool:
             """Write the HA-E78 policy-audit receipt; True iff recorded.
 
@@ -259,6 +271,7 @@ class HealthEngine:
                     repro_hash=repro_hash,
                     error_code=error_code,
                     requested_policy_digest=requested_policy_digest,
+                    run_input_digest=run_input_digest,
                     receipts_dir=(
                         Path(self.policy_audit_receipts_dir)
                         if self.policy_audit_receipts_dir
@@ -308,21 +321,21 @@ class HealthEngine:
                     "",
                     verified=False,
                     error_code="policy_unknown",
-                    # Digest (never the raw string) lets the ledger correlate
+                    # Digest (never the raw value) lets the ledger correlate
                     # the rejected request without echoing attacker text.
-                    requested_policy_digest=hashlib.sha256(
-                        policy.encode("utf-8")
-                    ).hexdigest()[:16],
+                    # Non-str requests are digested via repr and can never
+                    # raise here (review finding 2).
+                    requested_policy_digest=_digest(policy),
+                    run_input_digest=_digest(assembled),
                 )
                 return _policy_failure("policy_unknown")
 
             try:
-                raw = openmed.deidentify(
+                raw = run_policy_deidentify(
                     assembled,
                     method=method,
-                    loader=self.loader,
-                    keep_mapping=True,
                     policy=resolved,
+                    loader=self.loader,
                 )
             except Exception as exc:
                 logger.error(
@@ -339,6 +352,7 @@ class HealthEngine:
                     resolved,
                     verified=False,
                     error_code="policy_audit_missing",
+                    run_input_digest=_digest(assembled),
                 )
                 return _policy_failure("policy_audit_missing")
 
@@ -363,6 +377,7 @@ class HealthEngine:
                     verified=False,
                     repro_hash=repro_hash,
                     error_code=error_code,
+                    run_input_digest=_digest(assembled),
                 )
                 return _policy_failure(error_code)
 
@@ -372,6 +387,7 @@ class HealthEngine:
                 resolved,
                 verified=True,
                 repro_hash=repro_hash,
+                run_input_digest=_digest(assembled),
             ):
                 return _policy_failure("policy_audit_receipt_write_failed")
 

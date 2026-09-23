@@ -6,27 +6,42 @@ following the existing receipt file shapes (JSON, ``indent=2``,
 ``sort_keys=True``, trailing newline — see gate.write_receipts).
 
 No raw text, no canaries, ever: a receipt carries only the permitted policy
-name, the audit reproducibility hash, the verification result, and build
-metadata. Unknown requested policy names are never echoed — only a SHA-256
-digest of the requested string is recorded, for correlation without content.
-This contract is enforced at the ledger boundary: ``write_policy_audit_receipt``
-sanitizes every free-form field (permitted policy names, canonical
-``sha256:<64 hex>`` hashes, the error-code vocabulary, hex digests) and blanks
-anything else before a byte reaches disk, whatever the calling path.
+name, the audit reproducibility hash, the verification result, a one-way
+16-hex digest of the run's assembled input (failure-volume evidence, never
+reversible to text), and build metadata. Unknown requested policy names are
+never echoed — only a SHA-256 digest of the requested string is recorded,
+for correlation without content. This contract is enforced at the ledger
+boundary: ``write_policy_audit_receipt`` sanitizes every free-form field
+(permitted policy names, canonical ``sha256:<64 hex>`` hashes, the error-code
+vocabulary, hex digests) and derives ``result`` from ``verification_result``
+so contradictory evidence cannot be written, whatever the calling path.
 
 The ledger is append-once and idempotent: the filename is derived from the
 verification event's identity (policy, outcome, reproducibility hash, error
-code), so recording the same event twice leaves exactly one unchanged file.
+code, run input digest), so recording the same event for the same input
+twice leaves exactly one unchanged file. CONSEQUENCE, stated plainly:
+repeated IDENTICAL failing runs (same policy, same error code, same input
+digest) collapse into that one receipt — the ledger evidences failure
+VOLUME across distinct runs (distinct inputs, policies, or outcomes each
+get their own file), not repetition count of a single identical event.
 Wall-clock ``generated_at`` and ``build_revision`` are metadata recorded at
 first write and never rewrite an existing receipt.
+
+Writes are atomic (temp file + fsync + ``os.replace``), so a crash can never
+leave a truncated receipt; and the append-once check treats only a PARSEABLE
+existing file as recorded — an unparseable file (external corruption,
+partial write by an older non-atomic writer) is rewritten cleanly instead of
+sticking forever.
 """
 
 from __future__ import annotations
 
 import hashlib
 import json
+import os
 import re
 import subprocess
+import tempfile
 from dataclasses import asdict, dataclass, replace
 from datetime import datetime, timezone
 from pathlib import Path
@@ -49,6 +64,7 @@ STOP_RULE = (
 _REPRO_HASH_RE = re.compile(r"^sha256:[0-9a-f]{64}$")
 _ERROR_CODE_RE = re.compile(r"^[a-z0-9_]*$")
 _REQUESTED_DIGEST_RE = re.compile(r"^[0-9a-f]{16}$")
+_RUN_DIGEST_RE = re.compile(r"^[0-9a-f]{16}$")
 
 
 @dataclass(frozen=True)
@@ -64,12 +80,13 @@ class PolicyAuditReceipt:
 
     build_revision: str
     generated_at: str
-    result: str  # "pass" | "fail" — verification outcome
+    result: str  # "pass" | "fail" — derived from verification_result at write
     policy: str  # permitted canonical name; "" when the request was unknown
     reproducibility_hash: str
     verification_result: bool
     error_code: str = ""
     requested_policy_digest: str = ""
+    run_input_digest: str = ""  # 16-hex sha256 of the assembled input
     evidence_id: str = "HA-E78"
     tool_version: str = TOOL_VERSION
     reviewer: str = REVIEWER
@@ -83,7 +100,12 @@ class PolicyAuditReceipt:
         return data
 
     def identity_digest(self) -> str:
-        """Stable digest of the verification event (excludes timestamps)."""
+        """Stable digest of the verification event (excludes timestamps).
+
+        Includes the run input digest so distinct failing runs over distinct
+        documents each leave their own receipt (failure-volume evidence);
+        identical events on identical inputs still collapse to one file.
+        """
         identity = {
             "evidence_id": self.evidence_id,
             "result": self.result,
@@ -92,6 +114,7 @@ class PolicyAuditReceipt:
             "verification_result": self.verification_result,
             "error_code": self.error_code,
             "requested_policy_digest": self.requested_policy_digest,
+            "run_input_digest": self.run_input_digest,
         }
         canonical = json.dumps(identity, sort_keys=True, separators=(",", ":"))
         return hashlib.sha256(canonical.encode("utf-8")).hexdigest()[:16]
@@ -134,11 +157,12 @@ def _sanitize_receipt(receipt: PolicyAuditReceipt) -> PolicyAuditReceipt:
     Only permitted policy names, canonical-format hashes, our error-code
     vocabulary, and hex digests may appear in a ledger file; every other
     value is blanked (ADV-008: no raw text, no canaries, ever — enforced at
-    the ledger boundary, not just at the caller).
+    the ledger boundary, not just at the caller). ``result`` is DERIVED from
+    ``verification_result`` so the pair can never contradict.
     """
     return replace(
         receipt,
-        result="pass" if receipt.result == "pass" else "fail",
+        result="pass" if receipt.verification_result else "fail",
         policy=receipt.policy if receipt.policy in PERMITTED_POLICY_PROFILES else "",
         reproducibility_hash=(
             receipt.reproducibility_hash
@@ -153,6 +177,11 @@ def _sanitize_receipt(receipt: PolicyAuditReceipt) -> PolicyAuditReceipt:
             if _REQUESTED_DIGEST_RE.match(receipt.requested_policy_digest or "")
             else ""
         ),
+        run_input_digest=(
+            receipt.run_input_digest
+            if _RUN_DIGEST_RE.match(receipt.run_input_digest or "")
+            else ""
+        ),
         evidence_id="HA-E78",
         tool_version=TOOL_VERSION,
         reviewer=REVIEWER,
@@ -161,18 +190,43 @@ def _sanitize_receipt(receipt: PolicyAuditReceipt) -> PolicyAuditReceipt:
     )
 
 
+def _receipt_intact(path: Path) -> bool:
+    """A recorded receipt is a PARSEABLE file; corruption is not 'recorded'."""
+    try:
+        json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return False
+    return True
+
+
 def write_policy_audit_receipt(
     receipt: PolicyAuditReceipt,
     output_dir: Path,
 ) -> Path:
-    """Write one append-once receipt; identical events never rewrite it."""
+    """Write one append-once receipt; identical events never rewrite it.
+
+    Atomic (temp file + fsync + ``os.replace``) so a crash mid-write cannot
+    leave a truncated entry; an existing but UNPARSEABLE file at the target
+    name is rewritten cleanly (self-heal) instead of sticking forever.
+    """
     receipt = _sanitize_receipt(receipt)
     output_dir.mkdir(parents=True, exist_ok=True)
     path = output_dir / receipt.filename()
-    if path.exists():
+    if path.exists() and _receipt_intact(path):
         return path
     payload = json.dumps(receipt.to_dict(), indent=2, sort_keys=True) + "\n"
-    path.write_text(payload, encoding="utf-8")
+    fd, tmp_name = tempfile.mkstemp(
+        dir=output_dir, prefix=".receipt-", suffix=".tmp"
+    )
+    try:
+        with os.fdopen(fd, "w", encoding="utf-8") as handle:
+            handle.write(payload)
+            handle.flush()
+            os.fsync(handle.fileno())
+        os.replace(tmp_name, path)
+    except BaseException:
+        Path(tmp_name).unlink(missing_ok=True)
+        raise
     return path
 
 
@@ -183,6 +237,7 @@ def record_policy_audit(
     repro_hash: str = "",
     error_code: str = "",
     requested_policy_digest: str = "",
+    run_input_digest: str = "",
     receipts_dir: Path | None = None,
     project_root: Path | None = None,
 ) -> Path:
@@ -190,8 +245,10 @@ def record_policy_audit(
 
     ``policy`` must be a permitted canonical name; pass ``""`` with
     ``requested_policy_digest`` for unknown-policy failures so the requested
-    string is never echoed into the ledger. Raises on filesystem errors —
-    callers decide whether that must fail the run closed.
+    string is never echoed into the ledger. ``run_input_digest`` is the
+    16-hex sha256 of the run's assembled input (failure-volume evidence;
+    a digest, never text). Raises on filesystem errors — callers decide
+    whether that must fail the run closed.
     """
     root = project_root or default_project_root()
     receipt = PolicyAuditReceipt(
@@ -203,5 +260,6 @@ def record_policy_audit(
         verification_result=verified,
         error_code=error_code,
         requested_policy_digest=requested_policy_digest,
+        run_input_digest=run_input_digest,
     )
     return write_policy_audit_receipt(receipt, receipts_dir or default_receipts_dir())

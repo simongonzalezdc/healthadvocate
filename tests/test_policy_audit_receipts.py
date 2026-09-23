@@ -2,24 +2,21 @@
 
 Scope (docs/OPENMED-UPSTREAM-LEVERAGE-2026-09-17.md line 116, selective
 adoption): ``HealthEngine.deidentify_for_llm_result`` gains an OPT-IN
-``policy`` kwarg threaded to ``openmed.deidentify(..., policy=...)``. The
-default path (``policy=None``) must stay byte-identical to the pre-wave
-behavior. Permitted policies are pinned constants enumerated from the
-installed openmed 2.5.0 (openmed/core/policy.py ``PolicyName``: 20 canonical
-values, verified 2026-09-22); unknown names fail closed.
+``policy`` kwarg. The default path (``policy=None``) must stay byte-identical
+to the pre-wave behavior. Permitted policies are pinned constants enumerated
+from the installed openmed 2.5.0 (openmed/core/policy.py ``PolicyName``: 20
+canonical values, verified 2026-09-22); unknown names fail closed.
 
-Audit contract reality in openmed 2.5.0 (openmed/core/pii.py): the
-``DeidentificationResult.audit_report`` field is populated only under
-``audit=True`` (pii.py:2338-2341), and then the top-level ``deidentify``
-returns the bare ``AuditReport`` instead of the result object (pii.py:2866-
-2867). HA therefore never passes ``audit=True`` (it would destroy the
-deidentified-text return) and instead duck-types: a policy run passes only
-when the returned object carries a verifiable ``audit_report``. Against the
-stock 2.5.0 top-level API that means policy runs fail closed with
-``policy_audit_missing`` — the pass leg is proven here with a fake result
-object carrying a REAL AuditReport built by the upstream builder
-(``openmed.core.pii._build_audit_report``), exactly the way the upstream API
-builds it.
+Policy-leg seam (review finding 1, 2026-09-22): the stock top-level
+``openmed.deidentify`` can never return text AND audit evidence — it attaches
+``audit_report`` only under ``audit=True`` (pii.py:2338-2341) and then returns
+the BARE AuditReport (pii.py:2866-2867). The policy leg therefore drives the
+same ``openmed.core.pipeline.Pipeline`` the top-level function constructs for
+this kwarg set (pii.py:2822-2846), with ``run(..., audit=True)`` taking
+``PipelineResult.deidentification_result`` — the full result object carrying
+``deidentified_text``, ``mapping``, and ``audit_report``. This is the
+extension shape upstream's own doctest documents (pii.py docstring example
+patches ``openmed.core.pipeline.Pipeline``).
 
 Fail-closed posture is sacred: every failure leg returns
 ``DEIDENTIFICATION_FAILED_PLACEHOLDER`` through the existing boundary path
@@ -32,20 +29,29 @@ policy, and hash-bound to the assembled input and the returned output.
 Unvalidated (attacker-controlled) hash values never reach the ledger, and
 the ledger sanitizes every free-form field at write time.
 
-Synthetic inputs only. No model loads: ``openmed.deidentify`` is patched in
-every test that reaches the engine.
+Review round 2 (2026-09-22): reachable pass leg (Pipeline+audit seam),
+non-string policy handled with a receipt (digest guarded), failure volume
+evidenced via run_input_digest, atomic + self-healing ledger writes, and
+result/verification_result reconciliation at the ledger boundary.
+
+Synthetic inputs only. No model loads: ``openmed.deidentify`` and
+``openmed.core.pipeline.Pipeline`` are patched in every test that reaches
+the engine.
 """
 
 from __future__ import annotations
 
+import hashlib
 import json
 import tempfile
 import unittest
+from datetime import datetime
 from pathlib import Path
 from types import SimpleNamespace
 from unittest import mock
 
 import openmed
+import openmed.core.pipeline
 from openmed.core import pii as openmed_pii
 from openmed.core.pii import PIIEntity
 
@@ -141,12 +147,55 @@ class RecordingFake:
         return item
 
 
+class FakePipeline:
+    """Fake openmed.core.pipeline.Pipeline (the policy-leg seam).
+
+    Mirrors the shape upstream's own doctest documents: instances capture
+    constructor kwargs, ``run`` captures its kwargs and returns an object
+    whose ``deidentification_result`` is the canned result.
+    """
+
+    results: list = []
+    constructed: list["FakePipeline"] = []
+
+    def __init__(self, **kwargs):
+        self.constructor_kwargs = kwargs
+        self.runs = []
+        FakePipeline.constructed.append(self)
+
+    def run(self, text, **kwargs):
+        self.runs.append({"text": text, "kwargs": kwargs})
+        item = FakePipeline.results.pop(0)
+        if isinstance(item, Exception):
+            raise item
+        return SimpleNamespace(deidentification_result=item)
+
+
 def make_engine(fake):
     engine = HealthEngine()
     engine._loader = SimpleNamespace()  # sentinel loader; never constructs ModelLoader
     engine.policy_audit_receipts_dir = None  # set per-test to a tmp dir
     patcher = mock.patch.object(openmed, "deidentify", fake)
     return engine, patcher
+
+
+def make_policy_engine(*results):
+    """Engine whose policy leg hits FakePipeline (default seam untouched)."""
+    FakePipeline.results = list(results)
+    FakePipeline.constructed = []
+    engine = HealthEngine()
+    engine._loader = SimpleNamespace()
+    engine.policy_audit_receipts_dir = None
+    patcher = mock.patch.object(openmed.core.pipeline, "Pipeline", FakePipeline)
+    return engine, patcher
+
+
+def policy_result(audit_report, deidentified_text=SYNTH_SAFE_TEXT, mapping=None):
+    return SimpleNamespace(
+        deidentified_text=deidentified_text,
+        mapping=dict(SYNTH_MAPPING if mapping is None else mapping),
+        audit_report=audit_report,
+    )
 
 
 def read_receipts(receipts_dir: Path) -> list[dict]:
@@ -278,45 +327,58 @@ class PolicyAllowlist(unittest.TestCase):
 
 
 class PermittedPolicyPassThrough(unittest.TestCase):
-    """Permitted policy + real verified AuditReport -> success + pass receipt."""
+    """Permitted policy + real verified AuditReport -> success + pass receipt.
+
+    The policy leg drives openmed.core.pipeline.Pipeline with audit=True and
+    consumes PipelineResult.deidentification_result (review finding 1): the
+    stock top-level openmed.deidentify can never return text and evidence
+    together, so this seam is the only reachable pass leg.
+    """
 
     def setUp(self):
         self.receipts = Path(tempfile.mkdtemp())
         self.report = build_real_audit_report("hipaa_safe_harbor")
-        self.fake = RecordingFake(
-            [
-                SimpleNamespace(
-                    deidentified_text=SYNTH_SAFE_TEXT,
-                    mapping=dict(SYNTH_MAPPING),
-                    audit_report=self.report,
-                )
-            ]
-        )
-        self.engine, self.patcher = make_engine(self.fake)
-        self.engine.policy_audit_receipts_dir = self.receipts
-        self.patcher.start()
-        self.addCleanup(self.patcher.stop)
 
-    def test_policy_is_threaded_to_openmed_without_audit_flag(self):
-        self.engine.deidentify_for_llm_result(SYNTH_INPUT, policy="hipaa_safe_harbor")
-        self.assertEqual(len(self.fake.calls), 1)
-        kwargs = self.fake.calls[0]["kwargs"]
-        self.assertEqual(kwargs.get("policy"), "hipaa_safe_harbor")
-        self.assertNotIn("audit", kwargs)
-        self.assertEqual(kwargs["method"], "mask")
-        self.assertEqual(kwargs["keep_mapping"], True)
+    def _run(self):
+        engine, patcher = make_policy_engine(policy_result(self.report))
+        engine.policy_audit_receipts_dir = self.receipts
+        with patcher:
+            result = engine.deidentify_for_llm_result(
+                SYNTH_INPUT, policy="hipaa_safe_harbor"
+            )
+        return result
+
+    def test_policy_leg_uses_pipeline_with_audit_true(self):
+        result = self._run()
+        self.assertEqual(len(FakePipeline.constructed), 1)
+        constructor_kwargs = FakePipeline.constructed[0].constructor_kwargs
+        run_kwargs = FakePipeline.constructed[0].runs[0]["kwargs"]
+        self.assertEqual(constructor_kwargs.get("policy"), "hipaa_safe_harbor")
+        self.assertIs(constructor_kwargs.get("loader"), FakePipeline.constructed[0].constructor_kwargs.get("loader"))
+        self.assertEqual(run_kwargs.get("method"), "mask")
+        self.assertEqual(run_kwargs.get("keep_mapping"), True)
+        self.assertTrue(run_kwargs.get("audit"))
+        self.assertEqual(FakePipeline.constructed[0].runs[0]["text"], SYNTH_INPUT)
+
+    def test_policy_leg_never_calls_top_level_deidentify(self):
+        fake = RecordingFake([AssertionError("must not be called")])
+        engine, patcher = make_policy_engine(policy_result(self.report))
+        engine.policy_audit_receipts_dir = self.receipts
+        with patcher, mock.patch.object(openmed, "deidentify", fake):
+            result = engine.deidentify_for_llm_result(
+                SYNTH_INPUT, policy="hipaa_safe_harbor"
+            )
+        self.assertEqual(result.status, DeidentificationStatus.SUCCESS)
 
     def test_success_result_uses_deidentified_text_and_mapping(self):
-        result = self.engine.deidentify_for_llm_result(
-            SYNTH_INPUT, policy="hipaa_safe_harbor"
-        )
+        result = self._run()
         self.assertEqual(result.status, DeidentificationStatus.SUCCESS)
         self.assertEqual(result.safe_text, SYNTH_SAFE_TEXT)
         self.assertEqual(dict(result.mapping), SYNTH_MAPPING)
         self.assertEqual(result.error_code, "")
 
     def test_pass_receipt_recorded_in_ledger(self):
-        self.engine.deidentify_for_llm_result(SYNTH_INPUT, policy="hipaa_safe_harbor")
+        self._run()
         receipts = read_receipts(self.receipts)
         self.assertEqual(len(receipts), 1)
         receipt = receipts[0]
@@ -329,25 +391,56 @@ class PermittedPolicyPassThrough(unittest.TestCase):
         self.assertFalse(receipt["contains_real_phi"])
         self.assertTrue(receipt["build_revision"])
 
-    def test_every_permitted_name_reaches_openmed(self):
+    def test_stock_upstream_doctest_shape_passes(self):
+        # Finding 1 pin: the engine must consume EXACTLY the shape the real
+        # pipeline produces under audit=True. This mirrors upstream's own
+        # doctest (openmed/core/pii.py deidentify example): patch the
+        # Pipeline class; run returns an object whose deidentification_result
+        # is a REAL openmed DeidentificationResult carrying a real audit
+        # report. If the pass leg were still wired to the top-level
+        # openmed.deidentify, it could never see this object.
+        report = build_real_audit_report("hipaa_safe_harbor")
+        fixture = openmed_pii.DeidentificationResult(
+            original_text=SYNTH_INPUT,
+            deidentified_text=SYNTH_SAFE_TEXT,
+            pii_entities=[],
+            method="mask",
+            timestamp=datetime.now(),
+            mapping=dict(SYNTH_MAPPING),
+            audit_report=report,
+        )
+        engine = HealthEngine()
+        engine._loader = SimpleNamespace()
+        engine.policy_audit_receipts_dir = self.receipts
+        with mock.patch("openmed.core.pipeline.Pipeline") as pipeline_cls:
+            pipeline_cls.return_value.run.return_value = SimpleNamespace(
+                deidentification_result=fixture
+            )
+            result = engine.deidentify_for_llm_result(
+                SYNTH_INPUT, policy="hipaa_safe_harbor"
+            )
+        self.assertEqual(result.status, DeidentificationStatus.SUCCESS)
+        self.assertEqual(result.safe_text, SYNTH_SAFE_TEXT)
+        self.assertTrue(
+            pipeline_cls.return_value.run.call_args.kwargs.get("audit") is True
+        )
+        receipts = read_receipts(self.receipts)
+        self.assertEqual(receipts[0]["result"], "pass")
+
+    def test_every_permitted_name_reaches_pipeline(self):
         from healthadvocate.privacy.policy_profiles import PERMITTED_POLICY_PROFILES
 
         for name in sorted(PERMITTED_POLICY_PROFILES):
-            fake = RecordingFake(
-                [
-                    SimpleNamespace(
-                        deidentified_text=SYNTH_SAFE_TEXT,
-                        mapping=dict(SYNTH_MAPPING),
-                        audit_report=build_real_audit_report(name),
-                    )
-                ]
+            engine, patcher = make_policy_engine(
+                policy_result(build_real_audit_report(name))
             )
-            engine, patcher = make_engine(fake)
             engine.policy_audit_receipts_dir = self.receipts
             with patcher:
                 result = engine.deidentify_for_llm_result(SYNTH_INPUT, policy=name)
             self.assertEqual(result.status, DeidentificationStatus.SUCCESS, name)
-            self.assertEqual(fake.calls[0]["kwargs"].get("policy"), name)
+            self.assertEqual(
+                FakePipeline.constructed[0].constructor_kwargs.get("policy"), name
+            )
 
 
 class FailClosedLegs(unittest.TestCase):
@@ -356,11 +449,11 @@ class FailClosedLegs(unittest.TestCase):
     def setUp(self):
         self.receipts = Path(tempfile.mkdtemp())
 
-    def _run(self, policy, fake):
-        engine, patcher = make_engine(fake)
+    def _run(self, policy, *results, text=SYNTH_INPUT):
+        engine, patcher = make_policy_engine(*results)
         engine.policy_audit_receipts_dir = self.receipts
         with patcher:
-            return engine.deidentify_for_llm_result(SYNTH_INPUT, policy=policy)
+            return engine.deidentify_for_llm_result(text, policy=policy)
 
     def _assert_failed(self, result):
         # The existing deid-failure path: placeholder + the boundary's error
@@ -372,33 +465,36 @@ class FailClosedLegs(unittest.TestCase):
         self.assertEqual(dict(result.mapping), {})
 
     def test_unknown_policy_fails_closed_without_calling_openmed(self):
-        fake = RecordingFake([])
-        result = self._run("total_recall_max", fake)
+        result = self._run("total_recall_max")
         self._assert_failed(result)
-        self.assertEqual(fake.calls, [])  # never handed to openmed
+        self.assertEqual(FakePipeline.constructed, [])  # never handed to openmed
         receipts = read_receipts(self.receipts)
         self.assertEqual(len(receipts), 1)
         self.assertEqual(receipts[0]["result"], "fail")
         self.assertEqual(receipts[0]["error_code"], "policy_unknown")
         self.assertFalse(receipts[0]["verification_result"])
 
+    def test_non_string_policy_fails_closed_with_receipt(self):
+        # Review finding 2: a caller violating the str | None hint (e.g.
+        # policy=42) must still get the failure receipt + policy_unknown —
+        # not an AttributeError that skips the ledger (old behavior:
+        # deidentify_exception via the boundary backstop, zero receipts).
+        for bad in (42, 4.5, True, ["hipaa_safe_harbor"], object()):
+            result = self._run(bad)
+            self.assertEqual(result.status, DeidentificationStatus.FAILED, repr(bad))
+            self.assertEqual(result.safe_text, DEIDENTIFICATION_FAILED_PLACEHOLDER)
+            self.assertEqual(FakePipeline.constructed, [], repr(bad))
+            receipts = read_receipts(self.receipts)
+            self.assertEqual(receipts[-1]["error_code"], "policy_unknown", repr(bad))
+            self.assertTrue(receipts[-1]["requested_policy_digest"], repr(bad))
+
     def test_alias_policy_also_fails_closed(self):
-        fake = RecordingFake([])
-        result = self._run("gdpr", fake)
+        result = self._run("gdpr")
         self.assertEqual(result.status, DeidentificationStatus.FAILED)
-        self.assertEqual(fake.calls, [])
+        self.assertEqual(FakePipeline.constructed, [])
 
     def test_audit_report_missing_fails_closed(self):
-        fake = RecordingFake(
-            [
-                SimpleNamespace(
-                    deidentified_text=SYNTH_SAFE_TEXT,
-                    mapping=dict(SYNTH_MAPPING),
-                    audit_report=None,
-                )
-            ]
-        )
-        result = self._run("hipaa_safe_harbor", fake)
+        result = self._run("hipaa_safe_harbor", policy_result(None))
         self._assert_failed(result)
         receipts = read_receipts(self.receipts)
         self.assertEqual(receipts[0]["result"], "fail")
@@ -407,16 +503,7 @@ class FailClosedLegs(unittest.TestCase):
     def test_audit_verification_failure_fails_closed(self):
         report = build_real_audit_report("hipaa_safe_harbor")
         report.policy = "strict_no_leak"  # tamper post-construction: hash mismatch
-        fake = RecordingFake(
-            [
-                SimpleNamespace(
-                    deidentified_text=SYNTH_SAFE_TEXT,
-                    mapping=dict(SYNTH_MAPPING),
-                    audit_report=report,
-                )
-            ]
-        )
-        result = self._run("hipaa_safe_harbor", fake)
+        result = self._run("hipaa_safe_harbor", policy_result(report))
         self._assert_failed(result)
         receipts = read_receipts(self.receipts)
         self.assertEqual(receipts[0]["result"], "fail")
@@ -429,31 +516,13 @@ class FailClosedLegs(unittest.TestCase):
             repro_hash="sha256:broken",
             repro_hash_matches=self._raise_value_error,
         )
-        fake = RecordingFake(
-            [
-                SimpleNamespace(
-                    deidentified_text=SYNTH_SAFE_TEXT,
-                    mapping=dict(SYNTH_MAPPING),
-                    audit_report=broken,
-                )
-            ]
-        )
-        result = self._run("strict_no_leak", fake)
+        result = self._run("strict_no_leak", policy_result(broken))
         self.assertEqual(result.status, DeidentificationStatus.FAILED)
         self.assertEqual(result.safe_text, DEIDENTIFICATION_FAILED_PLACEHOLDER)
 
     def test_pass_leg_receipt_write_failure_fails_closed(self):
         report = build_real_audit_report("hipaa_safe_harbor")
-        fake = RecordingFake(
-            [
-                SimpleNamespace(
-                    deidentified_text=SYNTH_SAFE_TEXT,
-                    mapping=dict(SYNTH_MAPPING),
-                    audit_report=report,
-                )
-            ]
-        )
-        engine, patcher = make_engine(fake)
+        engine, patcher = make_policy_engine(policy_result(report))
         # A file where the receipts directory should be: writes must fail.
         blocker = self.receipts / "blocked"
         blocker.write_text("not a dir", encoding="utf-8")
@@ -468,8 +537,7 @@ class FailClosedLegs(unittest.TestCase):
 
     def test_fail_leg_receipt_write_error_stays_failed(self):
         # Unknown policy AND an unwritable ledger: still fail closed, no raise.
-        fake = RecordingFake([])
-        engine, patcher = make_engine(fake)
+        engine, patcher = make_policy_engine()
         blocker = self.receipts / "blocked"
         blocker.write_text("not a dir", encoding="utf-8")
         engine.policy_audit_receipts_dir = blocker
@@ -508,16 +576,7 @@ class CanaryTripwire(unittest.TestCase):
             deidentified_text=canary_safe,
             entity_text=CANARY,
         )
-        fake = RecordingFake(
-            [
-                SimpleNamespace(
-                    deidentified_text=canary_safe,
-                    mapping={"[NAME]": CANARY},
-                    audit_report=report,
-                )
-            ]
-        )
-        engine, patcher = make_engine(fake)
+        engine, patcher = make_policy_engine(policy_result(report, canary_safe, {"[NAME]": CANARY}))
         engine.policy_audit_receipts_dir = self.receipts
         with patcher:
             result = engine.deidentify_for_llm_result(
@@ -561,16 +620,9 @@ class LedgerIdempotence(unittest.TestCase):
         self.receipts = Path(tempfile.mkdtemp())
 
     def _run_pass(self):
-        fake = RecordingFake(
-            [
-                SimpleNamespace(
-                    deidentified_text=SYNTH_SAFE_TEXT,
-                    mapping=dict(SYNTH_MAPPING),
-                    audit_report=build_real_audit_report("hipaa_safe_harbor"),
-                )
-            ]
+        engine, patcher = make_policy_engine(
+            policy_result(build_real_audit_report("hipaa_safe_harbor"))
         )
-        engine, patcher = make_engine(fake)
         engine.policy_audit_receipts_dir = self.receipts
         with patcher:
             return engine.deidentify_for_llm_result(
@@ -596,22 +648,12 @@ class LedgerIdempotence(unittest.TestCase):
 
         tampered = build_real_audit_report("hipaa_safe_harbor")
         tampered.policy = "strict_no_leak"
-        fake = RecordingFake(
-            [
-                SimpleNamespace(
-                    deidentified_text=SYNTH_SAFE_TEXT,
-                    mapping=dict(SYNTH_MAPPING),
-                    audit_report=tampered,
-                )
-            ]
-        )
-        engine, patcher = make_engine(fake)
+        engine, patcher = make_policy_engine(policy_result(tampered))
         engine.policy_audit_receipts_dir = self.receipts
         with patcher:
             engine.deidentify_for_llm_result(SYNTH_INPUT, policy="hipaa_safe_harbor")
 
-        fake2 = RecordingFake([])
-        engine2, patcher2 = make_engine(fake2)
+        engine2, patcher2 = make_policy_engine()
         engine2.policy_audit_receipts_dir = self.receipts
         with patcher2:
             engine2.deidentify_for_llm_result(SYNTH_INPUT, policy="nope")
@@ -636,19 +678,14 @@ class AuditReportBinding(unittest.TestCase):
         self.receipts = Path(tempfile.mkdtemp())
 
     def _run(self, policy, result_obj, text=SYNTH_INPUT):
-        fake = RecordingFake([result_obj])
-        engine, patcher = make_engine(fake)
+        engine, patcher = make_policy_engine(result_obj)
         engine.policy_audit_receipts_dir = self.receipts
         with patcher:
             return engine.deidentify_for_llm_result(text, policy=policy)
 
     @staticmethod
     def _result_with(audit_report, deidentified_text=SYNTH_SAFE_TEXT):
-        return SimpleNamespace(
-            deidentified_text=deidentified_text,
-            mapping=dict(SYNTH_MAPPING),
-            audit_report=audit_report,
-        )
+        return policy_result(audit_report, deidentified_text=deidentified_text)
 
     def test_report_built_under_different_policy_fails_closed(self):
         # ADV-004 exact finding: request strict_no_leak; openmed returns a
@@ -756,10 +793,9 @@ class UntrustedHashSanitization(unittest.TestCase):
         return b"".join(p.read_bytes() for p in sorted(self.receipts.rglob("*.json")))
 
     def test_canary_hash_on_fail_leg_never_reaches_ledger(self):
-        fake = RecordingFake(
-            [SimpleNamespace(deidentified_text=SYNTH_SAFE_TEXT, mapping={}, audit_report=SimpleNamespace(repro_hash=self.CANARY_HASH))]
+        engine, patcher = make_policy_engine(
+            policy_result(SimpleNamespace(repro_hash=self.CANARY_HASH))
         )
-        engine, patcher = make_engine(fake)
         engine.policy_audit_receipts_dir = self.receipts
         with patcher:
             result = engine.deidentify_for_llm_result(
@@ -776,10 +812,7 @@ class UntrustedHashSanitization(unittest.TestCase):
         report = build_real_audit_report("hipaa_safe_harbor")
         report.repro_hash = self.CANARY_HASH
         report.repro_hash_matches = lambda: True
-        fake = RecordingFake(
-            [SimpleNamespace(deidentified_text=SYNTH_SAFE_TEXT, mapping=dict(SYNTH_MAPPING), audit_report=report)]
-        )
-        engine, patcher = make_engine(fake)
+        engine, patcher = make_policy_engine(policy_result(report))
         engine.policy_audit_receipts_dir = self.receipts
         with patcher:
             result = engine.deidentify_for_llm_result(
@@ -831,16 +864,7 @@ class NonAuditReportShapes(unittest.TestCase):
         self.receipts = Path(tempfile.mkdtemp())
 
     def _run(self, audit_report):
-        fake = RecordingFake(
-            [
-                SimpleNamespace(
-                    deidentified_text=SYNTH_SAFE_TEXT,
-                    mapping=dict(SYNTH_MAPPING),
-                    audit_report=audit_report,
-                )
-            ]
-        )
-        engine, patcher = make_engine(fake)
+        engine, patcher = make_policy_engine(policy_result(audit_report))
         engine.policy_audit_receipts_dir = self.receipts
         with patcher:
             return engine.deidentify_for_llm_result(
@@ -885,6 +909,138 @@ class NonAuditReportShapes(unittest.TestCase):
         self.assertEqual(receipts[0]["error_code"], "policy_audit_invalid_report")
         self.assertEqual(receipts[0]["reproducibility_hash"], "")
         self.assertFalse(receipts[0]["verification_result"])
+
+
+class FailureVolumeEvidence(unittest.TestCase):
+    """Review finding 3: N failing runs over N different documents must
+    produce N receipts — failure volume is auditor evidence. Repeats of the
+    SAME run (same input, same outcome) still collapse to one append-once
+    receipt."""
+
+    def setUp(self):
+        self.receipts = Path(tempfile.mkdtemp())
+
+    def _failing_run(self, text):
+        # Permitted policy, result without audit_report -> policy_audit_missing.
+        engine, patcher = make_policy_engine(policy_result(None))
+        engine.policy_audit_receipts_dir = self.receipts
+        with patcher:
+            return engine.deidentify_for_llm_result(text, policy="hipaa_safe_harbor")
+
+    def test_different_documents_get_distinct_failure_receipts(self):
+        doc_a = "Patient Aria Synth-One called about metformin."
+        doc_b = "Patient Bo Synth-Two emailed about insulin."
+        doc_c = "Patient Cy Synth-Three asked about lisinopril."
+        for doc in (doc_a, doc_b, doc_c):
+            result = self._failing_run(doc)
+            self.assertEqual(result.status, DeidentificationStatus.FAILED)
+        receipts = read_receipts(self.receipts)
+        self.assertEqual(len(receipts), 3)
+        self.assertEqual({r["error_code"] for r in receipts}, {"policy_audit_missing"})
+        digests = {r["run_input_digest"] for r in receipts}
+        self.assertEqual(len(digests), 3)
+        self.assertTrue(all(d for d in digests))
+        for doc in (doc_a, doc_b, doc_c):
+            expected = hashlib.sha256(doc.encode("utf-8")).hexdigest()[:16]
+            self.assertIn(expected, digests)
+
+    def test_same_document_repeated_still_collapses(self):
+        self._failing_run(SYNTH_INPUT)
+        self._failing_run(SYNTH_INPUT)
+        self.assertEqual(len(list(self.receipts.rglob("*.json"))), 1)
+
+    def test_unknown_policy_same_name_different_docs_get_distinct_receipts(self):
+        for doc in ("Alpha doc synth.", "Beta doc synth."):
+            engine, patcher = make_policy_engine()
+            engine.policy_audit_receipts_dir = self.receipts
+            with patcher:
+                engine.deidentify_for_llm_result(doc, policy="nope")
+        self.assertEqual(len(list(self.receipts.rglob("*.json"))), 2)
+
+
+class AtomicSelfHealingLedger(unittest.TestCase):
+    """Review finding 4: atomic writes, and a corrupt ledger entry self-heals
+    instead of being sticky forever."""
+
+    def setUp(self):
+        self.receipts = Path(tempfile.mkdtemp())
+
+    def _record(self):
+        from healthadvocate.governance.policy_audit import record_policy_audit
+
+        return record_policy_audit(
+            policy="hipaa_safe_harbor",
+            verified=True,
+            repro_hash="sha256:" + "1" * 64,
+            run_input_digest="a" * 16,
+            receipts_dir=self.receipts,
+        )
+
+    def test_corrupt_receipt_file_is_rewritten_valid(self):
+        path = self._record()
+        path.write_text('{"truncated": ', encoding="utf-8")  # crash mid-write shape
+        healed = self._record()
+        self.assertEqual(healed, path)
+        data = json.loads(path.read_text(encoding="utf-8"))
+        self.assertEqual(data["result"], "pass")
+        self.assertEqual(data["reproducibility_hash"], "sha256:" + "1" * 64)
+
+    def test_empty_receipt_file_is_rewritten_valid(self):
+        path = self._record()
+        path.write_text("", encoding="utf-8")
+        self._record()
+        data = json.loads(path.read_text(encoding="utf-8"))
+        self.assertEqual(data["evidence_id"], "HA-E78")
+
+    def test_valid_receipt_file_is_never_rewritten(self):
+        path = self._record()
+        before = path.read_bytes()
+        mtime = path.stat().st_mtime
+        self._record()
+        self.assertEqual(path.read_bytes(), before)
+        self.assertEqual(path.stat().st_mtime, mtime)
+
+    def test_no_temporary_files_left_behind(self):
+        self._record()
+        self._record()
+        leftovers = [p for p in self.receipts.iterdir() if p.name.startswith(".")]
+        self.assertEqual(leftovers, [])
+
+
+class ResultReconciliation(unittest.TestCase):
+    """Review finding 5: the ledger derives `result` from
+    `verification_result` — contradictory pairs are reconciled at the
+    boundary, whatever the calling path."""
+
+    def _write(self, **overrides):
+        from healthadvocate.governance.policy_audit import (
+            PolicyAuditReceipt,
+            write_policy_audit_receipt,
+        )
+
+        base = dict(
+            build_revision="deadbee",
+            generated_at="2026-09-22T00:00:00+00:00",
+            result="fail",
+            policy="hipaa_safe_harbor",
+            reproducibility_hash="sha256:" + "2" * 64,
+            verification_result=False,
+        )
+        base.update(overrides)
+        receipt = PolicyAuditReceipt(**base)
+        out = Path(tempfile.mkdtemp())
+        path = write_policy_audit_receipt(receipt, out)
+        return json.loads(path.read_text(encoding="utf-8"))
+
+    def test_pass_result_with_failed_verification_becomes_fail(self):
+        written = self._write(result="pass", verification_result=False)
+        self.assertEqual(written["result"], "fail")
+        self.assertFalse(written["verification_result"])
+
+    def test_fail_result_with_true_verification_becomes_pass(self):
+        written = self._write(result="fail", verification_result=True)
+        self.assertEqual(written["result"], "pass")
+        self.assertTrue(written["verification_result"])
 
 
 if __name__ == "__main__":  # pragma: no cover

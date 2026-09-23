@@ -91,6 +91,58 @@ def resolve_permitted_policy(policy: str | None) -> str | None:
     return policy if policy in PERMITTED_POLICY_PROFILES else None
 
 
+def run_policy_deidentify(
+    text: str,
+    *,
+    method: str,
+    policy: str,
+    loader: object,
+) -> object:
+    """Deidentify with a permitted policy AND audit evidence attached.
+
+    The stock top-level ``openmed.deidentify`` cannot return text and audit
+    evidence together in 2.5.0: it attaches ``result.audit_report`` only
+    under ``audit=True`` (openmed/core/pii.py:2338-2341) and then returns the
+    BARE ``AuditReport`` instead of the result object (pii.py:2866-2867).
+    This helper mirrors the EXACT Pipeline construction the top-level
+    function performs for this kwarg set (pii.py:2822-2846 — verified against
+    the installed 2.5.0: every omitted constructor kwarg defaults to the
+    value the top-level passes explicitly), requests ``run(..., audit=True)``,
+    and returns ``PipelineResult.deidentification_result`` — the full result
+    carrying ``deidentified_text``, ``mapping``, and ``audit_report``. This
+    is the extension shape upstream's own doctest documents (it patches
+    ``openmed.core.pipeline.Pipeline``).
+
+    Raises whatever the pipeline raises; callers fail closed on exception.
+    """
+    from openmed.core.custom_recognizer import (
+        abdm_mode_enabled,
+        with_abdm_recognizer,
+    )
+    from openmed.core.pipeline import Pipeline
+    from openmed.core.pii import _DEFAULT_EN_MODEL
+
+    recognizer_config = None
+    indian_multi_id_enabled = abdm_mode_enabled(
+        None,
+        policy=policy,
+        lang="en",
+        locale=None,
+    )
+    if indian_multi_id_enabled:
+        recognizer_config = with_abdm_recognizer(recognizer_config)
+
+    pipeline = Pipeline(
+        model_name=_DEFAULT_EN_MODEL,
+        loader=loader,
+        policy=policy,
+        custom_recognizer=recognizer_config,
+        indian_multi_id=indian_multi_id_enabled,
+    )
+    run_result = pipeline.run(text, method=method, keep_mapping=True, audit=True)
+    return run_result.deidentification_result
+
+
 def verify_policy_audit_report(
     report: object,
     *,

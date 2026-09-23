@@ -618,6 +618,12 @@ class CanaryPhiFreeTripwireTests(unittest.TestCase):
 
 
 ASSESSOR_ALLOWLIST = frozenset({
+    # J2-c (2026-09-22): assess_symptoms is CONVERTED behind the receipt
+    # contract (urgency is a typed ScoreQuestion; see
+    # decisions/symptom_triage.py) but its engine-first signature is
+    # deliberately stable for callers, so the AST derivation still finds
+    # it and the entry stays. The shrink-only expectation applies when a
+    # surface's signature itself moves behind the receipt contract.
     "assess_symptoms",       # core/symptom_assessor.py:10
     "fight_denial",          # core/insurance_fighter.py:10
     "decode_bill",           # core/bill_decoder.py:13
@@ -952,6 +958,110 @@ class ThresholdProvenanceLinkageTests(unittest.TestCase):
                          "provenance": {"source": "measured", "surface": "???",
                                         "measured_on": "not-a-date",
                                         "sample_size": 1}}}})
+
+
+class PolicyProvenanceTierTests(unittest.TestCase):
+    """J2-c amendment: an additive, honestly-labeled `policy` provenance
+    tier for surfaces converting before measured confidence distributions
+    exist (first consumer: symptom-triage). The tier exists so a policy
+    threshold can say what it is; it can never borrow the measured
+    tier's fields, and the measured tier stays exactly as strict."""
+
+    POLICY_PROVENANCE = {
+        "source": "policy",
+        "surface": "symptom-triage",
+        "adopted_on": "2026-09-22",
+        "rationale": (
+            "Conservative bridge until measured confidence distributions "
+            "exist for this surface."
+        ),
+    }
+
+    def test_policy_provenance_validates(self):
+        entry = ClassThreshold.model_validate({
+            "question_class": "score", "min_confidence": 0.5,
+            "provenance": self.POLICY_PROVENANCE,
+        })
+        self.assertEqual(entry.provenance.source, "policy")
+        self.assertIsNone(entry.provenance.sample_size)
+
+    def test_measured_tier_still_requires_its_fields(self):
+        for missing in ("measured_on", "sample_size"):
+            with self.subTest(missing=missing):
+                payload = {**MEASURED_PROVENANCE, "surface": "symptom-triage"}
+                payload.pop(missing)
+                with self.assertRaises(ValidationError):
+                    ThresholdProvenance.model_validate(payload)
+
+    def test_policy_tier_cannot_claim_measurement_fields(self):
+        for extra in ({"sample_size": 200}, {"measured_on": "2026-09-22"},
+                      {"sample_size": 1, "measured_on": "2026-01-01"}):
+            with self.subTest(extra=extra):
+                with self.assertRaises(ValidationError):
+                    ThresholdProvenance.model_validate(
+                        {**self.POLICY_PROVENANCE, **extra}
+                    )
+
+    def test_measured_tier_cannot_carry_policy_fields(self):
+        for extra in ({"rationale": "r"}, {"adopted_on": "2026-09-22"}):
+            with self.subTest(extra=extra):
+                with self.assertRaises(ValidationError):
+                    ThresholdProvenance.model_validate(
+                        {**MEASURED_PROVENANCE, "surface": "symptom-triage",
+                         **extra}
+                    )
+
+    def test_policy_tier_requires_dated_non_blank_rationale(self):
+        for bad in (
+            {k: v for k, v in self.POLICY_PROVENANCE.items() if k != "adopted_on"},
+            {**self.POLICY_PROVENANCE, "adopted_on": "09/22/2026"},
+            {**self.POLICY_PROVENANCE, "rationale": "   "},
+            {k: v for k, v in self.POLICY_PROVENANCE.items() if k != "rationale"},
+        ):
+            with self.subTest(bad=sorted(bad)):
+                with self.assertRaises(ValidationError):
+                    ThresholdProvenance.model_validate(bad)
+
+    def test_policy_threshold_gates_through_assess_like_any_other(self):
+        # A policy-tier ThresholdData flows through the same assess()
+        # fail-closed flow — same surface-linkage rule, same legs.
+        data = ThresholdData.model_validate({
+            "surface": "symptom-triage",
+            "thresholds": {"score": {
+                "question_class": "score", "min_confidence": 0.5,
+                "provenance": self.POLICY_PROVENANCE,
+            }},
+        })
+        low = assess(
+            ScoreQuestion(id="symptom-triage-urgency",
+                          rubric=[ScoreLevel(label="low"),
+                                  ScoreLevel(label="medium"),
+                                  ScoreLevel(label="high")]),
+            receipt=synthetic_receipt(),
+            candidate=ScoreAnswer(question_id="symptom-triage-urgency",
+                                  level=0, per_level_probabilities=[1.0, 0.0, 0.0],
+                                  confidence=0.0),
+            surface="symptom-triage", runner="code", thresholds=data,
+        )
+        self.assertEqual(low.outcome, "NEEDS_HUMAN")
+        self.assertEqual(low.reason_kind, "below-threshold")
+        self.assertEqual(low.threshold_applied, 0.5)
+        high = assess(
+            ScoreQuestion(id="symptom-triage-urgency",
+                          rubric=[ScoreLevel(label="low"),
+                                  ScoreLevel(label="medium"),
+                                  ScoreLevel(label="high")]),
+            receipt=synthetic_receipt(),
+            candidate=ScoreAnswer(question_id="symptom-triage-urgency",
+                                  level=0, per_level_probabilities=[1.0, 0.0, 0.0],
+                                  confidence=1.0),
+            surface="symptom-triage", runner="code", thresholds=data,
+        )
+        self.assertEqual(high.outcome, "ANSWERED")
+        self.assertEqual(high.threshold_applied, 0.5)
+
+
+class ThresholdSurfaceLinkageTests(unittest.TestCase):
 
     def test_threshold_data_requires_a_surface(self):
         payload = measured_thresholds().model_dump()

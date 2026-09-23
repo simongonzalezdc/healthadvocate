@@ -224,6 +224,24 @@ _ANSWER_TYPES: dict[str, type[BaseModel]] = {
 }
 
 
+def invalid_receipt_outcome(
+    question: Question,
+    *,
+    runner: str = DEFAULT_RUNNER,
+    errors: list[StrippedValidationError] | None = None,
+) -> DecisionOutcome:
+    """The invalid-receipt wrapper for a receipt that could not be BUILT.
+
+    J2-c: `receipt_from_analysis` is total — a hostile identify-stage
+    result yields stripped errors, not an exception and not a fabricated
+    receipt. The converting surface routes that failure through the
+    SAME wrapper shape `assess` uses for the invalid-receipt leg (gate
+    sentence, deterministic steps, stripped errors only), so no receipt
+    build failure can bypass the typed layer's audit trail.
+    """
+    return _static("invalid-receipt", question, runner, None, None, errors)
+
+
 def _runner_label(runner: object) -> str:
     """Hostile runner values (unhashable, non-str) never reach the dict
     lookup and never serialize into the wrapper; a non-str runner is not

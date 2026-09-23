@@ -184,6 +184,49 @@ naive receipt would leak exactly what the privacy boundary exists to strip.
   NEEDS_HUMAN. Converting a surface removes it from the (h) ALLOWLIST.
 - **J3 (optional, CEO-gated):** hosted-jev runner behind the destination gate.
 
+## 6a. J2-c amendment — symptom-triage conversion (2026-09-22, lands with J2-c)
+
+The symptom assessor's urgency triage converted (first Score-question
+surface; wiring in `healthadvocate/decisions/symptom_triage.py`). Four
+decisions recorded with it:
+
+1. **Rubric order:** `ScoreAnswer.level` ASCENDS in severity —
+   0=low, 1=medium, 2=high — the J1 fixture convention. Ascending makes
+   the conservative fail-closed answer DERIVED, not hardcoded: it is the
+   last rubric label (`URGENCY_RUBRIC[-1]`), the highest urgency.
+2. **Policy threshold tier (schema amendment, additive):**
+   `ThresholdProvenance.source` gains `"policy"` alongside
+   `"measured"`. Why this does not weaken the calibration-honesty rule:
+   the rule's failure mode is UNEARNED TRUST from an invented number. A
+   converting surface's pre-conversion baseline is an UNGATED decision
+   (every pick trusted unconditionally), so a threshold there can only
+   REMOVE trust — push candidates to NEEDS_HUMAN, which the surface's
+   fail-closed mapping escalates to the conservative urgency — never
+   grant trust a measured threshold would deny. The tiers stay honestly
+   separated: policy provenance carries `adopted_on` + `rationale` and
+   is FORBIDDEN `sample_size`/`measured_on` (no masquerade);
+   `measured` keeps requiring both and cannot carry policy fields.
+   Symptom-triage ships the first production threshold data on this
+   tier: score class, bar 0.5, because the code-runner candidate's
+   confidence is a binary validity signal (1.0 real structured pick,
+   0.0 placeholder from `_model_blocked`/`_raw_text` shapes) — the bar
+   separates exactly those two states and nothing else. Measured data
+   replaces the policy tier when a distribution exists for the surface.
+3. **Allowlist (h) note:** `assess_symptoms` stays in the ALLOWLIST —
+   the J2-c contract requires a stable public signature (engine-first),
+   so the AST derivation still finds it. The shrink-only expectation
+   applies when a surface's SIGNATURE moves behind the receipt
+   contract, not when its internals convert.
+4. **Conservative behavior deltas (all in the safe direction, pinned in
+   tests/test_symptom_triage_jev.py):** model-blocked/unparseable
+   placeholder outputs escalated medium→high (below-threshold leg);
+   failed deidentification escalated medium→high (deidentification-
+   failed leg); out-of-rubric urgency strings escalate to high instead
+   of surfacing verbatim (invalid-answer leg). Normal low/medium/high
+   picks, the missing-urgency "medium" default, the empty-input early
+   return, and the NER/LLM disagreement escalation are preserved
+   exactly.
+
 ## 6. Guardrails
 
 Synthetic-only inputs; fail-closed posture unchanged; local-first default;

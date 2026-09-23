@@ -784,5 +784,109 @@ class Adv001StrictTypingTests(unittest.TestCase):
         self.assertEqual(outcome.answer.confidence, 0.95)
 
 
+# ---------------------------------------------------------------------------
+# ADV-004 round 2: the cycle-1 gate accepted subclasses (isinstance) but
+# _ANSWER_TYPES keyed on exact type() — KeyError on both threshold legs —
+# and a __class__-faking proxy WITH an .id attribute sailed through the
+# gate (the .id probe never covered that; type-based subclass checks do).
+# ---------------------------------------------------------------------------
+
+
+class Adv004Round2Tests(unittest.TestCase):
+    @staticmethod
+    def _subclasses():
+        class SubChoice(ChoiceQuestion):
+            pass
+
+        class SubScore(ScoreQuestion):
+            pass
+
+        class SubNoul(NoulQuestion):
+            pass
+
+        return (
+            (SubChoice(id="q-urgency",
+                       options=["clinician-visit"], context_ref="c"),
+             lambda: ChoiceAnswer(question_id="q-urgency",
+                                  value="clinician-visit", probability=0.5,
+                                  confidence=0.9), "choice"),
+            (SubScore(id="q-triage",
+                      rubric=[ScoreLevel(label="low"), ScoreLevel(label="high")]),
+             lambda: ScoreAnswer(question_id="q-triage", level=0,
+                                 per_level_probabilities=[0.5, 0.5],
+                                 confidence=0.9), "score"),
+            (SubNoul(id="q-claim", claim="c"),
+             lambda: NoulAnswer(question_id="q-claim", probability_true=0.4,
+                                confidence=0.9), "noul"),
+        )
+
+    def test_question_subclasses_assess_end_to_end(self):
+        # A legitimate pydantic extension pattern: subclasses are real
+        # questions and must flow through the full contract.
+        for question, answer, qclass in self._subclasses():
+            with self.subTest(question_class=qclass):
+                outcome = assess(
+                    question, receipt=synthetic_receipt(),
+                    candidate=answer(), runner="code",
+                    thresholds=measured_thresholds(),
+                )
+                self.assertEqual(outcome.outcome, "ANSWERED")
+                self.assertEqual(outcome.question_class, qclass)
+                self.assertIsNotNone(outcome.answer)
+
+    def test_question_subclasses_threshold_missing_leg_wraps(self):
+        # The leg that crashed with KeyError via _ANSWER_TYPES[type(...)].
+        for question, answer, qclass in self._subclasses():
+            with self.subTest(question_class=qclass):
+                outcome = assess(
+                    question, receipt=synthetic_receipt(),
+                    candidate=answer(), runner="code", thresholds=None,
+                )
+                self.assertEqual(outcome.outcome, "NEEDS_HUMAN")
+                self.assertEqual(outcome.reason_kind, "threshold-data-missing")
+                self.assertIsNotNone(outcome.answer)
+
+    def test_class_faking_proxy_with_id_fails_closed(self):
+        # __class__ shadow fools isinstance (asserted below — this is the
+        # vector), carries .id so the cycle-1 probe passed it; the
+        # type-based subclass check must reject it on every leg.
+        class ProxyWithId:
+            __class__ = ChoiceQuestion
+
+            def __init__(self):
+                self.id = "q-urgency"
+
+        proxy = ProxyWithId()
+        self.assertTrue(isinstance(proxy, ChoiceQuestion))  # documented vector
+        for thresholds in (measured_thresholds(), None):
+            with self.subTest(thresholds_present=thresholds is not None):
+                outcome = assess(
+                    proxy, receipt=synthetic_receipt(),
+                    candidate=choice_answer(), runner="code",
+                    thresholds=thresholds,
+                )
+                self.assertEqual(outcome.outcome, "NEEDS_HUMAN")
+                self.assertEqual(outcome.reason_kind, "invalid-question")
+                self.assertIsNone(outcome.answer)
+
+    def test_proxy_below_threshold_comparison_never_runs(self):
+        # A proxy must be rejected before any leg could compare a
+        # fabricated confidence against a threshold.
+        class ProxyWithId:
+            __class__ = NoulQuestion
+
+            def __init__(self):
+                self.id = "q-claim"
+
+        outcome = assess(
+            ProxyWithId(), receipt=synthetic_receipt(),
+            candidate=NoulAnswer(question_id="q-claim", probability_true=0.1,
+                                 confidence=0.99),
+            runner="code", thresholds=measured_thresholds(),
+        )
+        self.assertEqual(outcome.reason_kind, "invalid-question")
+        self.assertIsNone(outcome.threshold_applied)
+
+
 if __name__ == "__main__":
     unittest.main()

@@ -181,9 +181,15 @@ _QUESTION_CLASSES: tuple[tuple[type[BaseModel], str], ...] = (
 
 
 def question_class(question: Question) -> str:
-    """The question-class key thresholds are stored under."""
+    """The question-class key thresholds are stored under.
+
+    Type-based (ADV-004 round 2): real subclasses of the three question
+    models map to their base class, while a __class__-faking proxy — which
+    fools isinstance — is rejected, because issubclass() walks the actual
+    MRO of type(question) and a shadowed __class__ attribute is not in it.
+    """
     for model, name in _QUESTION_CLASSES:
-        if isinstance(question, model):
+        if issubclass(type(question), model):
             return name
     raise ValueError("not a known HA-JEV question type")
 

@@ -184,10 +184,15 @@ class DecisionOutcome(BaseModel):
         return GateState.REVIEW_REQUIRED
 
 
-_ANSWER_TYPES: dict[type[BaseModel], type[BaseModel]] = {
-    ChoiceQuestion: ChoiceAnswer,
-    ScoreQuestion: ScoreAnswer,
-    NoulQuestion: NoulAnswer,
+# Keyed by question_class() name, NOT by exact type(): a question
+# subclass is a real question and must map to its base class's answer
+# type (ADV-004 round 2 — type()-keying raised KeyError for subclasses).
+# The keys are exactly what question_class() can return, so the lookup
+# cannot miss for any question that passed the validity gate.
+_ANSWER_TYPES: dict[str, type[BaseModel]] = {
+    "choice": ChoiceAnswer,
+    "score": ScoreAnswer,
+    "noul": NoulAnswer,
 }
 
 
@@ -253,7 +258,7 @@ def _validated_answer(
     pair rules. Returns (answer, errors): an invalid candidate is never
     attached — only its stripped errors are."""
     errors: list[StrippedValidationError] = []
-    expected = _ANSWER_TYPES[type(question)]
+    expected = _ANSWER_TYPES[question_class(question)]
     if candidate is None:
         errors.append(
             StrippedValidationError(
@@ -306,10 +311,16 @@ def assess(
     # 2. Question validity (ADV-004): anything that is not a typed
     #    Question fails closed into the wrapper BEFORE any leg reads
     #    question.id or derives its class — no unhandled crashes.
+    #    question_class() is type-based (issubclass of type(question)),
+    #    which is what stops __class__-faking proxies: isinstance can be
+    #    fooled by a shadowed __class__ attribute even when the proxy
+    #    carries .id, but issubclass walks the real MRO and cannot be
+    #    (ADV-004 round 2 — 5ad9e2d wrongly credited the .id probe with
+    #    proxy coverage). The .id probe stays as defense-in-depth against
+    #    attribute-access failures on otherwise-valid instances.
     try:
         question_class(question)
-        question.id  # probe: guards __class__-faking proxies (isinstance
-        # can be fooled by a hostile __class__ attribute; .id cannot).
+        question.id
     except (AttributeError, TypeError, ValueError):
         return _invalid_question(runner)
 

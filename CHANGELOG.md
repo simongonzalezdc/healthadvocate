@@ -29,6 +29,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Renovate dependency automation configuration.
 
 ### Changed
+- **Insurance denial-reason classification routes through the HA-JEV
+  typed-decision layer** (J2-b; design
+  `docs/HA-JEV-TYPED-DECISIONS-DESIGN-2026-09-22.md` §5). The free-text
+  `denial_reason` the structured model returns is normalized by a
+  deterministic `code`-runner rule onto a canonical seven-option set
+  (not medically necessary, prior authorization required, experimental
+  or investigational, out-of-network, not a covered benefit, formulary
+  exclusion, insufficient documentation), then adjudicated by
+  `healthadvocate.decisions.assess` on surface `denial-classifier` behind
+  the identification-receipt contract: the receipt is built from the
+  call's real NER identify stage and states the real privacy-boundary
+  deidentification status; thresholds are measured, surface-linked, and
+  conservative (1.0 — the deterministic rule's degenerate confidence
+  distribution; the provenance records the frozen synthetic measurement
+  corpus). Every fail-closed leg — invalid receipt, failed or unknown
+  deidentification, unknown or ambiguous pick, below-threshold — maps to
+  the surface's pre-existing safe fallback (empty `denial_reason`), with
+  the NEEDS_HUMAN wrapper and consumed receipt attached as additive
+  audit (`denial_reason_decision`, `denial_reason_receipt`; canary-free
+  by construction and pinned so). The public `fight_denial` signature
+  and every existing result key are unchanged; the
+  deidentify-before-reasoning order is untouched. Contract tests:
+  `tests/test_denial_classifier_jev.py`.
 - **OpenMed vendoring retired** — the repo-root `openmed/` fork (upstream
   v1.4.0 + 3 local patches, 67 files) is deleted; the runtime is the
   PyPI-pinned package (`openmed[hf]==2.5.0`, exact pin; Renovate offers

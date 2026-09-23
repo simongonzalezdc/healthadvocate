@@ -8,6 +8,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- `healthadvocate/decisions/` — the HA-JEV typed, calibrated decision layer
+  (J1; design `docs/HA-JEV-TYPED-DECISIONS-DESIGN-2026-09-22.md`):
+  Choice/Score/Noul question and answer schemas with strict real-float
+  probabilities (numpy dtypes accepted; str/bytes/bool/int never coerced),
+  the identification-receipt gate (receipt required; missing, invalid,
+  canary-bearing, or failed-deidentification inputs fail closed into a
+  NEEDS_HUMAN wrapper that carries the numbers), surface-linked measured
+  threshold provenance (cross-surface application fails closed; no
+  production threshold defaults), and a runner registry (`code` default,
+  `local-ml`, and an inert CEO-gated `hosted-jev` stub with no gate flag
+  in code). Contract tests in `tests/test_ha_jev_decisions.py`, including
+  the canary PHI-free tripwire and the AST-derived assessor-allowlist pin.
 - CLI surfaces for appointment prep, denial checklists, and server health
   (`python -m healthadvocate.cli`).
 - MCP server surface (`python -m healthadvocate.mcp_server`) with uplifted tool

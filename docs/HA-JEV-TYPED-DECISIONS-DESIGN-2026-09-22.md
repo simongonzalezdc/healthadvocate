@@ -62,7 +62,16 @@ tests/test_openmed_contract.py:178) pins that no assess entry point exists
 without it; (b) NEEDS_HUMAN is a WRAPPER outcome carrying the numbers — never
 a sentinel inside ChoiceAnswer.value or ScoreAnswer.level — and J1 tests pin
 all four fail-closed legs: below-threshold, threshold-data-missing-or-malformed,
-unknown-runner, invalid-receipt; (c) cross-field validation at the schema layer:
+unknown-runner, invalid-receipt. Every wrapper field derived from ANY pydantic
+ValidationError — invalid receipt, threshold data, provenance — carries
+stripped error types/locs only (`errors(include_input=False,
+include_context=False)`; on pydantic 2.13.5 the raw form carries the rejected
+value under `input` and str(exc) embeds it, while the stripped form yields
+loc/msg/type/url only — verified live in this tree, 2026-09-22), never
+str(exc) or raw errors(); and the canary tripwire's assertion that the
+serialized wrapper contains neither canary nor raw entity text covers the
+malformed-threshold-data wrapper too, not just the invalid-receipt wrapper;
+(c) cross-field validation at the schema layer:
 value ∈ options, options non-empty/unique/≤255, level indexes the rubric,
 per_level_probabilities length == rubric length and sums ≈ 1, probabilities
 and confidences ∈ [0,1], answers reference their question ids; (d) a

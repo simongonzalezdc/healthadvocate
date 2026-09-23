@@ -2,18 +2,25 @@
 
 from __future__ import annotations
 
+import hashlib
 import time
 import logging
 from dataclasses import dataclass, field
+from pathlib import Path
 from typing import Optional
 
 logger = logging.getLogger(__name__)
 
+from healthadvocate.governance.policy_audit import record_policy_audit
 from healthadvocate.privacy.boundary import (
     DEIDENTIFICATION_FAILED_PLACEHOLDER,
     DeidentificationResult,
     DeidentificationStatus,
     PrivacyBoundary,
+)
+from healthadvocate.privacy.policy_profiles import (
+    resolve_permitted_policy,
+    verify_policy_audit_report,
 )
 
 import openmed
@@ -81,6 +88,9 @@ class HealthEngine:
 
     def __init__(self) -> None:
         self._loader: Optional[ModelLoader] = None
+        # Optional override for the Wave-2a policy-audit ledger location
+        # (build/receipts/policy-audit by default). Test/ops injection point.
+        self.policy_audit_receipts_dir: Optional[Path] = None
 
     @property
     def loader(self) -> ModelLoader:
@@ -215,19 +225,105 @@ class HealthEngine:
         evidence_metadata: str = "",
         notes: str = "",
         canaries: list[str] | None = None,
+        policy: str | None = None,
     ) -> DeidentificationResult:
-        """Deidentify the fully assembled model context through PrivacyBoundary."""
+        """Deidentify the fully assembled model context through PrivacyBoundary.
+
+        Wave 2a (RALPLAN row 4): ``policy`` is OPT-IN. ``None`` (default) keeps
+        exactly the legacy openmed call and behavior. A permitted policy name
+        (healthadvocate.privacy.policy_profiles allowlist) is threaded to
+        ``openmed.deidentify(..., policy=...)`` and the run must be backed by a
+        verifiable ``AuditReport`` on the result — unknown policies, missing
+        audit reports, failed hash verification, or an unwritable governance
+        ledger all fail closed through the existing deid-failure path. A policy
+        can only add redaction/audit posture, never remove any.
+        """
+
+        def _record_audit(
+            policy_name: str,
+            *,
+            verified: bool,
+            repro_hash: str = "",
+            error_code: str = "",
+            requested_policy_digest: str = "",
+        ) -> bool:
+            """Write the HA-E78 policy-audit receipt; True iff recorded.
+
+            Failure-leg callers ignore the result (the run is already closed);
+            the pass leg treats False as a fail-closed condition.
+            """
+            try:
+                record_policy_audit(
+                    policy=policy_name,
+                    verified=verified,
+                    repro_hash=repro_hash,
+                    error_code=error_code,
+                    requested_policy_digest=requested_policy_digest,
+                    receipts_dir=(
+                        Path(self.policy_audit_receipts_dir)
+                        if self.policy_audit_receipts_dir
+                        else None
+                    ),
+                )
+                return True
+            except Exception as exc:  # noqa: BLE001 — logging must never leak text
+                logger.error(
+                    "policy_audit receipt write failed code=%s type=%s",
+                    error_code or "policy_audit",
+                    type(exc).__name__,
+                )
+                return False
+
+        def _policy_failure(code: str) -> tuple[str, dict[str, str]]:
+            logger.error("deidentify_for_llm failed code=%s", code)
+            return DEIDENTIFICATION_FAILED_PLACEHOLDER, {
+                "_deidentification_failed": code,
+            }
 
         def _engine_deidentify(assembled: str) -> tuple[str, dict[str, str]]:
+            # Default path: byte-identical to the pre-Wave-2a call — policy is
+            # not threaded at all when unset.
+            if policy is None:
+                try:
+                    raw = openmed.deidentify(
+                        assembled,
+                        method=method,
+                        loader=self.loader,
+                        keep_mapping=True,
+                    )
+                    pii_map = getattr(raw, "mapping", {}) or {}
+                    return raw.deidentified_text, dict(pii_map)
+                except Exception as exc:
+                    logger.error(
+                        "deidentify_for_llm failed code=deidentify_exception type=%s",
+                        type(exc).__name__,
+                    )
+                    return DEIDENTIFICATION_FAILED_PLACEHOLDER, {
+                        "_deidentification_failed": type(exc).__name__,
+                    }
+
+            resolved = resolve_permitted_policy(policy)
+            if resolved is None:
+                _record_audit(
+                    "",
+                    verified=False,
+                    error_code="policy_unknown",
+                    # Digest (never the raw string) lets the ledger correlate
+                    # the rejected request without echoing attacker text.
+                    requested_policy_digest=hashlib.sha256(
+                        policy.encode("utf-8")
+                    ).hexdigest()[:16],
+                )
+                return _policy_failure("policy_unknown")
+
             try:
                 raw = openmed.deidentify(
                     assembled,
                     method=method,
                     loader=self.loader,
                     keep_mapping=True,
+                    policy=resolved,
                 )
-                pii_map = getattr(raw, "mapping", {}) or {}
-                return raw.deidentified_text, dict(pii_map)
             except Exception as exc:
                 logger.error(
                     "deidentify_for_llm failed code=deidentify_exception type=%s",
@@ -236,6 +332,37 @@ class HealthEngine:
                 return DEIDENTIFICATION_FAILED_PLACEHOLDER, {
                     "_deidentification_failed": type(exc).__name__,
                 }
+
+            audit_report = getattr(raw, "audit_report", None)
+            if audit_report is None:
+                _record_audit(
+                    resolved,
+                    verified=False,
+                    error_code="policy_audit_missing",
+                )
+                return _policy_failure("policy_audit_missing")
+
+            verified, repro_hash = verify_policy_audit_report(audit_report)
+            if not verified:
+                _record_audit(
+                    resolved,
+                    verified=False,
+                    repro_hash=repro_hash,
+                    error_code="policy_audit_verification_failed",
+                )
+                return _policy_failure("policy_audit_verification_failed")
+
+            # A pass without recorded governance evidence is a silent pass:
+            # the receipt is required, not best-effort.
+            if not _record_audit(
+                resolved,
+                verified=True,
+                repro_hash=repro_hash,
+            ):
+                return _policy_failure("policy_audit_receipt_write_failed")
+
+            pii_map = getattr(raw, "mapping", {}) or {}
+            return raw.deidentified_text, dict(pii_map)
 
         boundary = PrivacyBoundary(
             deidentify_fn=_engine_deidentify,

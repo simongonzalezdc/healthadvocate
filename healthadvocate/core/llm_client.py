@@ -15,6 +15,8 @@ from healthadvocate.privacy.endpoint_policy import (
 )
 from healthadvocate.privacy.logging_redaction import install_redacting_log_filter
 
+import openai
+
 logger = logging.getLogger(__name__)
 install_redacting_log_filter(logger=logger)
 
@@ -233,15 +235,27 @@ def chat_structured(
         )
         return unavailable_structured_fallback(reason=type(exc).__name__)
 
-    response = client.chat.completions.create(
-        model=_MODEL_NAME,
-        messages=[
-            {"role": "system", "content": json_system},
-            {"role": "user", "content": user_message},
-        ],
-        max_tokens=max_tokens,
-        temperature=temperature,
-    )
+    try:
+        response = client.chat.completions.create(
+            model=_MODEL_NAME,
+            messages=[
+                {"role": "system", "content": json_system},
+                {"role": "user", "content": user_message},
+            ],
+            max_tokens=max_tokens,
+            temperature=temperature,
+        )
+    except openai.APIError as exc:
+        # Provider transport failure (timeout / connection / rate). The
+        # single-slot loopback runtime can refuse under concurrency; this is
+        # availability, not a product error — fail closed to the designed
+        # unavailable fallback instead of surfacing a raw 500.
+        logger.warning(
+            "chat_structured.llm_unavailable code=%s type=%s",
+            "llm_transport_error",
+            type(exc).__name__,
+        )
+        return unavailable_structured_fallback(reason=type(exc).__name__)
     text = response.choices[0].message.content or ""
     if "</think" in text:
         text = text.split("</think")[-1].strip()

@@ -625,7 +625,7 @@ ASSESSOR_ALLOWLIST = frozenset({
     # it and the entry stays. The shrink-only expectation applies when a
     # surface's signature itself moves behind the receipt contract.
     "assess_symptoms",       # core/symptom_assessor.py:10
-    "fight_denial",          # core/insurance_fighter.py:10
+    "fight_denial",          # core/insurance_fighter.py — J2-b converted: the denial-reason pick routes through assess behind the receipt contract; still engine-first because the public API (app endpoint) passes engine positionally, so the derivation still finds it — removal belongs to a later wave that owns the signature.
     "decode_bill",           # core/bill_decoder.py:13
     "decode_document",       # core/document_decoder.py:10
     "prepare_appointment",   # core/appointment_prep.py:10

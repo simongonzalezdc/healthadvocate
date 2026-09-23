@@ -9,6 +9,10 @@ No raw text, no canaries, ever: a receipt carries only the permitted policy
 name, the audit reproducibility hash, the verification result, and build
 metadata. Unknown requested policy names are never echoed — only a SHA-256
 digest of the requested string is recorded, for correlation without content.
+This contract is enforced at the ledger boundary: ``write_policy_audit_receipt``
+sanitizes every free-form field (permitted policy names, canonical
+``sha256:<64 hex>`` hashes, the error-code vocabulary, hex digests) and blanks
+anything else before a byte reaches disk, whatever the calling path.
 
 The ledger is append-once and idempotent: the filename is derived from the
 verification event's identity (policy, outcome, reproducibility hash, error
@@ -21,8 +25,9 @@ from __future__ import annotations
 
 import hashlib
 import json
+import re
 import subprocess
-from dataclasses import asdict, dataclass
+from dataclasses import asdict, dataclass, replace
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -37,6 +42,13 @@ STOP_RULE = (
     "openmed AuditReport reproducibility hash; unknown policies, missing "
     "audit reports, and hash mismatches fail closed with a failure receipt."
 )
+
+# Ledger-field contracts (ADV-008): anything not matching is replaced with ""
+# before serialization — an unvalidated, possibly attacker-controlled value
+# must never reach the ledger file, whatever the calling path.
+_REPRO_HASH_RE = re.compile(r"^sha256:[0-9a-f]{64}$")
+_ERROR_CODE_RE = re.compile(r"^[a-z0-9_]*$")
+_REQUESTED_DIGEST_RE = re.compile(r"^[0-9a-f]{16}$")
 
 
 @dataclass(frozen=True)
@@ -116,11 +128,45 @@ def default_receipts_dir() -> Path:
     return default_project_root() / RECEIPTS_DIR
 
 
+def _sanitize_receipt(receipt: PolicyAuditReceipt) -> PolicyAuditReceipt:
+    """Return a copy whose free-form fields are provenance-safe.
+
+    Only permitted policy names, canonical-format hashes, our error-code
+    vocabulary, and hex digests may appear in a ledger file; every other
+    value is blanked (ADV-008: no raw text, no canaries, ever — enforced at
+    the ledger boundary, not just at the caller).
+    """
+    return replace(
+        receipt,
+        result="pass" if receipt.result == "pass" else "fail",
+        policy=receipt.policy if receipt.policy in PERMITTED_POLICY_PROFILES else "",
+        reproducibility_hash=(
+            receipt.reproducibility_hash
+            if _REPRO_HASH_RE.match(receipt.reproducibility_hash or "")
+            else ""
+        ),
+        error_code=(
+            receipt.error_code if _ERROR_CODE_RE.match(receipt.error_code or "") else ""
+        ),
+        requested_policy_digest=(
+            receipt.requested_policy_digest
+            if _REQUESTED_DIGEST_RE.match(receipt.requested_policy_digest or "")
+            else ""
+        ),
+        evidence_id="HA-E78",
+        tool_version=TOOL_VERSION,
+        reviewer=REVIEWER,
+        stop_rule=STOP_RULE,
+        contains_real_phi=False,
+    )
+
+
 def write_policy_audit_receipt(
     receipt: PolicyAuditReceipt,
     output_dir: Path,
 ) -> Path:
     """Write one append-once receipt; identical events never rewrite it."""
+    receipt = _sanitize_receipt(receipt)
     output_dir.mkdir(parents=True, exist_ok=True)
     path = output_dir / receipt.filename()
     if path.exists():

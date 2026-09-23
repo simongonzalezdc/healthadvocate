@@ -342,15 +342,29 @@ class HealthEngine:
                 )
                 return _policy_failure("policy_audit_missing")
 
-            verified, repro_hash = verify_policy_audit_report(audit_report)
+            # The report must be verified AS EVIDENCE FOR THIS RUN: real
+            # AuditReport instance, well-formed hash, self-consistent, built
+            # under the requested policy, and bound to the assembled input
+            # and the returned output (ADV-004/005/008/009).
+            (
+                verified,
+                repro_hash,
+                audit_error,
+            ) = verify_policy_audit_report(
+                audit_report,
+                expected_policy=resolved,
+                input_text=assembled,
+                deidentified_text=raw.deidentified_text,
+            )
             if not verified:
+                error_code = audit_error or "policy_audit_verification_failed"
                 _record_audit(
                     resolved,
                     verified=False,
                     repro_hash=repro_hash,
-                    error_code="policy_audit_verification_failed",
+                    error_code=error_code,
                 )
-                return _policy_failure("policy_audit_verification_failed")
+                return _policy_failure(error_code)
 
             # A pass without recorded governance evidence is a silent pass:
             # the receipt is required, not best-effort.

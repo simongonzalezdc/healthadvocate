@@ -19,6 +19,7 @@ from healthadvocate.decisions.assess import (
 from healthadvocate.decisions.receipt import (
     EntityClassSummary,
     IdentificationReceipt,
+    ReceiptBuildResult,
     receipt_from_analysis,
 )
 from healthadvocate.decisions.runners import (
@@ -43,6 +44,7 @@ from healthadvocate.decisions.schemas import (
     ScoreSource,
     StrippedValidationError,
     answer_question_pair_errors,
+    is_real_float,
     question_class,
     stripped_validation_errors,
 )
@@ -70,6 +72,7 @@ __all__ = [
     "NoulQuestion",
     "Outcome",
     "Question",
+    "ReceiptBuildResult",
     "RunnerSpec",
     "ScoreAnswer",
     "ScoreLevel",
@@ -82,6 +85,7 @@ __all__ = [
     "assess",
     "get_runner",
     "hosted_jev_call",
+    "is_real_float",
     "question_class",
     "receipt_from_analysis",
     "runner_names",

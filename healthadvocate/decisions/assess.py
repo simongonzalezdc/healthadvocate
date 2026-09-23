@@ -1,20 +1,28 @@
 """The assess gate (design 2026-09-22 §4): identification before
 assessment, calibrated honesty, fail-closed on every leg.
 
-Flow: runner policy → question validity → receipt → thresholds →
-candidate → threshold comparison. Five fail-closed legs return a
+Flow: runner policy → question validity → receipt (canary screen,
+deidentification status) → threshold data (surface match) → candidate →
+threshold comparison. Every fail-closed leg (see ReasonKind) returns a
 NEEDS_HUMAN WRAPPER carrying the numbers (amendment b) — never a sentinel
 inside an answer's value/level:
 
-  below-threshold                confidence under the measured threshold
-  threshold-data-missing         no measured data for the question class
-  threshold-data-malformed       threshold payload failed pydantic validation
-  unknown-runner                 runner name not in the registry
-  invalid-receipt                receipt failed pydantic validation
-  invalid-question               first argument is not a typed Question
-                                 (ADV-004: fail closed, never an unhandled
-                                 ValueError/AttributeError)
-  invalid-answer                 candidate failed model or pair validation
+  answered                        confidence met the measured threshold
+  below-threshold                 confidence under the measured threshold
+  threshold-data-missing          no measured data for the question class
+  threshold-data-malformed        threshold payload failed pydantic validation
+  threshold-surface-mismatch      threshold data measured on another surface
+  unknown-runner                  runner name not in the registry
+  invalid-receipt                 receipt failed validation, carries a
+                                  canary, or reports failed deidentification
+                                  (the deidentification-failed kind)
+  invalid-question                first argument is not a typed Question
+                                  (ADV-004: fail closed, never an unhandled
+                                  ValueError/AttributeError/KeyError)
+  invalid-answer                  candidate failed model or pair validation
+
+Hostile input on ANY parameter fails closed into a wrapper or raises the
+hosted-jev CEO-gate error — never an unhandled crash.
 
 Every wrapper field derived from ANY pydantic ValidationError — invalid
 receipt, threshold data, provenance, candidate — carries stripped error
@@ -27,7 +35,7 @@ reuses the Commitment Gate's fail-closed sentence verbatim.
 
 from __future__ import annotations
 
-from collections.abc import Mapping
+from collections.abc import Mapping, Sequence
 from enum import Enum
 from typing import Literal
 
@@ -56,6 +64,8 @@ from healthadvocate.decisions.schemas import (
     stripped_validation_errors,
 )
 from healthadvocate.decisions.thresholds import ThresholdData
+from healthadvocate.privacy.boundary import DeidentificationStatus
+from healthadvocate.privacy.logging_redaction import DEFAULT_CANARIES
 
 # The Commitment Gate's BLOCKED sentence (commitment_gate.py:188-191),
 # reused verbatim — no receipt means the same refusal, generalized to
@@ -71,8 +81,10 @@ ReasonKind = Literal[
     "below-threshold",
     "threshold-data-missing",
     "threshold-data-malformed",
+    "threshold-surface-mismatch",
     "unknown-runner",
     "invalid-receipt",
+    "deidentification-failed",
     "invalid-question",
     "invalid-answer",
 ]
@@ -96,12 +108,20 @@ _NEXT_STEPS: dict[str, tuple[str, ...]] = {
         "Fix the threshold data using the stripped validation errors",
         "Decide as a human until valid measured data exists",
     ),
+    "threshold-surface-mismatch": (
+        "Provide thresholds measured on this surface",
+        "Decide as a human until surface-matched measured data exists",
+    ),
     "unknown-runner": (
         "Use a registered local runner: code or local-ml",
         "Decide as a human",
     ),
     "invalid-receipt": (
         "Run the identify stage and pass its identification receipt",
+        "Decide as a human outside this application",
+    ),
+    "deidentification-failed": (
+        "Re-run the identify stage until deidentification succeeds",
         "Decide as a human outside this application",
     ),
     "invalid-question": (
@@ -133,10 +153,18 @@ _REASONS: dict[str, str] = {
         "Threshold data is malformed (see the stripped validation "
         "errors); HealthAdvocate will not guess a threshold."
     ),
+    "threshold-surface-mismatch": (
+        "The threshold data was measured on a different surface; "
+        "HealthAdvocate will not cross-apply it to this one."
+    ),
     "unknown-runner": (
         "The named runner is not registered; no assessment ran."
     ),
     "invalid-receipt": FAIL_CLOSED_SENTENCE,
+    "deidentification-failed": (
+        "The identification receipt reports that deidentification "
+        "failed; HealthAdvocate will not consume this decision input."
+    ),
     "invalid-question": (
         "The question is not a typed HA-JEV question; no assessment ran."
     ),
@@ -194,6 +222,13 @@ _ANSWER_TYPES: dict[str, type[BaseModel]] = {
     "score": ScoreAnswer,
     "noul": NoulAnswer,
 }
+
+
+def _runner_label(runner: object) -> str:
+    """Hostile runner values (unhashable, non-str) never reach the dict
+    lookup and never serialize into the wrapper; a non-str runner is not
+    a registered runner and its value is not echoed."""
+    return runner if isinstance(runner, str) else ""
 
 
 def _static(
@@ -286,25 +321,43 @@ def _validated_answer(
     return answer, []
 
 
+def _receipt_contains_canary(
+    receipt: IdentificationReceipt, canaries: Sequence[str]
+) -> bool:
+    return any(
+        canary and canary in receipt.model_dump_json() for canary in canaries
+    )
+
+
 def assess(
     question: Question,
     *,
     receipt: IdentificationReceipt,
     candidate: Answer | None,
-    runner: str = DEFAULT_RUNNER,
+    surface: str,
+    runner: object = DEFAULT_RUNNER,
     thresholds: ThresholdData | Mapping[str, object] | None = None,
+    canaries: Sequence[str] = (),
 ) -> DecisionOutcome:
     """Adjudicate a runner-produced answer behind the receipt contract.
 
     `receipt` is a REQUIRED argument (amendment a): every assess entry
     point carries it, and an invalid receipt fails closed with the gate
-    sentence plus stripped errors only. A surface without measured
-    threshold data gets NEEDS_HUMAN — never a default threshold.
+    sentence plus stripped errors only. `surface` names the converted
+    surface asking the question; threshold data measured on any other
+    surface fails closed (the design's shipping condition, enforced). A
+    receipt that reports failed deidentification, or whose serialized
+    form contains a configured canary (supplied canaries plus the
+    defensive defaults), never yields ANSWERED. A surface without
+    measured threshold data gets NEEDS_HUMAN — never a default
+    threshold.
     """
     # 1. Runner policy. Hosted-jev is a CEO-gated external act: it raises
-    #    (PrivacyBoundary posture), it does not wrap. An unregistered name
-    #    is a configuration mistake: fail closed into the wrapper.
-    spec = get_runner(runner)
+    #    (PrivacyBoundary posture), it does not wrap. An unregistered or
+    #    hostile (non-str, unhashable) runner is a configuration
+    #    mistake: fail closed into the wrapper (review round 3).
+    runner_label = _runner_label(runner)
+    spec = get_runner(runner) if isinstance(runner, str) else None
     if spec is not None and spec.hosted:
         hosted_jev_call(question=question, receipt=receipt)
 
@@ -322,61 +375,101 @@ def assess(
         question_class(question)
         question.id
     except (AttributeError, TypeError, ValueError):
-        return _invalid_question(runner)
+        return _invalid_question(runner_label)
 
     if spec is None:
-        return _static("unknown-runner", question, runner, None, None)
+        return _static("unknown-runner", question, runner_label, None, None)
 
-    # 3. Receipt (the load-bearing rule): no valid receipt, no assessment.
+    # 3. Receipt (the load-bearing rule): no valid receipt, no
+    #    assessment. The serialized receipt is screened for canaries
+    #    (supplied plus defensive defaults — PrivacyBoundary's
+    #    canary-remained discipline), and a FAILED deidentification
+    #    status never clears a decision.
     try:
-        IdentificationReceipt.model_validate(receipt)
+        receipt_obj = IdentificationReceipt.model_validate(receipt)
     except ValidationError as exc:
         return _static(
             "invalid-receipt",
             question,
-            runner,
+            runner_label,
             None,
             None,
             stripped_validation_errors(exc),
         )
+    if _receipt_contains_canary(receipt_obj, tuple(canaries) or DEFAULT_CANARIES):
+        return _static(
+            "invalid-receipt",
+            question,
+            runner_label,
+            None,
+            None,
+            [
+                StrippedValidationError(
+                    loc=("receipt",),
+                    msg=(
+                        "A configured canary remains in the receipt; it is "
+                        "not safe to consume"
+                    ),
+                    type="canary_in_receipt",
+                )
+            ],
+        )
+    if receipt_obj.deidentification_status is DeidentificationStatus.FAILED:
+        return _static(
+            "deidentification-failed", question, runner_label, None, None
+        )
 
     # 4. Threshold data: missing or malformed fails closed (never a
-    #    default); a validating candidate still rides along as numbers.
+    #    default), and data measured on another surface is never
+    #    cross-applied; a validating candidate still rides along as
+    #    numbers.
     if thresholds is None:
-        answer, errors = _validated_answer(question, candidate, runner)
+        answer, errors = _validated_answer(question, candidate, runner_label)
         return _static(
-            "threshold-data-missing", question, runner, answer, None, errors
+            "threshold-data-missing", question, runner_label, answer, None, errors
         )
     try:
         data = ThresholdData.model_validate(thresholds)
     except ValidationError as exc:
-        answer, errors = _validated_answer(question, candidate, runner)
+        answer, errors = _validated_answer(question, candidate, runner_label)
         return _static(
             "threshold-data-malformed",
             question,
-            runner,
+            runner_label,
             answer,
             None,
             stripped_validation_errors(exc) + errors,
         )
+    if data.surface != surface:
+        answer, errors = _validated_answer(question, candidate, runner_label)
+        return _static(
+            "threshold-surface-mismatch",
+            question,
+            runner_label,
+            answer,
+            None,
+            errors,
+        )
     threshold = data.for_class(question_class(question))
     if threshold is None:
-        answer, errors = _validated_answer(question, candidate, runner)
+        answer, errors = _validated_answer(question, candidate, runner_label)
         return _static(
-            "threshold-data-missing", question, runner, answer, None, errors
+            "threshold-data-missing", question, runner_label, answer, None, errors
         )
 
     # 5. Candidate: invalid answers fail closed with stripped errors.
-    answer, errors = _validated_answer(question, candidate, runner)
+    answer, errors = _validated_answer(question, candidate, runner_label)
     if errors:
-        return _static("invalid-answer", question, runner, None, None, errors)
+        return _static(
+            "invalid-answer", question, runner_label, None, None, errors
+        )
 
     # 6. Calibration honesty: below threshold is not a best guess — it is
     #    NEEDS_HUMAN with the calibrated numbers attached.
     if answer.confidence >= threshold.min_confidence:
         return _static(
-            "answered", question, runner, answer, threshold.min_confidence
+            "answered", question, runner_label, answer, threshold.min_confidence
         )
     return _static(
-        "below-threshold", question, runner, answer, threshold.min_confidence
+        "below-threshold", question, runner_label, answer, threshold.min_confidence
     )

@@ -6,20 +6,39 @@ identify stage; no receipt, no assessment, the fail-closed sentence.
 
 Leak grounds: `_extract_entities` stores raw entity text plus offsets in
 EntityMatch (healthadvocate/core/engine.py:59-66), so a naive receipt
-would leak exactly what the privacy boundary exists to strip. This module
-therefore carries entity CLASSES with confidences — never raw text, never
-offsets — and reuses the existing PrivacyBoundary status vocabulary
-(DeidentificationStatus) rather than forking it.
+would leak exactly what the privacy boundary exists to strip. The
+entity-derived fields therefore carry entity CLASSES with confidences —
+never raw text, never offsets — structurally, at the builder.
+
+Free-text metadata fields (model_used, coverage_notes) are caller
+supplied and cannot be structurally stripped; the builder redacts them
+with `redact_text` (PrivacyBoundary's own redaction, reused — not
+forked; the supplied canaries plus the module's defensive defaults),
+and `assess` independently screens the serialized receipt for canaries
+before trusting it. Direct construction carries caller text verbatim —
+surfaces must use the builder.
+
+The builder is TOTAL (review round 3): hostile analysis shapes —
+coerced confidences (str/bool/int), NaN/inf, blank labels, degenerate
+model_used, wrong-typed status — yield a ReceiptBuildResult carrying
+stripped, static errors, never an unhandled exception and never a
+coerced value.
 """
 
 from __future__ import annotations
 
-from collections.abc import Iterable, Sequence
+from collections.abc import Sequence
+from typing import Any
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from healthadvocate.decisions.schemas import Probability
+from healthadvocate.decisions.schemas import (
+    Probability,
+    StrippedValidationError,
+    is_real_float,
+)
 from healthadvocate.privacy.boundary import DeidentificationStatus
+from healthadvocate.privacy.logging_redaction import redact_text
 
 
 class EntityClassSummary(BaseModel):
@@ -45,43 +64,128 @@ class IdentificationReceipt(BaseModel):
     deidentification_status: DeidentificationStatus
 
 
+class ReceiptBuildResult(BaseModel):
+    """Total result of `receipt_from_analysis`: a receipt, or stripped
+    static errors saying why none could be built — never an exception."""
+
+    receipt: IdentificationReceipt | None = None
+    errors: list[StrippedValidationError] = Field(default_factory=list)
+
+
+def _err(
+    loc: tuple[str | int, ...],
+    msg: str,
+    error_type: str,
+) -> StrippedValidationError:
+    return StrippedValidationError(loc=loc, msg=msg, type=error_type, url=None)
+
+
 def receipt_from_analysis(
     analysis: object,
     *,
     coverage_notes: Sequence[str] = (),
     deidentification_status: DeidentificationStatus,
-) -> IdentificationReceipt:
+    canaries: Sequence[str] = (),
+) -> ReceiptBuildResult:
     """Build a receipt from an engine AnalysisResult-like object.
 
     Reads only `label`, `category`, `confidence` and `model_used` — the
-    raw `text` and offset fields of EntityMatch are never copied. The
+    raw `text` and offset fields of EntityMatch are never copied.
+    Confidences follow the answer path's exact-float discipline: genuine
+    floats only (numpy floats accepted), str/bool/int are rejected as
+    errors, not coerced. Free-text fields are canary-redacted
+    (`redact_text`, supplied canaries plus defensive defaults). The
     deidentification status must be stated by the caller (PrivacyBoundary
-    semantics, reused — not forked).
+    semantics, reused — not forked). Any hostile shape yields errors on
+    the result; nothing raises.
     """
-    aggregated: dict[tuple[str, str], list[float]] = {}
-    entities: Iterable[object] = getattr(analysis, "entities", None) or ()
-    for entity in entities:
-        label = str(getattr(entity, "label", "") or "")
-        category = str(getattr(entity, "category", "") or "")
-        confidence = float(getattr(entity, "confidence", 0.0))
-        if not label or not category:
-            continue
-        key = (label, category)
-        bucket = aggregated.setdefault(key, [])
-        bucket.append(confidence)
+    errors: list[StrippedValidationError] = []
 
-    entity_classes = [
-        EntityClassSummary(
-            label=label,
-            category=category,
-            count=len(confidences),
-            max_confidence=max(confidences),
+    model_used_raw = getattr(analysis, "model_used", "")
+    if not isinstance(model_used_raw, str) or not model_used_raw.strip():
+        errors.append(
+            _err(
+                ("model_used",),
+                "Analysis model_used must be a non-empty string",
+                "model_used_invalid",
+            )
         )
-        for (label, category), confidences in sorted(aggregated.items())
-    ]
-    return IdentificationReceipt(
-        model_used=str(getattr(analysis, "model_used", "") or ""),
-        entity_classes=entity_classes,
-        coverage_notes=list(coverage_notes),
+        model_used_raw = ""
+    model_used = redact_text(model_used_raw, canaries) if model_used_raw else ""
+
+    notes: list[str] = []
+    for index, note in enumerate(coverage_notes):
+        if not isinstance(note, str):
+            errors.append(
+                _err(
+                    ("coverage_notes", index),
+                    "Coverage notes must be strings",
+                    "coverage_note_invalid",
+                )
+            )
+            continue
+        notes.append(redact_text(note, canaries) if note else note)
+
+    if not isinstance(deidentification_status, DeidentificationStatus):
+        errors.append(
+            _err(
+                ("deidentification_status",),
+                "deidentification_status must be a DeidentificationStatus member",
+                "deidentification_status_invalid",
+            )
+        )
+
+    aggregated: dict[tuple[str, str], list[float]] = {}
+    entities: Sequence[Any] = getattr(analysis, "entities", None) or ()
+    for index, entity in enumerate(entities):
+        label = getattr(entity, "label", None)
+        category = getattr(entity, "category", None)
+        confidence = getattr(entity, "confidence", None)
+        if not isinstance(label, str) or not label.strip():
+            errors.append(
+                _err(
+                    ("entity_classes", index, "label"),
+                    "Entity label must be a non-empty string",
+                    "entity_label_invalid",
+                )
+            )
+            continue
+        if not isinstance(category, str) or not category.strip():
+            errors.append(
+                _err(
+                    ("entity_classes", index, "category"),
+                    "Entity category must be a non-empty string",
+                    "entity_category_invalid",
+                )
+            )
+            continue
+        if not is_real_float(confidence) or not 0.0 <= confidence <= 1.0:
+            errors.append(
+                _err(
+                    ("entity_classes", index, "max_confidence"),
+                    "Entity confidence must be a genuine float in [0, 1]; "
+                    "coerced values are not accepted",
+                    "entity_confidence_invalid",
+                )
+            )
+            continue
+        aggregated.setdefault((label, category), []).append(float(confidence))
+
+    if errors:
+        return ReceiptBuildResult(receipt=None, errors=errors)
+
+    receipt = IdentificationReceipt(
+        model_used=model_used,
+        entity_classes=[
+            EntityClassSummary(
+                label=label,
+                category=category,
+                count=len(confidences),
+                max_confidence=max(confidences),
+            )
+            for (label, category), confidences in sorted(aggregated.items())
+        ],
+        coverage_notes=notes,
         deidentification_status=deidentification_status,
     )
+    return ReceiptBuildResult(receipt=receipt)

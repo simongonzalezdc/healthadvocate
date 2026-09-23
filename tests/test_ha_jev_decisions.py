@@ -55,16 +55,17 @@ CANARY_MEMBER = "MEMBER-ID-SYNTH-42"
 RAW_ENTITY_TEXTS = (CANARY, CANARY_MEMBER, "Synthetic Patient Name")
 
 # Synthetic threshold fixtures — the ONLY thresholds J1 knows (design §4:
-# no production defaults; provenance must be measured).
+# no production defaults; provenance must be measured, surface-linked).
+SURFACE = "symptom-triage-synthetic"
 MEASURED_PROVENANCE = {
     "source": "measured",
-    "surface": "synthetic-test-fixture",
+    "surface": SURFACE,
     "measured_on": "2026-09-22",
     "sample_size": 200,
 }
 
 
-def measured_thresholds(**overrides: object) -> ThresholdData:
+def measured_thresholds(surface: str = SURFACE, **overrides: object) -> ThresholdData:
     """Build a valid measured ThresholdData for all three question classes."""
     entries = {}
     for qclass, min_conf in (
@@ -75,11 +76,13 @@ def measured_thresholds(**overrides: object) -> ThresholdData:
         entry = {
             "question_class": qclass,
             "min_confidence": min_conf,
-            "provenance": dict(MEASURED_PROVENANCE),
+            "provenance": {**MEASURED_PROVENANCE, "surface": surface},
         }
         entry.update(overrides)
         entries[qclass] = entry
-    return ThresholdData.model_validate({"thresholds": entries})
+    return ThresholdData.model_validate(
+        {"surface": surface, "thresholds": entries}
+    )
 
 
 def synthetic_receipt() -> IdentificationReceipt:
@@ -214,7 +217,7 @@ class PairValidationTests(unittest.TestCase):
             receipt=synthetic_receipt(),
             candidate=ChoiceAnswer(question_id="q-other", value="self-care",
                                    probability=0.9, confidence=0.95),
-            runner="code",
+            surface=SURFACE, runner="code",
             thresholds=measured_thresholds(),
         )
         self.assertEqual(outcome.outcome, "NEEDS_HUMAN")
@@ -226,7 +229,7 @@ class PairValidationTests(unittest.TestCase):
             receipt=synthetic_receipt(),
             candidate=ChoiceAnswer(question_id="q-urgency", value="teleport",
                                    probability=0.9, confidence=0.95),
-            runner="code",
+            surface=SURFACE, runner="code",
             thresholds=measured_thresholds(),
         )
         self.assertEqual(outcome.outcome, "NEEDS_HUMAN")
@@ -241,7 +244,7 @@ class PairValidationTests(unittest.TestCase):
             candidate=ScoreAnswer(question_id="q-triage", level=2,
                                   per_level_probabilities=[0.5, 0.5],
                                   confidence=0.9),
-            runner="code", thresholds=measured_thresholds(),
+            surface=SURFACE, runner="code", thresholds=measured_thresholds(),
         )
         self.assertEqual(outcome.outcome, "NEEDS_HUMAN")
         types = {e.type for e in outcome.validation_errors}
@@ -256,7 +259,7 @@ class PairValidationTests(unittest.TestCase):
                               per_level_probabilities=[0.5, 0.4], confidence=0.9)
         for candidate in (bad_len, bad_sum):
             outcome = assess(q, receipt=synthetic_receipt(), candidate=candidate,
-                             runner="code", thresholds=measured_thresholds())
+                             surface=SURFACE, runner="code", thresholds=measured_thresholds())
             self.assertEqual(outcome.outcome, "NEEDS_HUMAN")
             self.assertTrue(outcome.validation_errors)
 
@@ -271,7 +274,7 @@ class CalibrationHonestyTests(unittest.TestCase):
         outcome = assess(
             choice_question(), receipt=synthetic_receipt(),
             candidate=choice_answer(confidence=0.9),
-            runner="code", thresholds=measured_thresholds(),
+            surface=SURFACE, runner="code", thresholds=measured_thresholds(),
         )
         self.assertEqual(outcome.outcome, "ANSWERED")
         self.assertEqual(outcome.answer, choice_answer(confidence=0.9))
@@ -282,7 +285,7 @@ class CalibrationHonestyTests(unittest.TestCase):
         candidate = choice_answer(confidence=0.55)
         outcome = assess(
             choice_question(), receipt=synthetic_receipt(), candidate=candidate,
-            runner="code", thresholds=measured_thresholds(),
+            surface=SURFACE, runner="code", thresholds=measured_thresholds(),
         )
         self.assertEqual(outcome.outcome, "NEEDS_HUMAN")
         # The numbers ride IN the wrapper — never a sentinel in value/level.
@@ -297,7 +300,7 @@ class CalibrationHonestyTests(unittest.TestCase):
         args = (choice_question(),)
         kw = dict(receipt=synthetic_receipt(),
                   candidate=choice_answer(confidence=0.55),
-                  runner="code", thresholds=measured_thresholds())
+                  surface=SURFACE, runner="code", thresholds=measured_thresholds())
         first = assess(*args, **kw)
         second = assess(*args, **kw)
         self.assertEqual(first.allowed_next_steps, second.allowed_next_steps)
@@ -307,7 +310,7 @@ class CalibrationHonestyTests(unittest.TestCase):
         outcome = assess(
             choice_question(), receipt=synthetic_receipt(),
             candidate=choice_answer(confidence=0.99),  # would pass any default
-            runner="code", thresholds=None,
+            surface=SURFACE, runner="code", thresholds=None,
         )
         self.assertEqual(outcome.outcome, "NEEDS_HUMAN")
         self.assertEqual(outcome.reason_kind, "threshold-data-missing")
@@ -320,7 +323,7 @@ class CalibrationHonestyTests(unittest.TestCase):
         outcome = assess(
             choice_question(), receipt=synthetic_receipt(),
             candidate=choice_answer(confidence=0.99),
-            runner="code", thresholds=data,
+            surface=SURFACE, runner="code", thresholds=data,
         )
         self.assertEqual(outcome.outcome, "NEEDS_HUMAN")
         self.assertEqual(outcome.reason_kind, "threshold-data-missing")
@@ -341,7 +344,7 @@ class CalibrationHonestyTests(unittest.TestCase):
     def test_unknown_runner_fails_closed(self):
         outcome = assess(
             choice_question(), receipt=synthetic_receipt(),
-            candidate=choice_answer(), runner="gpt-9-magic",
+            candidate=choice_answer(), surface=SURFACE, runner="gpt-9-magic",
             thresholds=measured_thresholds(),
         )
         self.assertEqual(outcome.outcome, "NEEDS_HUMAN")
@@ -353,7 +356,7 @@ class CalibrationHonestyTests(unittest.TestCase):
             choice_question(),
             receipt={"model_used": 42},  # malformed receipt payload
             candidate=choice_answer(),
-            runner="code", thresholds=measured_thresholds(),
+            surface=SURFACE, runner="code", thresholds=measured_thresholds(),
         )
         self.assertEqual(outcome.outcome, "NEEDS_HUMAN")
         self.assertEqual(outcome.reason_kind, "invalid-receipt")
@@ -377,7 +380,7 @@ class ScoreSourceHonestyTests(unittest.TestCase):
         outcome = assess(
             choice_question(), receipt=synthetic_receipt(),
             candidate=choice_answer(confidence=0.95),  # no score_source
-            runner="local-ml", thresholds=measured_thresholds(),
+            surface=SURFACE, runner="local-ml", thresholds=measured_thresholds(),
         )
         self.assertEqual(outcome.outcome, "NEEDS_HUMAN")
         types = {e.type for e in outcome.validation_errors}
@@ -389,7 +392,7 @@ class ScoreSourceHonestyTests(unittest.TestCase):
                                  confidence=0.95, score_source=ScoreSource.RAW)
         outcome = assess(
             choice_question(), receipt=synthetic_receipt(), candidate=candidate,
-            runner="local-ml", thresholds=measured_thresholds(),
+            surface=SURFACE, runner="local-ml", thresholds=measured_thresholds(),
         )
         self.assertEqual(outcome.outcome, "ANSWERED")
         self.assertEqual(outcome.answer.score_source, ScoreSource.RAW)
@@ -427,14 +430,17 @@ class ReceiptRequiredTests(unittest.TestCase):
         # the call cannot even be made.
         with self.assertRaises(TypeError):
             assess(choice_question(), candidate=choice_answer(),
-                   runner="code", thresholds=measured_thresholds())
+                   surface=SURFACE, runner="code", thresholds=measured_thresholds())
 
     def test_receipt_never_stores_raw_entity_text(self):
-        receipt = receipt_from_analysis(
+        result = receipt_from_analysis(
             SyntheticAnalysis(),
             coverage_notes=["synthetic identify stage"],
             deidentification_status=DeidentificationStatus.SUCCESS,
         )
+        self.assertEqual(result.errors, [])
+        assert result.receipt is not None
+        receipt = result.receipt
         self.assertEqual(receipt.model_used, "synthetic-ner-fixture")
         labels = {e.label for e in receipt.entity_classes}
         self.assertEqual(labels, {"PatientName", "MemberID"})
@@ -463,7 +469,7 @@ class HostedRunnerRefusalTests(unittest.TestCase):
         with self.assertRaises(HostedJevGateError):
             assess(
                 choice_question(), receipt=synthetic_receipt(),
-                candidate=choice_answer(), runner="hosted-jev",
+                candidate=choice_answer(), surface=SURFACE, runner="hosted-jev",
                 thresholds=measured_thresholds(),
             )
 
@@ -514,7 +520,7 @@ class StrippedErrorsTests(unittest.TestCase):
 
         outcome = assess(
             choice_question(), receipt=payload, candidate=choice_answer(),
-            runner="code", thresholds=measured_thresholds(),
+            surface=SURFACE, runner="code", thresholds=measured_thresholds(),
         )
         self.assertEqual(outcome.reason_kind, "invalid-receipt")
         wrapper_json = json.dumps(outcome.model_dump())
@@ -535,7 +541,7 @@ class StrippedErrorsTests(unittest.TestCase):
         outcome = assess(
             choice_question(), receipt=synthetic_receipt(),
             candidate=choice_answer(confidence=0.95),
-            runner="code", thresholds=payload,
+            surface=SURFACE, runner="code", thresholds=payload,
         )
         self.assertEqual(outcome.reason_kind, "threshold-data-malformed")
         wrapper_json = json.dumps(outcome.model_dump())
@@ -564,20 +570,23 @@ class StrippedErrorsTests(unittest.TestCase):
 
 class CanaryPhiFreeTripwireTests(unittest.TestCase):
     def test_receipt_and_needs_human_wrapper_are_canary_free(self):
-        canary_receipt = receipt_from_analysis(
+        built = receipt_from_analysis(
             SyntheticAnalysis(),
             coverage_notes=["synthetic identify stage"],
             deidentification_status=DeidentificationStatus.SUCCESS,
         )
+        self.assertEqual(built.errors, [])
+        assert built.receipt is not None
         outcome = assess(
-            choice_question(), receipt=canary_receipt,
+            choice_question(), receipt=built.receipt,
             candidate=choice_answer(confidence=0.55),  # below threshold
-            runner="code", thresholds=measured_thresholds(),
+            surface=SURFACE, runner="code",
+            thresholds=measured_thresholds(),
         )
         self.assertEqual(outcome.outcome, "NEEDS_HUMAN")
         self.assertEqual(outcome.answer.value, "clinician-visit")
 
-        receipt_json = json.dumps(canary_receipt.model_dump())
+        receipt_json = json.dumps(built.receipt.model_dump())
         wrapper_json = json.dumps(outcome.model_dump())
         for text in RAW_ENTITY_TEXTS:
             self.assertNotIn(text, receipt_json)
@@ -590,7 +599,7 @@ class CanaryPhiFreeTripwireTests(unittest.TestCase):
         outcome = assess(
             choice_question(), receipt=synthetic_receipt(),
             candidate=choice_answer(confidence=0.55),
-            runner="code", thresholds=payload,
+            surface=SURFACE, runner="code", thresholds=payload,
         )
         self.assertEqual(outcome.reason_kind, "threshold-data-malformed")
         wrapper_json = json.dumps(outcome.model_dump())
@@ -621,23 +630,63 @@ ASSESSOR_ALLOWLIST = frozenset({
 })
 
 
+def derive_engine_first_assessors(core: Path) -> set[str]:
+    """The (h) derivation: every engine-first public function in
+    healthadvocate/core/, including `async def` and nested/conditional
+    definitions (ast.walk, not just tree.body + FunctionDef — an async or
+    nested engine-first def must not evade the pin)."""
+    derived: set[str] = set()
+    for py in sorted(core.glob("*.py")):
+        tree = ast.parse(py.read_text())
+        for node in ast.walk(tree):
+            if not isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+                continue
+            if node.name.startswith("_"):
+                continue
+            positional = node.args.posonlyargs + node.args.args
+            if positional and positional[0].arg == "engine":
+                derived.add(node.name)
+    return derived
+
+
 class AssessorAllowlistTests(unittest.TestCase):
     def test_derived_engine_first_assessors_equal_allowlist(self):
         """AST-derive the engine-first public functions in healthadvocate/
         core/ and require set equality with the frozen nine-entry allowlist.
         Fails on ANY addition; J2+ conversions shrink it (design §4 (h))."""
         core = ROOT / "healthadvocate" / "core"
-        derived: set[str] = set()
+        self.assertEqual(derive_engine_first_assessors(core),
+                         set(ASSESSOR_ALLOWLIST))
+
+    def test_derivation_collects_async_and_nested_defs(self):
+        # Pins the walk itself: an async or nested engine-first def is
+        # collected, so none can slip past the allowlist pin.
+        snippet = (
+            "async def sneak(engine):\n    pass\n"
+            "def outer():\n"
+            "    def hidden(engine):\n        pass\n"
+            "    return hidden\n"
+        )
+        tree = ast.parse(snippet)
+        found = {
+            node.name for node in ast.walk(tree)
+            if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef))
+            and not node.name.startswith("_")
+            and (node.args.posonlyargs + node.args.args)
+            and (node.args.posonlyargs + node.args.args)[0].arg == "engine"
+        }
+        self.assertEqual(found, {"sneak", "hidden"})
+
+    def test_no_async_def_exists_in_core_today(self):
+        # Documents the latent-gap ground truth the reviewer verified.
+        core = ROOT / "healthadvocate" / "core"
         for py in sorted(core.glob("*.py")):
             tree = ast.parse(py.read_text())
-            for node in tree.body:
-                if not (isinstance(node, ast.FunctionDef)
-                        and not node.name.startswith("_")):
-                    continue
-                positional = node.args.posonlyargs + node.args.args
-                if positional and positional[0].arg == "engine":
-                    derived.add(node.name)
-        self.assertEqual(derived, set(ASSESSOR_ALLOWLIST))
+            async_defs = [
+                node.name for node in ast.walk(tree)
+                if isinstance(node, ast.AsyncFunctionDef)
+            ]
+            self.assertEqual(async_defs, [], py.name)
 
     def test_allowlist_is_the_nine_pinned_entries(self):
         self.assertEqual(len(ASSESSOR_ALLOWLIST), 9)
@@ -658,7 +707,7 @@ class Adv004InvalidQuestionTests(unittest.TestCase):
             with self.subTest(question=hostile):
                 outcome = assess(
                     hostile, receipt=synthetic_receipt(),
-                    candidate=choice_answer(), runner="code",
+                    candidate=choice_answer(), surface=SURFACE, runner="code",
                     thresholds=measured_thresholds(),
                 )
                 self.assertEqual(outcome.outcome, "NEEDS_HUMAN")
@@ -673,7 +722,7 @@ class Adv004InvalidQuestionTests(unittest.TestCase):
             with self.subTest(question=hostile):
                 outcome = assess(
                     hostile, receipt=synthetic_receipt(), candidate=None,
-                    runner="nope", thresholds=measured_thresholds(),
+                    surface=SURFACE, runner="nope", thresholds=measured_thresholds(),
                 )
                 self.assertEqual(outcome.outcome, "NEEDS_HUMAN")
                 self.assertEqual(outcome.reason_kind, "invalid-question")
@@ -681,7 +730,7 @@ class Adv004InvalidQuestionTests(unittest.TestCase):
     def test_hostile_question_with_valid_control_still_works(self):
         outcome = assess(
             choice_question(), receipt=synthetic_receipt(),
-            candidate=choice_answer(confidence=0.9), runner="code",
+            candidate=choice_answer(confidence=0.9), surface=SURFACE, runner="code",
             thresholds=measured_thresholds(),
         )
         self.assertEqual(outcome.outcome, "ANSWERED")
@@ -691,13 +740,13 @@ class Adv004InvalidQuestionTests(unittest.TestCase):
         # input-validation ordering.
         with self.assertRaises(HostedJevGateError):
             assess({"id": "q-urgency"}, receipt=synthetic_receipt(),
-                   candidate=None, runner="hosted-jev",
+                   candidate=None, surface=SURFACE, runner="hosted-jev",
                    thresholds=measured_thresholds())
 
     def test_invalid_question_wrapper_never_echoes_hostile_input(self):
         outcome = assess(
             {"id": CANARY}, receipt=synthetic_receipt(),
-            candidate=choice_answer(), runner="code",
+            candidate=choice_answer(), surface=SURFACE, runner="code",
             thresholds=measured_thresholds(),
         )
         wrapper_json = json.dumps(outcome.model_dump())
@@ -767,7 +816,7 @@ class Adv001StrictTypingTests(unittest.TestCase):
                     candidate={"question_id": "q-urgency",
                                "value": "clinician-visit",
                                "probability": 0.5, "confidence": bad},
-                    runner="code", thresholds=measured_thresholds(),
+                    surface=SURFACE, runner="code", thresholds=measured_thresholds(),
                 )
                 self.assertEqual(outcome.outcome, "NEEDS_HUMAN")
                 self.assertEqual(outcome.reason_kind, "invalid-answer")
@@ -777,7 +826,7 @@ class Adv001StrictTypingTests(unittest.TestCase):
         # Guard against over-strictness: plain floats keep flowing.
         outcome = assess(
             choice_question(), receipt=synthetic_receipt(),
-            candidate=choice_answer(confidence=0.95), runner="code",
+            candidate=choice_answer(confidence=0.95), surface=SURFACE, runner="code",
             thresholds=measured_thresholds(),
         )
         self.assertEqual(outcome.outcome, "ANSWERED")
@@ -827,7 +876,7 @@ class Adv004Round2Tests(unittest.TestCase):
             with self.subTest(question_class=qclass):
                 outcome = assess(
                     question, receipt=synthetic_receipt(),
-                    candidate=answer(), runner="code",
+                    candidate=answer(), surface=SURFACE, runner="code",
                     thresholds=measured_thresholds(),
                 )
                 self.assertEqual(outcome.outcome, "ANSWERED")
@@ -840,7 +889,7 @@ class Adv004Round2Tests(unittest.TestCase):
             with self.subTest(question_class=qclass):
                 outcome = assess(
                     question, receipt=synthetic_receipt(),
-                    candidate=answer(), runner="code", thresholds=None,
+                    candidate=answer(), surface=SURFACE, runner="code", thresholds=None,
                 )
                 self.assertEqual(outcome.outcome, "NEEDS_HUMAN")
                 self.assertEqual(outcome.reason_kind, "threshold-data-missing")
@@ -862,7 +911,7 @@ class Adv004Round2Tests(unittest.TestCase):
             with self.subTest(thresholds_present=thresholds is not None):
                 outcome = assess(
                     proxy, receipt=synthetic_receipt(),
-                    candidate=choice_answer(), runner="code",
+                    candidate=choice_answer(), surface=SURFACE, runner="code",
                     thresholds=thresholds,
                 )
                 self.assertEqual(outcome.outcome, "NEEDS_HUMAN")
@@ -882,10 +931,292 @@ class Adv004Round2Tests(unittest.TestCase):
             ProxyWithId(), receipt=synthetic_receipt(),
             candidate=NoulAnswer(question_id="q-claim", probability_true=0.1,
                                  confidence=0.99),
-            runner="code", thresholds=measured_thresholds(),
+            surface=SURFACE, runner="code", thresholds=measured_thresholds(),
         )
         self.assertEqual(outcome.reason_kind, "invalid-question")
         self.assertIsNone(outcome.threshold_applied)
+
+
+# ---------------------------------------------------------------------------
+# Review round 3: threshold-provenance linkage (F1), hostile runner values
+# (F2), total receipt builder (F3), deidentification gate (F4), receipt
+# free-text canary screen (F7), numpy float dtypes (F8).
+# ---------------------------------------------------------------------------
+
+
+class ThresholdProvenanceLinkageTests(unittest.TestCase):
+    def test_junk_provenance_shape_is_malformed(self):
+        with self.assertRaises(ValidationError):
+            ThresholdData.model_validate({"surface": "s", "thresholds": {
+                "noul": {"question_class": "noul", "min_confidence": 0.0,
+                         "provenance": {"source": "measured", "surface": "???",
+                                        "measured_on": "not-a-date",
+                                        "sample_size": 1}}}})
+
+    def test_threshold_data_requires_a_surface(self):
+        payload = measured_thresholds().model_dump()
+        del payload["surface"]
+        with self.assertRaises(ValidationError):
+            ThresholdData.model_validate(payload)
+
+    def test_entry_provenance_surface_must_match_data_surface(self):
+        payload = measured_thresholds().model_dump()
+        payload["thresholds"]["choice"]["provenance"]["surface"] = "other"
+        with self.assertRaises(ValidationError):
+            ThresholdData.model_validate(payload)
+
+    def test_cross_surface_threshold_fails_closed(self):
+        # A threshold file measured on denial-classifier must not gate a
+        # symptom-triage question — the design's shipping condition,
+        # enforced loudly instead of cross-applied silently.
+        outcome = assess(
+            choice_question(), receipt=synthetic_receipt(),
+            candidate=choice_answer(confidence=0.95),
+            surface="symptom-triage",
+            runner="code",
+            thresholds=measured_thresholds(surface="denial-classifier"),
+        )
+        self.assertEqual(outcome.outcome, "NEEDS_HUMAN")
+        self.assertEqual(outcome.reason_kind, "threshold-surface-mismatch")
+        self.assertIsNone(outcome.threshold_applied)
+        self.assertEqual(outcome.gate_state, GateState.REVIEW_REQUIRED)
+
+    def test_matching_surface_still_answers(self):
+        outcome = assess(
+            choice_question(), receipt=synthetic_receipt(),
+            candidate=choice_answer(confidence=0.95),
+            surface=SURFACE, runner="code", thresholds=measured_thresholds(),
+        )
+        self.assertEqual(outcome.outcome, "ANSWERED")
+
+    def test_measured_on_must_be_iso_date(self):
+        with self.assertRaises(ValidationError):
+            ThresholdData.model_validate({
+                "surface": SURFACE, "thresholds": {"noul": {
+                    "question_class": "noul", "min_confidence": 0.5,
+                    "provenance": {**MEASURED_PROVENANCE,
+                                   "measured_on": "09/22/2026"}}}})
+
+
+class HostileRunnerValueTests(unittest.TestCase):
+    def test_unhashable_runner_fails_closed(self):
+        outcome = assess(
+            choice_question(), receipt=synthetic_receipt(),
+            candidate=choice_answer(),
+            surface=SURFACE, runner=["code"], thresholds=measured_thresholds(),
+        )
+        self.assertEqual(outcome.outcome, "NEEDS_HUMAN")
+        self.assertEqual(outcome.reason_kind, "unknown-runner")
+        # The hostile value is never echoed into the wrapper.
+        self.assertEqual(outcome.runner, "")
+        self.assertNotIn('["code"]', json.dumps(outcome.model_dump()))
+
+    def test_non_string_runner_values_fail_closed(self):
+        for bad in (None, 42, {"name": "code"}, ("code",)):
+            with self.subTest(runner=bad):
+                outcome = assess(
+                    choice_question(), receipt=synthetic_receipt(),
+                    candidate=choice_answer(),
+                    surface=SURFACE, runner=bad,
+                    thresholds=measured_thresholds(),
+                )
+                self.assertEqual(outcome.reason_kind, "unknown-runner")
+                self.assertEqual(outcome.runner, "")
+
+    def test_non_string_runner_with_hostile_question_no_crash(self):
+        outcome = assess(
+            {"id": "q"}, receipt=synthetic_receipt(), candidate=None,
+            surface=SURFACE, runner=["code"], thresholds=None,
+        )
+        self.assertEqual(outcome.reason_kind, "invalid-question")
+
+
+class ReceiptBuilderTotalityTests(unittest.TestCase):
+    @staticmethod
+    def _analysis(entities, model_used="m"):
+        class Analysis:
+            pass
+
+        analysis = Analysis()
+        analysis.model_used = model_used
+        analysis.entities = entities
+        return analysis
+
+    @staticmethod
+    def _entity(confidence, label="L", category="pii"):
+        class Entity:
+            pass
+
+        entity = Entity()
+        entity.label = label
+        entity.category = category
+        entity.confidence = confidence
+        return entity
+
+    def test_valid_analysis_builds_receipt_with_no_errors(self):
+        result = receipt_from_analysis(
+            self._analysis([self._entity(0.9)]),
+            deidentification_status=DeidentificationStatus.SUCCESS,
+        )
+        self.assertEqual(result.errors, [])
+        assert result.receipt is not None
+
+    def test_coerced_confidences_are_rejected_not_coerced(self):
+        # str/bool/int confidences must NOT become max_confidence floats —
+        # the answer path's exact-float stance, applied to the builder too.
+        for bad in ("0.99", b"0.99", True, 1, None):
+            with self.subTest(confidence=bad):
+                result = receipt_from_analysis(
+                    self._analysis([self._entity(bad)]),
+                    deidentification_status=DeidentificationStatus.SUCCESS,
+                )
+                self.assertIsNone(result.receipt)
+                self.assertTrue(result.errors)
+                errors_json = json.dumps(
+                    [e.model_dump() for e in result.errors])
+                self.assertNotIn("0.99", errors_json)
+
+    def test_unparseable_nan_and_degenerate_inputs_fail_closed(self):
+        for entities, model_used in (
+            ([self._entity(float("nan"))], "m"),      # NaN confidence
+            ([self._entity(float("inf"))], "m"),      # out of range
+            ([self._entity(0.5, label="")], "m"),     # blank label
+            ([], ""),                                 # empty model_used
+            ([], 42),                                 # non-str model_used
+        ):
+            with self.subTest(model_used=model_used):
+                result = receipt_from_analysis(
+                    self._analysis(entities, model_used=model_used),
+                    deidentification_status=DeidentificationStatus.SUCCESS,
+                )
+                self.assertIsNone(result.receipt)
+                self.assertTrue(result.errors)
+
+    def test_non_string_deidentification_status_fails_closed(self):
+        result = receipt_from_analysis(
+            self._analysis([]),
+            deidentification_status="success",  # type: ignore[arg-type]
+        )
+        self.assertIsNone(result.receipt)
+        self.assertTrue(result.errors)
+
+
+class DeidentificationGateTests(unittest.TestCase):
+    def _failed_receipt(self):
+        return IdentificationReceipt(
+            model_used="m", entity_classes=[], coverage_notes=[],
+            deidentification_status=DeidentificationStatus.FAILED,
+        )
+
+    def test_failed_deidentification_never_answers(self):
+        outcome = assess(
+            choice_question(), receipt=self._failed_receipt(),
+            candidate=choice_answer(confidence=0.99),
+            surface=SURFACE, runner="code", thresholds=measured_thresholds(),
+        )
+        self.assertEqual(outcome.outcome, "NEEDS_HUMAN")
+        self.assertEqual(outcome.reason_kind, "deidentification-failed")
+        self.assertIsNone(outcome.answer)
+        self.assertEqual(outcome.gate_state, GateState.REVIEW_REQUIRED)
+
+    def test_no_pii_found_still_answers(self):
+        receipt = synthetic_receipt()
+        receipt = receipt.model_copy(
+            update={"deidentification_status": DeidentificationStatus.NO_PII_FOUND})
+        outcome = assess(
+            choice_question(), receipt=receipt,
+            candidate=choice_answer(confidence=0.9),
+            surface=SURFACE, runner="code", thresholds=measured_thresholds(),
+        )
+        self.assertEqual(outcome.outcome, "ANSWERED")
+
+
+class ReceiptFreeTextCanaryScreenTests(unittest.TestCase):
+    def test_builder_redacts_canaries_from_free_text(self):
+        class Analysis:
+            model_used = f"ner/{CANARY}"
+            entities = []
+
+        result = receipt_from_analysis(
+            Analysis(),
+            coverage_notes=[f"saw {CANARY} and {CANARY_MEMBER}"],
+            deidentification_status=DeidentificationStatus.SUCCESS,
+            canaries=(CANARY, CANARY_MEMBER),
+        )
+        self.assertEqual(result.errors, [])
+        assert result.receipt is not None
+        receipt_json = json.dumps(result.receipt.model_dump())
+        self.assertNotIn(CANARY, receipt_json)
+        self.assertNotIn(CANARY_MEMBER, receipt_json)
+
+    def test_assess_screens_receipt_free_text_for_canaries(self):
+        leaky = IdentificationReceipt(
+            model_used=f"ner/{CANARY}", entity_classes=[], coverage_notes=[],
+            deidentification_status=DeidentificationStatus.SUCCESS,
+        )
+        outcome = assess(
+            choice_question(), receipt=leaky, candidate=choice_answer(),
+            surface=SURFACE, runner="code", thresholds=measured_thresholds(),
+        )
+        self.assertEqual(outcome.outcome, "NEEDS_HUMAN")
+        self.assertEqual(outcome.reason_kind, "invalid-receipt")
+        self.assertIsNone(outcome.answer)
+        wrapper_json = json.dumps(outcome.model_dump())
+        self.assertNotIn(CANARY, wrapper_json)
+
+    def test_default_canaries_screen_without_explicit_argument(self):
+        # redact_text/DEFAULT_CANARIES discipline: the screen is on by
+        # default (house canaries), not only when canaries are passed.
+        leaky = IdentificationReceipt(
+            model_used="m", entity_classes=[], coverage_notes=[CANARY_MEMBER],
+            deidentification_status=DeidentificationStatus.SUCCESS,
+        )
+        outcome = assess(
+            choice_question(), receipt=leaky, candidate=choice_answer(),
+            surface=SURFACE, runner="code", thresholds=measured_thresholds(),
+        )
+        self.assertEqual(outcome.reason_kind, "invalid-receipt")
+
+
+class NumpyFloatDtypeTests(unittest.TestCase):
+    def setUp(self):
+        try:
+            import numpy  # noqa: F401
+        except ImportError:
+            self.skipTest("numpy not available")
+        import numpy as np
+        self.np = np
+
+    def test_float64_and_float32_accepted(self):
+        answer = ChoiceAnswer(question_id="q", value="a", probability=0.5,
+                              confidence=self.np.float64(0.95))
+        self.assertIsInstance(answer.confidence, float)
+        self.assertEqual(answer.confidence, 0.95)
+        answer32 = NoulAnswer(question_id="q",
+                              probability_true=self.np.float32(0.5),
+                              confidence=self.np.float32(0.9))
+        self.assertEqual(answer32.probability_true, 0.5)
+
+    def test_numpy_int_and_bool_rejected(self):
+        for bad in (self.np.int64(1), self.np.bool_(True), self.np.int32(1)):
+            with self.subTest(value=bad):
+                with self.assertRaises(ValidationError):
+                    ChoiceAnswer(question_id="q", value="a", probability=0.5,
+                                 confidence=bad)
+
+    def test_numpy_confidence_assesses_end_to_end(self):
+        # The J2 local-ml runner's natural dtype flows through the gate
+        # without a per-call-site conversion tax.
+        outcome = assess(
+            choice_question(), receipt=synthetic_receipt(),
+            candidate={"question_id": "q-urgency", "value": "clinician-visit",
+                       "probability": 0.5, "confidence": self.np.float64(0.95),
+                       "score_source": "raw"},
+            surface=SURFACE, runner="local-ml",
+            thresholds=measured_thresholds(),
+        )
+        self.assertEqual(outcome.outcome, "ANSWERED")
+        self.assertEqual(outcome.answer.confidence, 0.95)
 
 
 if __name__ == "__main__":

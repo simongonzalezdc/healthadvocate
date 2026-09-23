@@ -24,6 +24,7 @@ would sail straight through the stripped form.
 from __future__ import annotations
 
 from enum import Enum
+from numbers import Integral, Real
 from typing import Annotated
 
 from pydantic import (
@@ -40,21 +41,38 @@ _SUM_TOLERANCE = 1e-6
 _STRICT = ConfigDict(strict=True)
 
 
-def _require_exact_float(value: object) -> object:
-    """ADV-001: the calibrated gate consumes floats only — never a value
-    coerced from str/bytes/bool/int (bool True and int 1 both become 1.0
-    and would pass every threshold). Static message; input never echoed."""
-    if type(value) is not float:
+def is_real_float(value: object) -> bool:
+    """True for genuine floating-point values only.
+
+    float and the numpy float scalars (float64, float32, ...) pass; str,
+    bytes, bool, int and the numpy integer/boolean scalars fail (bool is
+    Integral, numpy bool_ is not Real). This is ADV-001's line — coerced
+    or integer-typed confidences never enter the gate — widened to the
+    natural dtypes of openmed NER confidences so J2 local-ml candidates
+    do not pay a per-call-site conversion tax.
+    """
+    return isinstance(value, Real) and not isinstance(value, Integral)
+
+
+def _require_real_float(value: object) -> float:
+    """ADV-001: the calibrated gate consumes genuine floats — never a
+    value coerced from str/bytes/bool/int (bool True and int 1 both become
+    1.0 and would pass every threshold). Accepted real floats (including
+    numpy scalars) are normalized to Python float. Static message; the
+    input is never echoed."""
+    if not is_real_float(value):
         raise ValueError(
-            "probability and confidence values must be provided as exact "
-            "floats; coerced values are not accepted"
+            "probability and confidence values must be genuine "
+            "floating-point numbers; values are never coerced from "
+            "str, bytes, bool, or int"
         )
-    return value
+    return float(value)
 
 
-#: A calibrated probability or confidence in [0, 1] — exact float only.
+#: A calibrated probability or confidence in [0, 1] — a genuine float
+#: (Python or numpy), never a coerced str/bytes/bool/int.
 Probability = Annotated[
-    float, BeforeValidator(_require_exact_float), Field(ge=0.0, le=1.0)
+    float, BeforeValidator(_require_real_float), Field(ge=0.0, le=1.0)
 ]
 
 
@@ -206,7 +224,10 @@ class ChoiceAnswer(BaseModel):
     value: str = Field(min_length=1)
     probability: Probability
     confidence: Probability
-    score_source: ScoreSource | None = None
+    # Enums accept their value strings ("raw"/"calibrated") even under
+    # strict mode: runners hand over plain dicts; the HONESTY fields that
+    # must never coerce — probabilities, confidences — stay strict.
+    score_source: ScoreSource | None = Field(default=None, strict=False)
 
 
 class ScoreAnswer(BaseModel):
@@ -216,7 +237,10 @@ class ScoreAnswer(BaseModel):
     level: int = Field(ge=0)
     per_level_probabilities: list[Probability] = Field(min_length=1)
     confidence: Probability
-    score_source: ScoreSource | None = None
+    # Enums accept their value strings ("raw"/"calibrated") even under
+    # strict mode: runners hand over plain dicts; the HONESTY fields that
+    # must never coerce — probabilities, confidences — stay strict.
+    score_source: ScoreSource | None = Field(default=None, strict=False)
 
 
 class NoulAnswer(BaseModel):
@@ -225,7 +249,10 @@ class NoulAnswer(BaseModel):
     question_id: str = Field(min_length=1)
     probability_true: Probability
     confidence: Probability
-    score_source: ScoreSource | None = None
+    # Enums accept their value strings ("raw"/"calibrated") even under
+    # strict mode: runners hand over plain dicts; the HONESTY fields that
+    # must never coerce — probabilities, confidences — stay strict.
+    score_source: ScoreSource | None = Field(default=None, strict=False)
 
 
 Answer = ChoiceAnswer | ScoreAnswer | NoulAnswer

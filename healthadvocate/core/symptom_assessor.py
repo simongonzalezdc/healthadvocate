@@ -1,10 +1,29 @@
-"""Symptom assessment — NER extraction + structured LLM analysis."""
+"""Symptom assessment — NER extraction + structured LLM analysis.
+
+J2-c (2026-09-22): the urgency pick is routed through the HA-JEV
+typed-decision layer (healthadvocate/decisions/symptom_triage.py).
+The public API and every pre-conversion behavior is preserved; the
+typed layer adds auditability (identification receipt, calibrated
+gate, NEEDS_HUMAN wrapper) and never lowers urgency — any fail-closed
+leg and any urgency_disagreement surfaces as the conservative
+highest urgency, exactly as the disagreement rule did before.
+Deidentify-before-reasoning order is untouched: the gated model call
+still assembles and deidentifies the full context itself.
+"""
 
 from __future__ import annotations
 
 from .engine import HealthEngine, format_entities_with_confidence
 from .cross_validation import cross_validate
 from healthadvocate.privacy.gated_model import structured_model_call
+from healthadvocate.decisions.assess import invalid_receipt_outcome
+from healthadvocate.decisions.receipt import receipt_from_analysis
+from healthadvocate.decisions.symptom_triage import (
+    URGENCY_QUESTION,
+    assess_urgency,
+    deidentification_status_from_output,
+    external_urgency,
+)
 
 
 def assess_symptoms(engine: HealthEngine, symptoms: str, profile_id: str | None = None) -> dict:
@@ -43,9 +62,27 @@ def assess_symptoms(engine: HealthEngine, symptoms: str, profile_id: str | None 
     )
     validation = cross_validate(result.entities, llm_output)
 
-    urgency = llm_output.get("urgency", "medium")
-    if validation.urgency_disagreement:
-        urgency = "high"
+    # J2-c: type the urgency pick through the receipt contract. The
+    # receipt comes from the REAL identify stage above (never fabricated);
+    # its deidentification status is the one the gated call measured. A
+    # receipt that cannot be built fails closed through the same wrapper
+    # shape. Disagreement dominates: it escalates to the conservative
+    # urgency even when the gate answered.
+    built = receipt_from_analysis(
+        result,
+        deidentification_status=deidentification_status_from_output(
+            llm_output.get("deidentification_status", "unknown")
+        ),
+    )
+    if built.receipt is None:
+        decision = invalid_receipt_outcome(
+            URGENCY_QUESTION, errors=built.errors
+        )
+    else:
+        decision = assess_urgency(
+            receipt=built.receipt, llm_output=llm_output
+        )
+    urgency = external_urgency(decision, validation.urgency_disagreement)
 
     status = llm_output.get("deidentification_status", "unknown")
     return {
@@ -68,4 +105,8 @@ def assess_symptoms(engine: HealthEngine, symptoms: str, profile_id: str | None 
         "processing_time": result.processing_time,
         "deidentification_status": status,
         "pii_scrubbed": status == "success",
+        "urgency_decision": decision.model_dump(mode="json"),
+        "urgency_receipt": (
+            built.receipt.model_dump(mode="json") if built.receipt else None
+        ),
     }

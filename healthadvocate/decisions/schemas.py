@@ -4,6 +4,13 @@ Typed, calibrated decision primitives — no prose. Cross-field validation
 (amendment c) lives at the schema layer for what a model can know about
 itself, and in `answer_question_pair_errors` for (question, answer) pairs.
 
+Strict typing (ADV-001): every input model runs pydantic strict mode, and
+every probability/confidence field is an exact-float `Probability` —
+pydantic 2.13.5 lax mode coerces str/bytes/bool/int into floats and bytes
+into option strings, which drove ANSWERED outcomes on untyped input;
+strict mode alone still accepts int (verified live), so the exact-float
+before-validator is load-bearing, not redundant.
+
 Leak discipline (consensus amendment, round 3): every error object this
 package emits is a `StrippedValidationError` built from
 `errors(include_input=False, include_context=False)`. On pydantic 2.13.5
@@ -19,9 +26,36 @@ from __future__ import annotations
 from enum import Enum
 from typing import Annotated
 
-from pydantic import BaseModel, ConfigDict, Field, ValidationError, field_validator
+from pydantic import (
+    BaseModel,
+    BeforeValidator,
+    ConfigDict,
+    Field,
+    ValidationError,
+    field_validator,
+)
 
 _SUM_TOLERANCE = 1e-6
+
+_STRICT = ConfigDict(strict=True)
+
+
+def _require_exact_float(value: object) -> object:
+    """ADV-001: the calibrated gate consumes floats only — never a value
+    coerced from str/bytes/bool/int (bool True and int 1 both become 1.0
+    and would pass every threshold). Static message; input never echoed."""
+    if type(value) is not float:
+        raise ValueError(
+            "probability and confidence values must be provided as exact "
+            "floats; coerced values are not accepted"
+        )
+    return value
+
+
+#: A calibrated probability or confidence in [0, 1] — exact float only.
+Probability = Annotated[
+    float, BeforeValidator(_require_exact_float), Field(ge=0.0, le=1.0)
+]
 
 
 class ScoreSource(str, Enum):
@@ -85,13 +119,15 @@ def _stripped(
 class ScoreLevel(BaseModel):
     """One ordered rubric level; `ScoreAnswer.level` indexes the rubric."""
 
-    model_config = ConfigDict(frozen=True)
+    model_config = ConfigDict(strict=True, frozen=True)
 
     label: str = Field(min_length=1)
 
 
 class ChoiceQuestion(BaseModel):
     """Jev Choice primitive: pick from at most 255 options."""
+
+    model_config = _STRICT
 
     id: str = Field(min_length=1)
     options: list[str] = Field(min_length=1, max_length=255)
@@ -112,6 +148,8 @@ class ChoiceQuestion(BaseModel):
 class ScoreQuestion(BaseModel):
     """Jev Score primitive: an ordered rubric with per-level probabilities."""
 
+    model_config = _STRICT
+
     id: str = Field(min_length=1)
     rubric: list[ScoreLevel] = Field(min_length=1)
 
@@ -126,6 +164,8 @@ class ScoreQuestion(BaseModel):
 
 class NoulQuestion(BaseModel):
     """Jev Noul primitive: a yes/no claim with a calibrated probability."""
+
+    model_config = _STRICT
 
     id: str = Field(min_length=1)
     claim: str = Field(min_length=1)
@@ -152,29 +192,33 @@ def question_class(question: Question) -> str:
 # Answers
 # ---------------------------------------------------------------------------
 
-_Probability = Annotated[float, Field(ge=0.0, le=1.0)]
-
 
 class ChoiceAnswer(BaseModel):
+    model_config = _STRICT
+
     question_id: str = Field(min_length=1)
     value: str = Field(min_length=1)
-    probability: _Probability
-    confidence: _Probability
+    probability: Probability
+    confidence: Probability
     score_source: ScoreSource | None = None
 
 
 class ScoreAnswer(BaseModel):
+    model_config = _STRICT
+
     question_id: str = Field(min_length=1)
     level: int = Field(ge=0)
-    per_level_probabilities: list[_Probability] = Field(min_length=1)
-    confidence: _Probability
+    per_level_probabilities: list[Probability] = Field(min_length=1)
+    confidence: Probability
     score_source: ScoreSource | None = None
 
 
 class NoulAnswer(BaseModel):
+    model_config = _STRICT
+
     question_id: str = Field(min_length=1)
-    probability_true: _Probability
-    confidence: _Probability
+    probability_true: Probability
+    confidence: Probability
     score_source: ScoreSource | None = None
 
 

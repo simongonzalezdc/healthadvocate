@@ -1,16 +1,19 @@
 """The assess gate (design 2026-09-22 §4): identification before
 assessment, calibrated honesty, fail-closed on every leg.
 
-Flow: runner policy → receipt → thresholds → candidate → threshold
-comparison. Four fail-closed legs return a NEEDS_HUMAN WRAPPER carrying
-the numbers (amendment b) — never a sentinel inside an answer's
-value/level:
+Flow: runner policy → question validity → receipt → thresholds →
+candidate → threshold comparison. Five fail-closed legs return a
+NEEDS_HUMAN WRAPPER carrying the numbers (amendment b) — never a sentinel
+inside an answer's value/level:
 
   below-threshold                confidence under the measured threshold
   threshold-data-missing         no measured data for the question class
   threshold-data-malformed       threshold payload failed pydantic validation
   unknown-runner                 runner name not in the registry
   invalid-receipt                receipt failed pydantic validation
+  invalid-question               first argument is not a typed Question
+                                 (ADV-004: fail closed, never an unhandled
+                                 ValueError/AttributeError)
   invalid-answer                 candidate failed model or pair validation
 
 Every wrapper field derived from ANY pydantic ValidationError — invalid
@@ -70,6 +73,7 @@ ReasonKind = Literal[
     "threshold-data-malformed",
     "unknown-runner",
     "invalid-receipt",
+    "invalid-question",
     "invalid-answer",
 ]
 
@@ -100,6 +104,10 @@ _NEXT_STEPS: dict[str, tuple[str, ...]] = {
         "Run the identify stage and pass its identification receipt",
         "Decide as a human outside this application",
     ),
+    "invalid-question": (
+        "Pass a typed ChoiceQuestion, ScoreQuestion, or NoulQuestion",
+        "Decide as a human",
+    ),
     "invalid-answer": (
         "Fix the candidate answer using the stripped validation errors",
         "Decide as a human",
@@ -129,6 +137,9 @@ _REASONS: dict[str, str] = {
         "The named runner is not registered; no assessment ran."
     ),
     "invalid-receipt": FAIL_CLOSED_SENTENCE,
+    "invalid-question": (
+        "The question is not a typed HA-JEV question; no assessment ran."
+    ),
     "invalid-answer": (
         "The candidate answer failed validation; see the stripped "
         "validation errors."
@@ -204,6 +215,35 @@ def _static(
     )
 
 
+def _invalid_question(runner: str) -> DecisionOutcome:
+    """ADV-004: a hostile or non-Question first argument fails closed.
+
+    `question_id`/`question_class` are unavailable by construction and
+    stay empty — the hostile input is never echoed into the wrapper.
+    """
+    return DecisionOutcome(
+        outcome=Outcome.NEEDS_HUMAN,
+        reason_kind="invalid-question",
+        question_id="",
+        question_class="",
+        runner=runner,
+        answer=None,
+        threshold_applied=None,
+        reason=_REASONS["invalid-question"],
+        allowed_next_steps=list(_NEXT_STEPS["invalid-question"]),
+        validation_errors=[
+            StrippedValidationError(
+                loc=("question",),
+                msg=(
+                    "The question must be a ChoiceQuestion, ScoreQuestion, "
+                    "or NoulQuestion instance"
+                ),
+                type="invalid_question",
+            )
+        ],
+    )
+
+
 def _validated_answer(
     question: Question,
     candidate: object,
@@ -262,10 +302,21 @@ def assess(
     spec = get_runner(runner)
     if spec is not None and spec.hosted:
         hosted_jev_call(question=question, receipt=receipt)
+
+    # 2. Question validity (ADV-004): anything that is not a typed
+    #    Question fails closed into the wrapper BEFORE any leg reads
+    #    question.id or derives its class — no unhandled crashes.
+    try:
+        question_class(question)
+        question.id  # probe: guards __class__-faking proxies (isinstance
+        # can be fooled by a hostile __class__ attribute; .id cannot).
+    except (AttributeError, TypeError, ValueError):
+        return _invalid_question(runner)
+
     if spec is None:
         return _static("unknown-runner", question, runner, None, None)
 
-    # 2. Receipt (the load-bearing rule): no valid receipt, no assessment.
+    # 3. Receipt (the load-bearing rule): no valid receipt, no assessment.
     try:
         IdentificationReceipt.model_validate(receipt)
     except ValidationError as exc:
@@ -278,7 +329,7 @@ def assess(
             stripped_validation_errors(exc),
         )
 
-    # 3. Threshold data: missing or malformed fails closed (never a
+    # 4. Threshold data: missing or malformed fails closed (never a
     #    default); a validating candidate still rides along as numbers.
     if thresholds is None:
         answer, errors = _validated_answer(question, candidate, runner)
@@ -304,12 +355,12 @@ def assess(
             "threshold-data-missing", question, runner, answer, None, errors
         )
 
-    # 4. Candidate: invalid answers fail closed with stripped errors.
+    # 5. Candidate: invalid answers fail closed with stripped errors.
     answer, errors = _validated_answer(question, candidate, runner)
     if errors:
         return _static("invalid-answer", question, runner, None, None, errors)
 
-    # 5. Calibration honesty: below threshold is not a best guess — it is
+    # 6. Calibration honesty: below threshold is not a best guess — it is
     #    NEEDS_HUMAN with the calibrated numbers attached.
     if answer.confidence >= threshold.min_confidence:
         return _static(

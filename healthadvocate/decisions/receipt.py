@@ -16,8 +16,9 @@ from __future__ import annotations
 
 from collections.abc import Iterable, Sequence
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
+from healthadvocate.decisions.schemas import Probability
 from healthadvocate.privacy.boundary import DeidentificationStatus
 
 
@@ -25,14 +26,18 @@ class EntityClassSummary(BaseModel):
     """One entity class observed by the identify stage — label and counts
     only; raw entity text is deliberately absent."""
 
+    model_config = ConfigDict(strict=True)
+
     label: str = Field(min_length=1)
     category: str = Field(min_length=1)
     count: int = Field(ge=1)
-    max_confidence: float = Field(ge=0.0, le=1.0)
+    max_confidence: Probability
 
 
 class IdentificationReceipt(BaseModel):
     """The identify stage's output, carried into every assessment."""
+
+    model_config = ConfigDict(strict=True)
 
     model_used: str = Field(min_length=1)
     entity_classes: list[EntityClassSummary] = Field(default_factory=list)

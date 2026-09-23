@@ -643,5 +643,146 @@ class AssessorAllowlistTests(unittest.TestCase):
         self.assertEqual(len(ASSESSOR_ALLOWLIST), 9)
 
 
+# ---------------------------------------------------------------------------
+# ADV-004: hostile (non-Question) first arguments must fail closed into the
+# NEEDS_HUMAN wrapper — never an unhandled ValueError/AttributeError.
+# ---------------------------------------------------------------------------
+
+
+class Adv004InvalidQuestionTests(unittest.TestCase):
+    HOSTILE_QUESTIONS = ({"id": "q-urgency", "claim": "c"}, "raw string",
+                         None, 42)
+
+    def test_valid_runner_hostile_question_fails_closed(self):
+        for hostile in self.HOSTILE_QUESTIONS:
+            with self.subTest(question=hostile):
+                outcome = assess(
+                    hostile, receipt=synthetic_receipt(),
+                    candidate=choice_answer(), runner="code",
+                    thresholds=measured_thresholds(),
+                )
+                self.assertEqual(outcome.outcome, "NEEDS_HUMAN")
+                self.assertEqual(outcome.reason_kind, "invalid-question")
+                self.assertIsNone(outcome.answer)
+                self.assertIsNone(outcome.threshold_applied)
+                self.assertEqual(outcome.gate_state, GateState.REVIEW_REQUIRED)
+                self.assertTrue(outcome.allowed_next_steps)
+
+    def test_unknown_runner_hostile_question_fails_closed(self):
+        for hostile in self.HOSTILE_QUESTIONS:
+            with self.subTest(question=hostile):
+                outcome = assess(
+                    hostile, receipt=synthetic_receipt(), candidate=None,
+                    runner="nope", thresholds=measured_thresholds(),
+                )
+                self.assertEqual(outcome.outcome, "NEEDS_HUMAN")
+                self.assertEqual(outcome.reason_kind, "invalid-question")
+
+    def test_hostile_question_with_valid_control_still_works(self):
+        outcome = assess(
+            choice_question(), receipt=synthetic_receipt(),
+            candidate=choice_answer(confidence=0.9), runner="code",
+            thresholds=measured_thresholds(),
+        )
+        self.assertEqual(outcome.outcome, "ANSWERED")
+
+    def test_hosted_runner_refusal_dominates_invalid_question(self):
+        # The CEO gate raise is the loudest refusal; it is not weakened by
+        # input-validation ordering.
+        with self.assertRaises(HostedJevGateError):
+            assess({"id": "q-urgency"}, receipt=synthetic_receipt(),
+                   candidate=None, runner="hosted-jev",
+                   thresholds=measured_thresholds())
+
+    def test_invalid_question_wrapper_never_echoes_hostile_input(self):
+        outcome = assess(
+            {"id": CANARY}, receipt=synthetic_receipt(),
+            candidate=choice_answer(), runner="code",
+            thresholds=measured_thresholds(),
+        )
+        wrapper_json = json.dumps(outcome.model_dump())
+        self.assertNotIn(CANARY, wrapper_json)
+        self.assertNotIn(CANARY_MEMBER, wrapper_json)
+
+
+# ---------------------------------------------------------------------------
+# ADV-001: the typed gate must not accept coerced confidence/probability
+# values (str/bytes/bool/int) or coerced option strings — pydantic lax
+# coercion drove ANSWERED outcomes. Strict models + exact-float validators.
+# ---------------------------------------------------------------------------
+
+
+class Adv001StrictTypingTests(unittest.TestCase):
+    COERCED_VALUES = ("0.95", b"0.95", True, 1, None)
+
+    def test_answer_confidence_rejects_coerced_types(self):
+        for bad in self.COERCED_VALUES:
+            with self.subTest(value=bad):
+                with self.assertRaises(ValidationError):
+                    ChoiceAnswer(question_id="q", value="a", probability=0.5,
+                                 confidence=bad)
+                with self.assertRaises(ValidationError):
+                    ChoiceAnswer(question_id="q", value="a", probability=bad,
+                                 confidence=0.5)
+                with self.assertRaises(ValidationError):
+                    NoulAnswer(question_id="q", probability_true=bad,
+                               confidence=0.5)
+                with self.assertRaises(ValidationError):
+                    ScoreAnswer(question_id="q", level=0,
+                                per_level_probabilities=[bad], confidence=0.5)
+
+    def test_threshold_min_confidence_rejects_coerced_types(self):
+        for bad in ("0.9", b"0.9", True, 1, None):
+            with self.subTest(value=bad):
+                with self.assertRaises(ValidationError):
+                    ClassThreshold.model_validate({
+                        "question_class": "choice", "min_confidence": bad,
+                        "provenance": MEASURED_PROVENANCE,
+                    })
+
+    def test_receipt_max_confidence_rejects_coerced_types(self):
+        for bad in ("0.9", b"0.9", True, 1, None):
+            with self.subTest(value=bad):
+                with self.assertRaises(ValidationError):
+                    IdentificationReceipt(
+                        model_used="m",
+                        entity_classes=[{"label": "L", "category": "c",
+                                         "count": 1, "max_confidence": bad}],
+                        coverage_notes=[],
+                        deidentification_status=DeidentificationStatus.SUCCESS,
+                    )
+
+    def test_bytes_option_rejected(self):
+        with self.assertRaises(ValidationError):
+            ChoiceQuestion(id="q", options=[b"clinician-visit"],
+                           context_ref="c")
+
+    def test_coerced_confidence_drives_fail_closed_not_answered(self):
+        # The exact ADV-001 scenario: each coerced value used to reach the
+        # comparison and drive ANSWERED; it must now fail closed.
+        for bad in self.COERCED_VALUES:
+            with self.subTest(value=bad):
+                outcome = assess(
+                    choice_question(), receipt=synthetic_receipt(),
+                    candidate={"question_id": "q-urgency",
+                               "value": "clinician-visit",
+                               "probability": 0.5, "confidence": bad},
+                    runner="code", thresholds=measured_thresholds(),
+                )
+                self.assertEqual(outcome.outcome, "NEEDS_HUMAN")
+                self.assertEqual(outcome.reason_kind, "invalid-answer")
+                self.assertIsNone(outcome.answer)
+
+    def test_honest_float_confidence_still_answers(self):
+        # Guard against over-strictness: plain floats keep flowing.
+        outcome = assess(
+            choice_question(), receipt=synthetic_receipt(),
+            candidate=choice_answer(confidence=0.95), runner="code",
+            thresholds=measured_thresholds(),
+        )
+        self.assertEqual(outcome.outcome, "ANSWERED")
+        self.assertEqual(outcome.answer.confidence, 0.95)
+
+
 if __name__ == "__main__":
     unittest.main()

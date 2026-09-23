@@ -17,15 +17,21 @@ from __future__ import annotations
 
 from typing import Literal
 
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator
+
+from healthadvocate.decisions.schemas import Probability
 
 QUESTION_CLASSES: tuple[str, ...] = ("choice", "score", "noul")
 
 QuestionClass = Literal["choice", "score", "noul"]
 
+_STRICT = ConfigDict(strict=True)
+
 
 class ThresholdProvenance(BaseModel):
     """Where a threshold's confidence distribution was measured."""
+
+    model_config = _STRICT
 
     source: Literal["measured"]
     surface: str = Field(min_length=1)
@@ -36,13 +42,17 @@ class ThresholdProvenance(BaseModel):
 class ClassThreshold(BaseModel):
     """Minimum acceptable calibrated confidence for one question class."""
 
+    model_config = _STRICT
+
     question_class: QuestionClass
-    min_confidence: float = Field(ge=0.0, le=1.0)
+    min_confidence: Probability
     provenance: ThresholdProvenance  # required — no default thresholds ever
 
 
 class ThresholdData(BaseModel):
     """The threshold file shape: one measured entry per question class."""
+
+    model_config = _STRICT
 
     thresholds: dict[str, ClassThreshold] = Field(default_factory=dict)
 

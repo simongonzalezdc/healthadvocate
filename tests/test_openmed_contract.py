@@ -193,3 +193,40 @@ class TestNoVendoredShadow:
             "local package dir is shadowing the pinned dependency (cwd on "
             "sys.path still prefers it; the vendoring failure mode)"
         )
+
+
+class TestModelUnloadDevLoop:
+    """Wave 2c: dev-loop RAM release via the openmed>=2.5.0 loader API,
+    fail-open when unsupported (maintenance surface, never a safety one)."""
+
+    def test_real_loader_has_unload_api(self):
+        # pins the upstream API the wrapper depends on (bump tripwire class)
+        loader = ModelLoader()
+        assert callable(getattr(loader, "unload_all_models", None))
+
+    def test_engine_wrapper_calls_unload(self):
+        from healthadvocate.core.engine import HealthEngine
+
+        released = {"models": 2, "tokenizers": 2, "pipelines": 3}
+
+        class FakeLoader:
+            def unload_all_models(self):
+                return dict(released)
+
+        engine = HealthEngine()
+        engine._loader = FakeLoader()
+        out = engine.unload_models()
+        assert out["supported"] is True
+        assert out["models"] == 2 and out["pipelines"] == 3
+
+    def test_engine_wrapper_failopen_without_api(self):
+        from healthadvocate.core.engine import HealthEngine
+
+        class LegacyLoader:
+            pass
+
+        engine = HealthEngine()
+        engine._loader = LegacyLoader()
+        out = engine.unload_models()
+        assert out["supported"] is False
+        assert out == {"models": 0, "tokenizers": 0, "pipelines": 0, "supported": False}

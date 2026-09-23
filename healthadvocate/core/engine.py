@@ -140,6 +140,25 @@ class HealthEngine:
             processing_time=round(elapsed, 3),
         )
 
+    def unload_models(self) -> dict:
+        """Release cached OpenMed models for the dev loop (RAM win after
+        battery/model-enabled runs; openmed>=2.5.0 loader API). Fail-open to a
+        no-op receipt when the loader predates the unload API or is a test
+        fake — unloading is maintenance, never a safety surface.
+        """
+        unload_all = getattr(self.loader, "unload_all_models", None)
+        if not callable(unload_all):
+            return {"models": 0, "tokenizers": 0, "pipelines": 0, "supported": False}
+        released = dict(unload_all())
+        released["supported"] = True
+        logger.info(
+            "engine.unload_models models=%s tokenizers=%s pipelines=%s",
+            released.get("models", 0),
+            released.get("tokenizers", 0),
+            released.get("pipelines", 0),
+        )
+        return released
+
     def extract_diseases(self, text: str, confidence: float = 0.65) -> AnalysisResult:
         return self.analyze(text, "disease_detection_superclinical", confidence, "disease")
 

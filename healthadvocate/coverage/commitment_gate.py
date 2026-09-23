@@ -1,4 +1,21 @@
-"""Commitment Gate: classify intents; never execute external side effects."""
+"""Commitment Gate: classify intents; never execute external side effects.
+
+HA-JEV J2-a (2026-09-22): the intent classification routes through the
+typed-decision layer (healthadvocate/coverage/intent_decision.py) when the
+caller supplies the identify stage's evidence. The conversion is additive:
+
+- Without identify evidence the gate decides exactly as before — the typed
+  layer never engages and no receipt is fabricated.
+- With identify evidence (an analysis plus its stated deidentification
+  status), the classifier's pick is adjudicated behind the receipt
+  contract. Any fail-closed typed leg (NEEDS_HUMAN wrapper or identify
+  errors) DOWNGRADES an otherwise-allowed intent to review-only with the
+  existing fail-closed sentence — never a new permissive path. Prohibited
+  intents stay byte-equivalent regardless of the typed outcome: the set
+  logic below is untouched and dominates the wrapper (audit numbers, not
+  permissions). See intent_decision.py for the receipt, confidence, and
+  threshold policy of this surface.
+"""
 
 from __future__ import annotations
 
@@ -111,6 +128,28 @@ _ALIASES: dict[str, Intent] = {
     "export": Intent.EXPORT_LOCAL,
 }
 
+_INTENT_VALUES: frozenset[str] = frozenset(intent.value for intent in Intent)
+
+# The product's core fail-closed sentence — byte-identical to the BLOCKED
+# reason below; decisions.FAIL_CLOSED_SENTENCE is pinned equal to it by
+# tests/test_ha_jev_decisions.py.
+_FAIL_CLOSED_REASON = (
+    "HealthAdvocate will not perform this action. It requires a "
+    "human decision outside this application."
+)
+
+_REVIEW_REASON = (
+    "This action could create an external, financial, coverage, or "
+    "communication commitment. Review it yourself before acting outside "
+    "the app. HealthAdvocate will not submit or send anything."
+)
+
+_REVIEW_STEPS = [
+    "Review prepared materials",
+    "Generate a deterministic script",
+    "Act only through official portals or people you choose",
+]
+
 
 @dataclass
 class GateDecision:
@@ -119,6 +158,15 @@ class GateDecision:
     reason: str
     allowed_next_steps: list[str] = field(default_factory=list)
     side_effects: list[str] = field(default_factory=list)
+    # HA-JEV J2-a audit additives (annotations stay stringified — the
+    # decisions package imports this module, so the types are never
+    # imported here at runtime). Deliberately NOT serialized: to_dict()
+    # keeps the exact legacy payload shape for the /api/coverage/
+    # commitment-gate endpoint.
+    typed_decision: "DecisionOutcome | None" = None
+    identify_errors: "list[StrippedValidationError]" = field(
+        default_factory=list
+    )
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -158,10 +206,14 @@ def reset_outbound_recorder() -> None:
     _DEFAULT_RECORDER.clear()
 
 
+def _intent_key(raw: str) -> str:
+    return (raw or "").strip().lower().replace("-", "_").replace(" ", "_")
+
+
 def normalize_intent(raw: str | Intent) -> Intent:
     if isinstance(raw, Intent):
         return raw
-    key = (raw or "").strip().lower().replace("-", "_").replace(" ", "_")
+    key = _intent_key(raw)
     if not key:
         return Intent.UNKNOWN
     if key in _ALIASES:
@@ -172,45 +224,112 @@ def normalize_intent(raw: str | Intent) -> Intent:
         return Intent.UNKNOWN
 
 
-def evaluate_intent(raw_intent: str | Intent) -> GateDecision:
+def exact_intent_match(raw: str | Intent) -> bool:
+    """True when the classifier's pick is an exact table/enum match.
+
+    False for the UNKNOWN fallback (no alias, no enum value matched) —
+    the distinction the typed layer's confidence constants are built on.
+    An Intent instance is exact by definition.
+    """
+    if isinstance(raw, Intent):
+        return True
+    key = _intent_key(raw)
+    return bool(key) and (key in _ALIASES or key in _INTENT_VALUES)
+
+
+def evaluate_intent(
+    raw_intent: str | Intent,
+    *,
+    analysis: Any = None,
+    deidentification_status: Any = None,
+    canaries: Any = (),
+    thresholds: Any = None,
+) -> GateDecision:
+    """Classify an intent and decide its gate state.
+
+    HA-JEV J2-a: when `analysis` (identify-stage evidence) is supplied,
+    the pick is additionally adjudicated behind the receipt contract via
+    healthadvocate/coverage/intent_decision.py. The typed layer can only
+    REMOVE permissions: an engaged-but-unanswered adjudication (any
+    NEEDS_HUMAN wrapper leg, or identify errors when no receipt could be
+    built) downgrades an otherwise-allowed intent to review-only with the
+    existing fail-closed sentence. Prohibited and review intents return
+    exactly the legacy decision in every case — the wrapper attaches
+    audit numbers, never permissions. Without `analysis` the typed layer
+    does not engage at all and the decision is byte-identical to the
+    pre-conversion gate.
+    """
     intent = normalize_intent(raw_intent)
+    typed_decision: Any = None
+    identify_errors: list[Any] = []
+    if analysis is not None:
+        # Local import: healthadvocate.decisions imports this module at
+        # load time (assess -> GateState), so the dependency arrow points
+        # function-ward only.
+        from healthadvocate.coverage.intent_decision import adjudicate_intent
+
+        typed_decision, identify_errors = adjudicate_intent(
+            raw_intent,
+            analysis=analysis,
+            deidentification_status=deidentification_status,
+            canaries=canaries,
+            thresholds=thresholds,
+        )
+    typed_answered = (
+        typed_decision is not None
+        and typed_decision.outcome.value == "ANSWERED"
+    )
+
     if intent in _ALLOWED:
+        if analysis is not None and not typed_answered:
+            # Fail-closed typed leg: review-only, the existing sentence.
+            # With a wrapper, its deterministic next steps (amendment g)
+            # ride along; without one (identify errors), the legacy
+            # review steps.
+            return GateDecision(
+                gate_state=GateState.REVIEW_REQUIRED,
+                intent=intent,
+                reason=_FAIL_CLOSED_REASON,
+                allowed_next_steps=(
+                    list(typed_decision.allowed_next_steps)
+                    if typed_decision is not None
+                    else list(_REVIEW_STEPS)
+                ),
+                side_effects=[],
+                typed_decision=typed_decision,
+                identify_errors=list(identify_errors),
+            )
         return GateDecision(
             gate_state=GateState.ALLOWED,
             intent=intent,
             reason="Local preparation action with no external commitment.",
             allowed_next_steps=["Continue in the Coverage workflow"],
             side_effects=[],
+            typed_decision=typed_decision,
+            identify_errors=list(identify_errors),
         )
     if intent in _BLOCKED:
         return GateDecision(
             gate_state=GateState.BLOCKED,
             intent=intent,
-            reason=(
-                "HealthAdvocate will not perform this action. It requires a "
-                "human decision outside this application."
-            ),
+            reason=_FAIL_CLOSED_REASON,
             allowed_next_steps=[
                 "Prepare a script or checklist",
                 "Record the outcome later as a Contact Event",
             ],
             side_effects=[],
+            typed_decision=typed_decision,
+            identify_errors=list(identify_errors),
         )
     # review_required for review set and any unknown
     return GateDecision(
         gate_state=GateState.REVIEW_REQUIRED,
         intent=intent,
-        reason=(
-            "This action could create an external, financial, coverage, or "
-            "communication commitment. Review it yourself before acting outside "
-            "the app. HealthAdvocate will not submit or send anything."
-        ),
-        allowed_next_steps=[
-            "Review prepared materials",
-            "Generate a deterministic script",
-            "Act only through official portals or people you choose",
-        ],
+        reason=_REVIEW_REASON,
+        allowed_next_steps=list(_REVIEW_STEPS),
         side_effects=[],
+        typed_decision=typed_decision,
+        identify_errors=list(identify_errors),
     )
 
 
@@ -219,13 +338,25 @@ def request_commitment(
     *,
     recorder: Optional[OutboundRecorder] = None,
     execute: Optional[Callable[[], Any]] = None,
+    analysis: Any = None,
+    deidentification_status: Any = None,
+    canaries: Any = (),
+    thresholds: Any = None,
 ) -> dict[str, Any]:
     """Evaluate an intent and refuse execution for non-allowed states.
 
     `execute` is only invoked when the gate state is ALLOWED. Prohibited
     intents never call execute and never record outbound side effects.
+    The HA-JEV identify-stage keyword arguments pass through to
+    evaluate_intent (additive; the endpoint payload is unchanged).
     """
-    decision = evaluate_intent(raw_intent)
+    decision = evaluate_intent(
+        raw_intent,
+        analysis=analysis,
+        deidentification_status=deidentification_status,
+        canaries=canaries,
+        thresholds=thresholds,
+    )
     rec = recorder or get_outbound_recorder()
     executed = False
     result_payload: Any = None

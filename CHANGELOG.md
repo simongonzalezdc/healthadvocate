@@ -18,7 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   other surfaces can adopt it without new plumbing. The banner and a new
   Help view name real humans (E2), exactly two widely published US
   crisis lines (988 Suicide & Crisis Lifeline, call/text 988; SAMHSA
-  National Helpline, 1-800-985-5990) plus link-only resources
+  National Helpline, 1-800-662-4357 / 1-800-662-HELP — pairing verified against samhsa.gov 2026-09-24; the earlier draft mislabeled the Disaster Distress number) plus link-only resources
   (HealthCare.gov navigator finder, NAIC state-insurance lookup) and the
   plain-language line "Ask the hospital for the Patient Advocate /
   Patient Relations office" — nothing scraped, nothing invented.

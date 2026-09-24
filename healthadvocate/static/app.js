@@ -50,7 +50,7 @@ const HA = {
         <p><strong>Talk to a real person:</strong></p>
         <ul>
           <li>988 Suicide &amp; Crisis Lifeline — call or text <strong>988</strong> (US)</li>
-          <li>SAMHSA National Helpline — <strong>1-800-985-5990</strong> (US)</li>
+          <li>SAMHSA National Helpline — <strong>1-800-662-4357</strong> (1-800-662-HELP, US)</li>
         </ul>
         <p><strong>Find help near you:</strong></p>
         <ul>
@@ -572,7 +572,7 @@ const HA = {
   },
 
   renderDenial(data, el) {
-    let html = '';
+    let html = this.needsHumanHtml(data.denial_reason_decision ? { ...data, urgency_decision: data.denial_reason_decision } : data);
     if (data.urgency) {
       html += `<div class="result-section"><h3>Urgency</h3>
         ${this.urgencyBadgeHtml(data.urgency)}</div>`;

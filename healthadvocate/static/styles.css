@@ -143,14 +143,14 @@
   --bg-muted: #2d2a24;
   --bg-input: #1e1b16;
 
-  --accent: #74c093;
-  --accent-hover: #8ad2a8;
-  --accent-light: rgba(116, 192, 147, 0.10);
-  --accent-medium: rgba(116, 192, 147, 0.19);
+  --accent: #6fb98d;
+  --accent-hover: #82ca9d;
+  --accent-light: rgba(111, 185, 141, 0.11);
+  --accent-medium: rgba(111, 185, 141, 0.20);
 
-  --warm: #d09a72;
-  --warm-light: rgba(208, 154, 114, 0.1);
-  --warm-medium: rgba(208, 154, 114, 0.17);
+  --warm: #dcae6b;
+  --warm-light: rgba(220, 174, 107, 0.11);
+  --warm-medium: rgba(220, 174, 107, 0.19);
 
   --coral: #d47a72;
   --coral-light: rgba(212, 122, 114, 0.1);
@@ -166,7 +166,7 @@
   --border: #3a352c;
   --border-light: #2d2a24;
 
-  --ochre-ink-700: #dfa489;
+  --ochre-ink-700: #e7bd7f;
   --coral-ink-700: #eba29a;
   --slate-ink-700: #9cb9d8;
 
@@ -285,7 +285,7 @@ header {
 .icon-btn {
   background: transparent;
   border: 1px solid var(--color-border);
-  color: var(--color-text-subtle);
+  color: var(--color-text-muted);
   width: 40px; height: 40px;
   border-radius: var(--radius-sm);
   display: flex; align-items: center; justify-content: center;
@@ -335,9 +335,20 @@ nav {
   -webkit-overflow-scrolling: touch;
   scrollbar-width: none;
   scroll-snap-type: x proximity;
-  /* right-edge fade = scroll affordance; nothing reads as accidentally cut */
+  /* right-edge fade = scroll affordance on the mobile rail; nothing reads as cut */
   -webkit-mask-image: linear-gradient(90deg, #000 0, #000 calc(100% - 34px), transparent 100%);
   mask-image: linear-gradient(90deg, #000 0, #000 calc(100% - 34px), transparent 100%);
+}
+/* desktop: the rail wraps instead of hiding controls behind a scroll —
+   every nav item visible and reachable (r3 receipt P0) */
+@media (min-width: 681px) {
+  nav {
+    flex-wrap: wrap;
+    overflow-x: visible;
+    -webkit-mask-image: none;
+    mask-image: none;
+  }
+  .nav-btn { scroll-snap-align: auto; }
 }
 nav::-webkit-scrollbar { display: none; }
 
@@ -668,8 +679,8 @@ main {
 /* ── Forms ─── */
 .field-label {
   display: block;
-  font-size: var(--step--2);
-  font-weight: 600;
+  font-size: 12.5px;
+  font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.06em;
   color: var(--color-text-muted);

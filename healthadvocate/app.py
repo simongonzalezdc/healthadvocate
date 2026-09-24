@@ -634,6 +634,21 @@ async def index():
     return FileResponse(str(_static_dir / "index.html"))
 
 
+# PWA offline shell. The service worker is served from the site root with an
+# explicit Service-Worker-Allowed header so its scope can cover "/". It caches
+# STATIC ASSETS ONLY — /api/* is never cached (no patient data in the SW).
+@app.get("/sw.js")
+async def service_worker():
+    return FileResponse(
+        str(_static_dir / "sw.js"),
+        media_type="application/javascript",
+        headers={
+            "Service-Worker-Allowed": "/",
+            "Cache-Control": "no-cache",
+        },
+    )
+
+
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run("healthadvocate.app:app", host="127.0.0.1", port=8080, reload=True)

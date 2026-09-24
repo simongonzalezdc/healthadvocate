@@ -8,6 +8,45 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Design system: "a warm paper clinic"** (2026-09-24,
+  `feat/design-system-20260924`). `docs/DESIGN-SYSTEM.md` is the committed
+  source of truth: nine interview dimensions decided from the product truths,
+  primitives → semantic tokens → legacy aliases in `static/styles.css` (all
+  existing class contracts preserved), a type scale on a deliberate system
+  stack (the Google Fonts CDN is REMOVED — a privacy-absolute, local-first
+  tool makes zero third-party requests), a 4px spacing ladder, restrained
+  motion tokens, and the **Honesty Lane** as the signature system:
+  NEEDS_HUMAN / unavailable / urgency verdicts are mutually exclusive visual
+  species; unavailable stays neutral-dashed; HIGH gains a non-color dot;
+  the recording pulse is the product's only glow. Coverage risk chips moved
+  off raw dark-only hexes onto tokens. Scroll-reveal no longer hides content
+  without JS (pending-marker pattern + bfcache restore).
+- **Call Recorder (demo mode)** + `docs/CALL-RECORDER-SPEC.md`. Consent
+  screen (fail-closed start), recording state (pulse, timer, waveform,
+  sticky stop bar), live transcript with speaker turns where interim text is
+  visually distinct from final and `[inaudible]` is an honest gap, post-call
+  summary with provenance-labeled analysis and an unverified deadline
+  rendered through the NEEDS_HUMAN discipline. Clearly badged synthetic
+  demo — no audio backend; the spec covers local ASR options
+  (whisper.cpp/Vosk/offline SpeechRecognizer), consent law notes, and the
+  privacy boundary integration.
+- **Library, Directory, "What's coming up"** (demo views) +
+  `docs/PROACTIVE-CATALOG-SPEC.md`: catalog with filters/search and per-matter
+  timeline; self-building provider directory with field-level provenance
+  (extracted / inferred / user-confirmed — confirmed is the only solid
+  species and overrides inference; one-tap confirm; merge notes with source
+  lists; tel:/mailto: fire on tap only); home reminder cards
+  (upcoming/due-soon/overdue/done) with one-tap call actions and a due-soon
+  header badge. Encrypted-at-rest storage schema, typed-decision analysis
+  pipeline, merge rules, and local-notifications design specified.
+- **PWA (CEO amendment)**: web app manifest (standalone, token theme colors,
+  PNG/SVG icons generated with stdlib python — no new dependencies), service
+  worker at `/sw.js` (scope `/` via header) caching STATIC ASSETS ONLY —
+  `/api/*` is never cached or intercepted (no patient data in the SW cache;
+  no push, no network), installability meta (theme-color per scheme,
+  apple-touch-icon), guarded SW registration. Mobile-first: 40–48px touch
+  floors, coarse-pointer bumps, sticky recorder bar in the thumb arc.
+
 - **Glass honesty: the safety truth reaches the screen** (lane B, audits
   E1/E2/D5/D3/B3, 2026-09-24). When a response payload carries a typed
   decision wrapper whose outcome is `NEEDS_HUMAN` (e.g. the symptom

@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>HealthAdvocate — Free Patient Health Advocacy Tool</title>
   <meta name="description" content="Free, private health advocacy tool. Decode medical bills, fight insurance denials, assess symptoms, translate discharge papers, and prep for doctor visits. Runs locally — your data never leaves your device.">
   <meta name="keywords" content="health advocate, patient advocacy, medical bill decoder, insurance denial appeal, symptom checker, drug information checker, medical document translator, discharge instructions, patient rights, free health tool, open source health, medical AI, health literacy, privacy-preserving">
@@ -15,16 +15,32 @@
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="HealthAdvocate — Your Health Deserves an Advocate">
   <meta name="twitter:description" content="Free, private health advocacy tool. Decode bills, fight denials, understand symptoms, translate medical jargon.">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <!-- PWA: installability + theme. No third-party asset hosts — local-first law. -->
+  <link rel="manifest" href="/static/manifest.webmanifest">
+  <meta name="theme-color" content="#191714">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="HealthAdvocate">
+  <link rel="icon" href="/static/icons/favicon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="/static/icons/icon-192.png">
   <link rel="stylesheet" href="/static/styles.css">
+  <script>
+    /* Dark-first home mode, resolved before first paint (no wrong-theme flash).
+       The 2 a.m. truth: the lamp is already on when the page opens. */
+    try {
+      var t = localStorage.getItem('ha-theme');
+      document.documentElement.setAttribute('data-theme', t === 'light' ? 'light' : 'dark');
+    } catch (e) {
+      document.documentElement.setAttribute('data-theme', 'dark');
+    }
+  </script>
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
     "@type": "WebApplication",
     "name": "HealthAdvocate",
-    "description": "Free, private health advocacy tool. Decode medical bills, fight insurance denials, assess symptoms, translate medical documents, and prep for doctor visits. Runs locally.",
+    "description": "Free, private health advocacy tool. Decode medical bills, fight insurance denials, translate medical documents, and prep for doctor visits. Runs locally.",
     "url": "https://github.com/simongonzalezdc/healthadvocate",
     "applicationCategory": "HealthApplication",
     "operatingSystem": "Any",
@@ -41,7 +57,8 @@
       "Second opinion brief creation",
       "Community health bulletin scanning",
       "Family health profile management",
-      "Health concern tracking"
+      "Health concern tracking",
+      "Medical call recording and transcription (local only)"
     ]
   }
   </script>
@@ -59,6 +76,9 @@
         <span class="logo-text">HealthAdvocate</span>
       </div>
       <div class="header-actions">
+        <button type="button" class="due-badge" id="due-badge" data-goto="home" hidden aria-label="Reminders due soon — open What's coming up">
+          <span class="dot" aria-hidden="true"></span><span id="due-badge-count">1</span><span class="due-badge-words"> reminder due soon</span>
+        </button>
         <button type="button" class="icon-btn" id="btn-home" aria-label="Home" title="Home">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
         </button>
@@ -76,6 +96,9 @@
       <button type="button" data-view="appointments" class="nav-btn">Appointments</button>
       <button type="button" data-view="discharge" class="nav-btn">Discharge</button>
       <button type="button" data-view="secondopinion" class="nav-btn">2nd Opinion</button>
+      <button type="button" data-view="recorder" class="nav-btn">Recorder</button>
+      <button type="button" data-view="library" class="nav-btn">Library</button>
+      <button type="button" data-view="directory" class="nav-btn">Directory</button>
       <button type="button" data-view="community" class="nav-btn">Scanner</button>
       <button type="button" data-view="family" class="nav-btn">Family</button>
       <button type="button" data-view="tracks" class="nav-btn">Tracks</button>
@@ -90,16 +113,25 @@
     <!-- Home View -->
     <section id="view-home" class="view active">
       <div class="hero reveal">
-        <span class="eyebrow">Your Health Advocate</span>
+        <span class="eyebrow">Free · Open source · Private by design</span>
         <h1>You deserve to understand your care.</h1>
         <p>Navigate symptoms, decode bills, fight insurance denials, and advocate for your family. Everything stays private on your device.</p>
+        <div class="hero-actions">
+          <button type="button" class="btn-primary btn-lg" data-goto="symptoms">Describe your symptoms</button>
+          <button type="button" class="btn-ghost" data-goto="insurance">Fight a denial</button>
+        </div>
         <div class="entry-grid">
-          <div class="entry-card" tabindex="0" data-goto="symptoms" role="button" aria-label="I don't feel well">
+          <div class="entry-card entry-card-primary">
             <div class="entry-icon">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
             </div>
             <h2>Something doesn't feel right</h2>
             <p>Describe how you're feeling and we'll help you understand what might be happening and what to do next.</p>
+            <button type="button" class="btn-primary" data-goto="symptoms">Start a symptom check</button>
+            <div class="entry-card-meta">
+              <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>Private by design</span>
+              <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6L9 17l-5-5"/></svg>No account needed</span>
+            </div>
           </div>
           <div class="entry-card" tabindex="0" data-goto="documents" role="button" aria-label="I have a document">
             <div class="entry-icon">
@@ -117,6 +149,16 @@
           </div>
         </div>
       </div>
+
+      <!-- What's coming up (proactive reminders, demo data) -->
+      <div class="coming-up reveal" id="coming-up" style="--reveal-delay: 0.1s" hidden>
+        <div class="coming-up-head">
+          <h2>What's coming up <span class="demo-badge">Demo data</span></h2>
+          <span class="coming-up-note">Synthetic examples so you can see how reminders look. Real ones are created on this device only; local notifications fire while the app is open — nothing is ever sent over the network.</span>
+        </div>
+        <div class="reminder-list" id="reminder-list"></div>
+      </div>
+
       <div class="dash-strip reveal" style="--reveal-delay: 0.15s">
         <div class="dash-card">
           <h3>Active Tracks</h3>
@@ -292,6 +334,134 @@
       </div></div>
     </section>
 
+    <!-- Call Recorder (demo mode — synthetic audio script, no real recording) -->
+    <section id="view-recorder" class="view" aria-labelledby="recorder-heading">
+      <div class="panel"><div class="panel-inner">
+        <div class="panel-header">
+          <div class="panel-icon recorder" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 00-3 3v8a3 3 0 006 0V4a3 3 0 00-3-3z"/><path d="M19 10v2a7 7 0 01-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
+          </div>
+          <div>
+            <h2 class="panel-eyebrow" id="recorder-heading">Call Recorder</h2>
+            <div class="panel-desc">Record medical calls and appointments, see a live transcript, and get a summary with follow-ups. Recording and transcription happen on this device — nothing is uploaded, ever.</div>
+          </div>
+          <span class="demo-badge">Demo mode</span>
+        </div>
+
+        <div class="rec-stage">
+          <div class="privacy-chip">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+            Stays on this device — never uploaded, never sent
+          </div>
+
+          <!-- Step 1: consent -->
+          <div class="rec-consent" id="rec-consent">
+            <h3>Before you record</h3>
+            <p class="law-note">Recording laws differ by place — some require only your own consent, others require everyone on the call to know. Doctors' offices and insurers may have their own policies. HealthAdvocate cannot advise you on the law; check yours before recording.</p>
+            <label class="check-row" for="rec-consent-check">
+              <input type="checkbox" id="rec-consent-check">
+              <span>Everyone on this call knows it is being recorded, or my local law does not require their consent.</span>
+            </label>
+            <button type="button" class="btn-primary" id="rec-start" data-action="recorder-start" disabled>Start demo recording</button>
+          </div>
+
+          <!-- Step 2: recording + live transcript -->
+          <div id="rec-live" hidden>
+            <div class="rec-live-head">
+              <span class="rec-pulse" aria-hidden="true"></span>
+              <span class="rec-live-label">Recording · demo</span>
+              <span class="rec-timer" id="rec-timer" role="timer" aria-label="Recording time">00:00</span>
+            </div>
+            <div class="waveform" id="rec-waveform" aria-hidden="true"></div>
+            <div class="transcript" id="rec-transcript" aria-live="polite" aria-label="Live transcript"></div>
+            <p class="result-text" style="margin-top:12px">Words appear as they are recognized on this device. Italic text is still a draft and may change. <span style="font-style:italic">[inaudible]</span> means the words could not be made out — the recorder never guesses.</p>
+          </div>
+
+          <!-- Step 3: summary + analysis -->
+          <div id="rec-summary" class="results" hidden aria-live="polite"></div>
+
+          <!-- Recent demo recordings -->
+          <div id="rec-recent" class="results" hidden></div>
+        </div>
+      </div></div>
+
+      <!-- sticky recording bar (mobile-first) -->
+      <div class="rec-sticky-bar" aria-hidden="true" id="rec-sticky">
+        <span class="rec-pulse"></span>
+        <span class="rec-timer" id="rec-sticky-timer">00:00</span>
+        <button type="button" class="btn-danger" data-action="recorder-stop">Stop &amp; save</button>
+      </div>
+    </section>
+
+    <!-- Library / Catalog (demo data) -->
+    <section id="view-library" class="view" aria-labelledby="library-heading">
+      <div class="panel"><div class="panel-inner">
+        <div class="panel-header">
+          <div class="panel-icon library" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/></svg>
+          </div>
+          <div>
+            <h2 class="panel-eyebrow" id="library-heading">Library</h2>
+            <div class="panel-desc">Every recording, transcript, and appointment you've saved — catalogued, searchable, and linked to the matter it belongs to. Stored only on this device.</div>
+          </div>
+          <span class="demo-badge">Demo data</span>
+        </div>
+
+        <div class="lib-controls">
+          <label class="sr-only" for="lib-search">Search the library</label>
+          <input type="search" id="lib-search" placeholder="Search transcripts, matters, medications, providers…" style="margin-bottom:0">
+          <div class="lib-filters" role="group" aria-label="Filter by kind">
+            <button type="button" class="filter-chip" data-lib-filter="all" aria-pressed="true">All</button>
+            <button type="button" class="filter-chip" data-lib-filter="call" aria-pressed="false">Calls</button>
+            <button type="button" class="filter-chip" data-lib-filter="appointment" aria-pressed="false">Appointments</button>
+            <button type="button" class="filter-chip" data-lib-filter="voicemail" aria-pressed="false">Voicemails</button>
+            <button type="button" class="filter-chip" data-lib-filter="reminder" aria-pressed="false">Reminders</button>
+          </div>
+        </div>
+
+        <div id="lib-list" class="cat-list" aria-live="polite"></div>
+
+        <div id="lib-timeline" class="result-section" hidden>
+          <h3>Matter timeline</h3>
+          <div class="matter-timeline" id="matter-timeline"></div>
+        </div>
+      </div></div>
+    </section>
+
+    <!-- Provider Directory (self-building, demo data) -->
+    <section id="view-directory" class="view" aria-labelledby="directory-heading">
+      <div class="panel"><div class="panel-inner">
+        <div class="panel-header">
+          <div class="panel-icon library" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
+          </div>
+          <div>
+            <h2 class="panel-eyebrow" id="directory-heading">Directory</h2>
+            <div class="panel-desc">Your doctors, labs, imaging centers, therapists, pharmacies, and insurers — built automatically from your calls, documents, and appointments. Nothing to type unless you're correcting something. Stored only on this device.</div>
+          </div>
+          <span class="demo-badge">Demo data</span>
+        </div>
+
+        <div class="dir-controls">
+          <label class="sr-only" for="dir-search">Search the directory</label>
+          <input type="search" id="dir-search" placeholder="Search providers, specialties, phone numbers…" style="margin-bottom:0">
+          <div class="lib-filters" role="group" aria-label="Filter by provider class">
+            <button type="button" class="filter-chip" data-dir-filter="all" aria-pressed="true">All</button>
+            <button type="button" class="filter-chip" data-dir-filter="doctor" aria-pressed="false">Doctors</button>
+            <button type="button" class="filter-chip" data-dir-filter="lab" aria-pressed="false">Labs</button>
+            <button type="button" class="filter-chip" data-dir-filter="imaging" aria-pressed="false">Imaging</button>
+            <button type="button" class="filter-chip" data-dir-filter="therapy" aria-pressed="false">Therapy</button>
+            <button type="button" class="filter-chip" data-dir-filter="pharmacy" aria-pressed="false">Pharmacy</button>
+            <button type="button" class="filter-chip" data-dir-filter="insurer" aria-pressed="false">Insurers</button>
+          </div>
+        </div>
+
+        <p class="result-text" style="margin-bottom:16px">The app fills these in for you. Each field shows where it came from: <span class="prov-chip prov-extracted">from a call</span> <span class="prov-chip prov-inferred">inferred</span> <span class="prov-chip prov-confirmed">you confirmed</span> — confirmed information always wins over inference.</p>
+
+        <div id="dir-list" class="contact-list" aria-live="polite"></div>
+      </div></div>
+    </section>
+
     <!-- Community Health Scanner -->
     <section id="view-community" class="view" aria-labelledby="community-heading">
       <div class="panel"><div class="panel-inner">
@@ -437,10 +607,10 @@
         </div>
         <div class="result-section">
           <h3>Crisis support (US)</h3>
-          <ul>
-            <li class="result-text"><strong>988 Suicide &amp; Crisis Lifeline</strong> — call or text <strong>988</strong>, any time.</li>
-            <li class="result-text"><strong>SAMHSA National Helpline</strong> — call <strong>1-800-662-4357</strong> (1-800-662-HELP; 24/7 treatment referral).</li>
-          </ul>
+          <div class="crisis-card">
+            <p class="crisis-line"><strong>988 Suicide &amp; Crisis Lifeline</strong> — call or text <a class="crisis-number" href="tel:988">988</a>, any time.</p>
+            <p class="crisis-line"><strong>SAMHSA National Helpline</strong> — call <a class="crisis-number" href="tel:18006624357">1-800-662-4357</a> (1-800-662-HELP; 24/7 treatment referral).</p>
+          </div>
         </div>
         <div class="result-section">
           <h3>Find help with coverage and care</h3>
@@ -452,12 +622,24 @@
         </div>
         <div class="result-section">
           <h3>How HealthAdvocate reports itself</h3>
-          <p class="result-text">When a result could not be produced safely, you see a "This needs a human decision" notice instead of an answer. Urgency that reads "Model unavailable" means no urgency assessment was made — it is not a rating. Cross-checks between extraction methods are informal name overlaps, not accuracy checks.</p>
+          <p class="result-text">When a result could not be produced safely, you see a "This needs a human decision" notice instead of an answer. Urgency that reads "Model unavailable" means no urgency assessment was made — it is not a rating. Cross-checks between extraction methods are informal name overlaps, not accuracy checks. Analysis taken from recordings is labeled by where it came from — quoted from the transcript, inferred by a model, or unverified — and unverified items are always marked as needing your confirmation.</p>
         </div>
       </div></div>
     </section>
 
   </main>
+
+  <!-- delete-recording confirm (demo) -->
+  <dialog id="rec-delete-dialog" class="ha-dialog" aria-labelledby="rec-delete-title">
+    <h3 id="rec-delete-title">Delete this recording?</h3>
+    <p>The recording and its transcript would be removed from this device. This cannot be undone. (Demo — nothing is really stored.)</p>
+    <div class="dialog-actions">
+      <button type="button" class="btn-ghost" data-action="recorder-delete-cancel">Keep it</button>
+      <button type="button" class="btn-danger" data-action="recorder-delete-confirm">Delete</button>
+    </div>
+  </dialog>
+
+  <div class="ha-toast-region" id="toast-region" aria-live="polite" aria-label="Notifications"></div>
 
   <footer>
     <p><strong>HealthAdvocate</strong> is here to support, not replace, professional medical guidance. Always consult a qualified healthcare provider for diagnosis and treatment. Your information stays on your device.</p>

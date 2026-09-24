@@ -147,12 +147,18 @@ const HA = {
     document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
     const btn = document.querySelector(`.nav-btn[data-view="${name}"]`);
     if (btn) btn.classList.add('active');
+    const homeBtn = document.getElementById('btn-home');
+    if (homeBtn) homeBtn.classList.toggle('active', name === 'home');
 
     if (name === 'family') this.loadFamilyProfiles();
     if (name === 'tracks') this.loadTrackDashboard();
     if (name === 'coverage') this.loadCoverageView();
+    if (name === 'library') this.renderLibrary();
+    if (name === 'directory') this.renderDirectory();
+    if (name === 'recorder') this.renderRecentRecordings();
     if (name === 'home') {
       this.loadDashStrip();
+      this.renderReminders();
       this.initScrollReveal();
     }
 
@@ -274,25 +280,23 @@ const HA = {
 
   initTheme() {
     const saved = localStorage.getItem('ha-theme');
-    if (saved === 'dark') document.documentElement.setAttribute('data-theme', 'dark');
+    document.documentElement.setAttribute('data-theme', saved === 'light' ? 'light' : 'dark');
     this.updateThemeIcon();
   },
 
   toggleTheme() {
-    const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
-    if (isDark) {
-      document.documentElement.removeAttribute('data-theme');
-      localStorage.setItem('ha-theme', 'light');
-    } else {
-      document.documentElement.setAttribute('data-theme', 'dark');
-      localStorage.setItem('ha-theme', 'dark');
-    }
+    /* dark-first home mode: the attribute is always explicit (light|dark);
+       the pre-paint head script sets dark unless the user chose light */
+    const isDark = document.documentElement.getAttribute('data-theme') !== 'light';
+    const next = isDark ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', next);
+    localStorage.setItem('ha-theme', next);
     this.updateThemeIcon();
   },
 
   updateThemeIcon() {
     const icon = document.getElementById('theme-icon');
-    const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+    const isDark = document.documentElement.getAttribute('data-theme') !== 'light';
     const btn = document.getElementById('btn-theme');
     if (isDark) {
       icon.innerHTML = '<path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/>';
@@ -310,13 +314,24 @@ const HA = {
     this._scrollObserver = new IntersectionObserver((entries) => {
       entries.forEach(entry => {
         if (entry.isIntersecting) {
-          entry.target.classList.add('revealed');
+          entry.target.setAttribute('data-reveal', 'revealed');
           this._scrollObserver.unobserve(entry.target);
         }
       });
     }, { threshold: 0.08 });
 
-    document.querySelectorAll('.reveal:not(.revealed)').forEach(el => this._scrollObserver.observe(el));
+    /* Content is visible by default; JS marks ONLY offscreen elements as
+       pending, after the observer exists — no-JS and bfcache restores never
+       hide the hero (micro-motion law). */
+    document.querySelectorAll('.reveal').forEach(el => {
+      if (el.getAttribute('data-reveal') === 'revealed') return;
+      /* only mark content clearly below the fold (plus a grace band) —
+         near-fold sections stay visible on first paint so home never
+         reads as an empty page */
+      const below = el.getBoundingClientRect().top > window.innerHeight * 1.2;
+      if (below) el.setAttribute('data-reveal', 'pending');
+      this._scrollObserver.observe(el);
+    });
   },
 
   /* ── Dashboard Strip ── */
@@ -342,7 +357,8 @@ const HA = {
   /* ── Loading / Errors ── */
 
   setLoading(el) {
-    el.innerHTML = `<div class="skeleton-wrap">
+    el.innerHTML = `<div class="skeleton-wrap" role="status">
+      <p class="condition-confidence" style="margin-bottom:12px">Working on this device — local analysis can take a few seconds.</p>
       <div class="skeleton-line h-xl"></div>
       <div class="skeleton-line w-100"></div>
       <div class="skeleton-line w-80"></div>
@@ -405,11 +421,15 @@ const HA = {
       </div>`;
 
     if (data.conditions?.length) {
-      html += `<div class="result-section"><h3>Possible Conditions</h3>`;
+      /* dictionary name-matches, honestly labeled — recognition is not
+         a diagnosis (GLM-5.3-Flash honesty receipt r1: confident-looking
+         percentages under a needs-human banner read as an answer) */
+      html += `<div class="result-section"><h3>Name Matches — Not a Diagnosis</h3>
+        <p class="condition-confidence" style="margin-bottom:10px">These are dictionary name matches found in your text. They are not an assessment${data.urgency === 'unavailable' ? ' — no urgency assessment was made either' : ''}.</p>`;
       for (const c of data.conditions) {
         html += `<div class="condition-item">
           <span class="condition-name">${this.escapeHtml(c.name)}</span>
-          <span class="condition-confidence">(${Math.round(c.confidence * 100)}%)</span>
+          <span class="condition-confidence">(name match, ${Math.round(c.confidence * 100)}% string similarity)</span>
         </div>`;
       }
       html += `</div>`;
@@ -636,6 +656,11 @@ const HA = {
     }
     if (data.generic_available === true) html += `<div class="drug-generic">${this.escapeHtml(data.generic_name)}</div>`;
     else if (data.generic_available === "Unknown") html += `<p class="result-text">Generic availability unknown. ${this.escapeHtml(data.cost_note || '')}</p>`;
+    /* honesty law (GLM-5.3-Flash receipt r1): a name-match-only response
+       must never read like a completed drug review */
+    if (data.generic_available !== true && !(data.alternatives || []).length && !data.cost_note) {
+      html += `<div class="flag-item flag-info urgency-unavailable">No drug details were generated — the optional model is off. Only the name match above is real; this is not a drug review.</div>`;
+    }
     if (data.alternatives?.length) {
       html += `<h4 style="margin-top:14px;font-size:11px;text-transform:uppercase;letter-spacing:0.06em;color:var(--text-3)">Alternatives</h4><ul class="alt-list">`;
       for (const a of data.alternatives) html += `<li>${this.escapeHtml(a)}</li>`;
@@ -966,6 +991,542 @@ const HA = {
       if (el) this.showError(el, err.message);
     }
   },
+
+  /* ── Toast (role=status, bottom-center; never the only record) ── */
+
+  toast(message) {
+    const region = document.getElementById('toast-region');
+    if (!region) return;
+    const el = document.createElement('div');
+    el.className = 'ha-toast';
+    el.setAttribute('role', 'status');
+    el.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg><span>${this.escapeHtml(message)}</span>`;
+    region.appendChild(el);
+    setTimeout(() => el.remove(), 4000);
+  },
+
+  /* ── Provenance chips (analysis + directory honesty) ── */
+
+  provChip(kind, label) {
+    return `<span class="prov-chip prov-${this.escapeHtml(kind)}">${this.escapeHtml(label)}</span>`;
+  },
+
+  /* ── Reminders / "What's coming up" (demo data, local-only) ── */
+
+  REMINDERS: [
+    {
+      id: 'r1', state: 'due-soon',
+      title: 'Appeal deadline — Aetna MRI denial',
+      context: 'Matter: MRI denial (Aetna) · detected in the Sep 24 call',
+      when: { top: 'FRI', main: '26' },
+      contact: { name: 'Aetna member services', phone: '+1-800-555-0142' },
+      gotoView: 'library',
+      prov: ['extracted', 'from the call'],
+    },
+    {
+      id: 'r2', state: 'upcoming',
+      title: 'Appointment with Dr. Patel',
+      context: 'Follow-up · 9:40 AM · bring the imaging CD',
+      when: { top: 'SEP', main: '30' },
+      contact: { name: 'Dr. Maya Patel', phone: '+1-555-010-7788' },
+      gotoView: 'appointments',
+    },
+    {
+      id: 'r3', state: 'overdue',
+      title: 'Refill metformin',
+      context: 'Pharmacy says the prescription expired 4 days ago',
+      when: { top: 'SEP', main: '20' },
+      contact: { name: 'Corner Pharmacy', phone: '+1-555-010-4432' },
+      gotoView: 'drugs',
+    },
+    {
+      id: 'r4', state: 'done',
+      title: 'Ask billing about the $1,200 charge',
+      context: 'Resolved in the Sep 24 call — itemized bill requested',
+      when: { top: 'SEP', main: '24' },
+      contact: null,
+      gotoView: 'bills',
+    },
+  ],
+
+  reminderStateLabel: { 'upcoming': 'Upcoming', 'due-soon': 'Due soon', 'overdue': 'Overdue', 'done': 'Done' },
+
+  renderReminders() {
+    const list = document.getElementById('reminder-list');
+    const panel = document.getElementById('coming-up');
+    if (!list || !panel) return;
+    list.innerHTML = this.REMINDERS.map(r => {
+      const call = r.contact && r.state !== 'done'
+        ? `<div class="reminder-actions">
+             <a class="contact-action" href="tel:${this.escapeHtml(r.contact.phone.replace(/[^+\d]/g, ''))}">
+               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6 19.79 19.79 0 01-3.07-8.67A2 2 0 014.11 2h3a2 2 0 012 1.72 12.84 12.84 0 00.7 2.81 2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45 12.84 12.84 0 002.81.7A2 2 0 0122 16.92z"/></svg>
+               Call ${this.escapeHtml(r.contact.name)}
+             </a>
+             <button type="button" class="xref-chip" data-goto="${this.escapeHtml(r.gotoView || 'library')}">Open</button>
+           </div>` : '';
+      return `<article class="reminder-card" data-state="${this.escapeHtml(r.state)}">
+        <span class="reminder-when"><strong>${this.escapeHtml(r.when.main)}</strong>${this.escapeHtml(r.when.top)}</span>
+        <span class="reminder-body">
+          <span class="reminder-title">${this.escapeHtml(r.title)}</span>
+          <span class="reminder-context">${this.escapeHtml(r.context)}</span>
+          ${r.prov ? `<span class="reminder-prov">${this.provChip(r.prov[0], r.prov[1])}</span>` : ''}
+          ${call}
+        </span>
+        <span class="reminder-state ${this.escapeHtml(r.state)}">${this.reminderStateLabel[r.state]}</span>
+      </article>`;
+    }).join('');
+    panel.hidden = false;
+    const dueCount = this.REMINDERS.filter(r => r.state === 'due-soon').length;
+    const badge = document.getElementById('due-badge');
+    const count = document.getElementById('due-badge-count');
+    const words = badge ? badge.querySelector('.due-badge-words') : null;
+    if (badge) {
+      if (dueCount > 0) {
+        if (count) count.textContent = String(dueCount);
+        if (words) words.textContent = dueCount === 1 ? ' reminder due soon' : ' reminders due soon';
+        badge.hidden = false;
+      } else {
+        badge.hidden = true;
+      }
+    }
+  },
+
+  /* ── Library / Catalog (demo data) ── */
+
+  CATALOG: [
+    {
+      id: 'c1', kind: 'call', when: 'Sep 24 · 11:02', matter: 'MRI denial (Aetna)',
+      title: 'Aetna — MRI denial call',
+      desc: '12 min · full transcript on device. Rep confirmed the appeal address and said a callback is expected with the reference number.',
+      entities: [['denial — not medically necessary', 'disease'], ['$1,200.00', 'pii'], ['Dr. M. Patel', 'pii'], ['appeal window', 'pii']],
+      links: [['Insurance', 'insurance'], ['Bills', 'bills']],
+    },
+    {
+      id: 'c2', kind: 'appointment', when: 'Sep 30 · 9:40', matter: 'Knee treatment',
+      title: 'Dr. Patel — orthopedic follow-up',
+      desc: 'Recorded with consent. Transcript marked: bring imaging CD, ask about PT vs. MRI.',
+      entities: [['Dr. Maya Patel', 'pii'], ['physical therapy', 'procedure'], ['Sep 30', 'pii']],
+      links: [['Appointments', 'appointments']],
+    },
+    {
+      id: 'c3', kind: 'voicemail', when: 'Sep 22 · 15:20', matter: 'Annual screening',
+      title: 'Riverside Imaging — results ready',
+      desc: 'Transcribed on device. Results available; ask for the written report at pickup.',
+      entities: [['Riverside Imaging', 'pii'], ['screening results', 'disease']],
+      links: [['Documents', 'documents']],
+    },
+    {
+      id: 'c4', kind: 'reminder', when: 'Oct 8', matter: 'MRI denial (Aetna)',
+      title: 'Appeal window closes (computed)',
+      desc: 'The letter states a 30-day window from the Sep 8 notice; the app computed Oct 8. Confirm the exact date with the insurer.',
+      entities: [['30-day appeal window', 'pii'], ['Aetna', 'pii']],
+      links: [['Insurance', 'insurance']],
+      prov: ['inferred', 'computed from the letter'],
+    },
+  ],
+
+  KIND_LABEL: { call: 'Call', appointment: 'Appointment', voicemail: 'Voicemail', reminder: 'Reminder' },
+
+  KIND_ICON: {
+    call: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6 19.79 19.79 0 01-3.07-8.67A2 2 0 014.11 2h3a2 2 0 012 1.72 12.84 12.84 0 00.7 2.81 2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45 12.84 12.84 0 002.81.7A2 2 0 0122 16.92z"/></svg>',
+    appointment: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>',
+    voicemail: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="5.5" cy="11.5" r="4.5"/><circle cx="18.5" cy="11.5" r="4.5"/><line x1="5.5" y1="16" x2="18.5" y2="16"/></svg>',
+    reminder: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>',
+  },
+
+  _libFilter: 'all',
+  _libQuery: '',
+
+  renderLibrary() {
+    const list = document.getElementById('lib-list');
+    const timeline = document.getElementById('matter-timeline');
+    if (!list) return;
+    const q = this._libQuery.trim().toLowerCase();
+    const items = this.CATALOG.filter(it =>
+      (this._libFilter === 'all' || it.kind === this._libFilter) &&
+      (!q || (it.title + ' ' + it.matter + ' ' + it.desc + ' ' + it.entities.map(e => e[0]).join(' ')).toLowerCase().includes(q))
+    );
+    if (!items.length) {
+      list.innerHTML = `<div class="empty-state">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <p>Nothing matches that search.</p>
+        <p class="empty-hint">Try a provider name, a medication, or clear the filters.</p>
+      </div>`;
+      if (timeline) timeline.hidden = true;
+      return;
+    }
+    const hasDerived = this.CATALOG.some(it => it.prov && it.prov[0] !== 'extracted');
+    const derivedNote = hasDerived
+      ? `<p class="condition-confidence" style="margin-bottom:12px"><strong>Machine-derived items:</strong> anything marked INFERRED or UNVERIFIED was computed by the app, not quoted — confirm it before relying on it.</p>`
+      : '';
+    list.innerHTML = derivedNote + items.map(it => `<article class="cat-card" data-cat-id="${this.escapeHtml(it.id)}">
+      <div class="cat-card-head">
+        <span class="cat-kind ${this.escapeHtml(it.kind)}">${this.KIND_ICON[it.kind] || ''}</span>
+        <span class="cat-title">${this.escapeHtml(it.title)}</span>
+        ${it.prov ? this.provChip(it.prov[0], it.prov[1]) : ''}
+        <span class="cat-when">${this.escapeHtml(it.when)}</span>
+      </div>
+      <p class="cat-desc">${this.escapeHtml(it.matter)} — ${this.escapeHtml(it.desc)}</p>
+      <div class="cat-links">
+        ${it.entities.map(e => `<span class="entity-chip ${this.safeEntityClass(e[1])}">${this.escapeHtml(e[0])}</span>`).join('')}
+        ${it.links.map(l => `<button type="button" class="xref-chip" data-goto="${this.escapeHtml(l[1])}">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="7" y1="17" x2="17" y2="7"/><polyline points="7 7 17 7 17 17"/></svg>
+          ${this.escapeHtml(l[0])}
+        </button>`).join('')}
+        ${it.kind === 'call' ? `<button type="button" class="xref-chip xref-danger" data-action="recorder-delete" data-cat-id="${this.escapeHtml(it.id)}" aria-label="Delete ${this.escapeHtml(it.title)}">Delete</button>` : ''}
+      </div>
+    </article>`).join('');
+    if (timeline) {
+      timeline.hidden = false;
+      const byMatter = {};
+      for (const it of this.CATALOG) (byMatter[it.matter] = byMatter[it.matter] || []).push(it);
+      const matter = Object.keys(byMatter).find(m => byMatter[m].length > 1) || Object.keys(byMatter)[0];
+      timeline.innerHTML = `<h3>Matter timeline — ${this.escapeHtml(matter)}</h3>` + (byMatter[matter] || []).map(it => `
+        <div class="tl-item kind-${this.escapeHtml(it.kind)}">
+          <div class="tl-when">${this.escapeHtml(it.when)}</div>
+          <div class="tl-title">${this.escapeHtml(it.title)}</div>
+          <div class="tl-note">${this.KIND_LABEL[it.kind] || 'Item'} · ${this.escapeHtml(it.desc)}</div>
+        </div>`).join('');
+    }
+  },
+
+  deleteCatalogItem(id) {
+    this.CATALOG = this.CATALOG.filter(it => it.id !== id);
+    this.renderLibrary();
+    this.renderRecentRecordings();
+    this.toast('Deleted (demo — nothing was really stored).');
+  },
+
+  /* ── Directory (self-building provider cards, demo data) ── */
+
+  DIRECTORY: [
+    {
+      id: 'p1', name: 'Dr. Maya Patel', klass: 'doctor', classLabel: 'Doctor · Orthopedics',
+      sources: ['Appointment card (Sep 12)', 'Call transcript (Sep 24)', 'Bill decode (Aug 30)'],
+      fields: [
+        { k: 'Phone', v: '+1-555-010-7788', href: 'tel:+15550107788', prov: 'confirmed' },
+        { k: 'Address', v: '410 Center St, Bldg C, Portland OR', prov: 'extracted', from: 'bill decode' },
+        { k: 'Email', v: 'scheduling@patelortho.example', href: 'mailto:scheduling@patelortho.example', prov: 'inferred', from: 'pattern' },
+      ],
+    },
+    {
+      id: 'p2', name: 'Riverside Imaging', klass: 'imaging', classLabel: 'Imaging center',
+      sources: ['Voicemail transcript (Sep 22)', 'Document decode (Sep 3)'],
+      fields: [
+        { k: 'Phone', v: '+1-555-022-8090', href: 'tel:+15550228090', prov: 'extracted', from: 'voicemail' },
+        { k: 'Address', v: '88 River Rd, Portland OR', prov: 'extracted', from: 'document' },
+        { k: 'Hours', v: 'Mon–Fri 7:00–19:00 · Sat 8:00–14:00', prov: 'inferred', from: 'voicemail' },
+      ],
+    },
+    {
+      id: 'p3', name: 'Aetna member services', klass: 'insurer', classLabel: 'Insurer',
+      sources: ['Call transcript (Sep 24)'],
+      fields: [
+        { k: 'Phone', v: '+1-800-555-0142', href: 'tel:+18005550142', prov: 'extracted', from: 'call' },
+        { k: 'Appeals fax', v: '+1-800-555-0177', href: 'tel:+18005550177', prov: 'inferred', from: 'letter' },
+      ],
+    },
+    {
+      id: 'p4', name: 'Corner Pharmacy', klass: 'pharmacy', classLabel: 'Pharmacy',
+      sources: ['You confirmed every field'],
+      fields: [
+        { k: 'Phone', v: '+1-555-010-4432', href: 'tel:+15550104432', prov: 'confirmed' },
+        { k: 'Address', v: '12 Alder Ave, Portland OR', prov: 'confirmed' },
+        { k: 'Hours', v: 'Daily 8:00–21:00', prov: 'confirmed' },
+      ],
+    },
+  ],
+
+  _dirFilter: 'all',
+  _dirQuery: '',
+
+  renderDirectory() {
+    const list = document.getElementById('dir-list');
+    if (!list) return;
+    const q = this._dirQuery.trim().toLowerCase();
+    const contacts = this.DIRECTORY.filter(c =>
+      (this._dirFilter === 'all' || c.klass === this._dirFilter) &&
+      (!q || (c.name + ' ' + c.classLabel + ' ' + c.fields.map(f => f.v).join(' ')).toLowerCase().includes(q))
+    );
+    if (!contacts.length) {
+      list.innerHTML = `<div class="empty-state">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/></svg>
+        <p>No providers match.</p>
+        <p class="empty-hint">The directory fills itself as you record calls and decode documents — or clear the filters.</p>
+      </div>`;
+      return;
+    }
+    const PROV_LABEL = { confirmed: 'you confirmed', extracted: 'from a call', inferred: 'inferred' };
+    list.innerHTML = contacts.map(c => `<article class="contact-card">
+      <div class="contact-head">
+        <span class="contact-kind ${this.escapeHtml(c.klass)}" aria-hidden="true">${this.KIND_ICON.appointment}</span>
+        <span class="contact-name">${this.escapeHtml(c.name)}</span>
+        <span class="contact-class">${this.escapeHtml(c.classLabel)}</span>
+      </div>
+      <p class="contact-merge-note">Merged from ${c.sources.length === 1 ? 'one source' : c.sources.length + ' sources'}: ${c.sources.map(s => this.escapeHtml(s)).join(' · ')}</p>
+      <div class="contact-fields">
+        ${c.fields.map(f => `<div class="contact-field">
+          <span class="k">${this.escapeHtml(f.k)}</span>
+          <span class="v">${f.href ? `<a href="${this.escapeHtml(f.href)}">${this.escapeHtml(f.v)}</a>` : this.escapeHtml(f.v)}</span>
+          ${f.prov === 'confirmed' ? this.provChip('confirmed', PROV_LABEL.confirmed)
+            : f.prov === 'extracted' ? this.provChip('extracted', f.from || PROV_LABEL.extracted)
+            : this.provChip('inferred', (f.from ? 'inferred · ' + f.from : PROV_LABEL.inferred))}
+          ${f.prov !== 'confirmed' ? `<button type="button" class="xref-chip" data-action="dir-confirm-field" data-contact="${this.escapeHtml(c.id)}" data-field="${this.escapeHtml(f.k)}">Confirm</button>` : ''}
+        </div>`).join('')}
+      </div>
+      <div class="contact-actions">
+        ${(c.fields.find(f => f.k === 'Phone') || {}).href ? `<a class="contact-action" href="${this.escapeHtml((c.fields.find(f => f.k === 'Phone') || {}).href)}">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6 19.79 19.79 0 01-3.07-8.67A2 2 0 014.11 2h3a2 2 0 012 1.72 12.84 12.84 0 00.7 2.81 2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45 12.84 12.84 0 002.81.7A2 2 0 0122 16.92z"/></svg>
+          Call</a>` : ''}
+        <button type="button" class="xref-chip" data-goto="library">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="7" y1="17" x2="17" y2="7"/><polyline points="7 7 17 7 17 17"/></svg>
+          Items in Library
+        </button>
+      </div>
+    </article>`).join('');
+  },
+
+  confirmDirectoryField(contactId, fieldKey) {
+    const contact = this.DIRECTORY.find(c => c.id === contactId);
+    const field = contact && contact.fields.find(f => f.k === fieldKey);
+    if (!field) return;
+    field.prov = 'confirmed';
+    delete field.from;
+    this.renderDirectory();
+    this.toast('Confirmed — this now overrides anything the app inferred.');
+  },
+
+  /* ── Call Recorder (DEMO MODE — synthetic script, no audio) ── */
+
+  _recState: 'idle',       /* idle | recording | summarized */
+  _recElapsed: 0,          /* script seconds — the timer AND the turn schedule
+                              run on the same clock, so displayed timestamps can
+                              never disagree (round-1 vision finding) */
+  _recRate: 3.5,           /* script seconds per real second (demo pacing) */
+  _recTimerInt: null,
+  _recTurnIdx: 0,
+
+  REC_SCRIPT: [
+    { t: '00:03', tSec: 3, who: 'you', text: 'Hi, I\'m calling about the denial letter for my knee MRI — reference A-2291.' },
+    { t: '00:11', tSec: 11, who: 'other', text: 'Thank you. I see the denial was issued September 8th as not medically necessary.' },
+    { t: '00:24', tSec: 24, who: 'you', text: 'My doctor documented six weeks of physical therapy first. That\'s in the records I submitted.' },
+    { t: '00:39', tSec: 39, who: 'other', text: 'I do see the PT notes. You can file a first-level appeal within thirty days of the letter.' },
+    { t: '00:58', tSec: 58, who: 'other', text: 'The appeal can be submitted by mail or fax, and we will acknowledge it in writing.' },
+    { t: '01:10', tSec: 70, who: 'gap', text: '[inaudible] …reference number for the appeal…' },
+    { t: '01:22', tSec: 82, who: 'you', text: 'Can you also send an itemized bill? The hospital total was one thousand two hundred dollars and I want to check it.' },
+    { t: '01:41', tSec: 101, who: 'other', text: 'Certainly, the itemized statement will be mailed within five business days.' },
+    { t: '01:55', tSec: 115, who: 'other', text: 'A case manager will call you back by Friday with the appeal reference number.' },
+    { t: '02:06', tSec: 126, who: 'you', text: 'Thank you. I\'ll send the appeal with the therapy records this week.' },
+  ],
+
+  recorderStart() {
+    if (this._recState === 'recording') return;
+    this._recState = 'recording';
+    this._recElapsed = 0;
+    this._recTurnIdx = 0;
+    const consent = document.getElementById('rec-consent');
+    const live = document.getElementById('rec-live');
+    const summary = document.getElementById('rec-summary');
+    const recent = document.getElementById('rec-recent');
+    const transcript = document.getElementById('rec-transcript');
+    const wave = document.getElementById('rec-waveform');
+    if (consent) consent.hidden = true;
+    if (summary) summary.hidden = true;
+    if (recent) recent.hidden = true;
+    if (live) live.hidden = false;
+    if (transcript) transcript.innerHTML = '';
+    if (wave) {
+      wave.innerHTML = '';
+      for (let i = 0; i < 28; i++) {
+        const bar = document.createElement('span');
+        bar.style.animationDelay = (i % 7) * 0.09 + 's';
+        bar.style.animationDuration = (0.8 + ((i * 37) % 9) / 12) + 's';
+        bar.style.opacity = (0.35 + ((i * 53) % 10) / 16).toFixed(2);
+        wave.appendChild(bar);
+      }
+    }
+    document.body.classList.add('is-recording');
+    const sticky = document.getElementById('rec-sticky');
+    if (sticky) sticky.setAttribute('aria-hidden', 'false');
+    const a = document.getElementById('rec-timer');
+    if (a) a.textContent = '00:00';
+    const b = document.getElementById('rec-sticky-timer');
+    if (b) b.textContent = '00:00';
+    this._recTimerInt = setInterval(() => {
+      this._recElapsed += 0.1 * this._recRate;
+      const t = this._fmtRecTime(this._recElapsed);
+      if (a) a.textContent = t;
+      if (b) b.textContent = t;
+      /* turns appear exactly when the displayed clock passes their timestamp */
+      while (this._recTurnIdx < this.REC_SCRIPT.length
+             && this.REC_SCRIPT[this._recTurnIdx].tSec <= this._recElapsed) {
+        this._recRenderTurn(this.REC_SCRIPT[this._recTurnIdx]);
+        this._recTurnIdx += 1;
+      }
+      if (this._recTurnIdx >= this.REC_SCRIPT.length
+          && this._recElapsed >= this.REC_SCRIPT[this.REC_SCRIPT.length - 1].tSec + 2) {
+        this.recorderStop();
+      }
+    }, 100);
+    this.toast('Demo recording started — synthetic script, no microphone is used.');
+  },
+
+  _fmtRecTime(s) {
+    const total = Math.floor(s);
+    const m = Math.floor(total / 60).toString().padStart(2, '0');
+    const ss = (total % 60).toString().padStart(2, '0');
+    return `${m}:${ss}`;
+  },
+
+  _recRenderTurn(turn) {
+    const transcript = document.getElementById('rec-transcript');
+    if (!transcript) return;
+    /* interim draft first — visually distinct, never final */
+    const row = document.createElement('div');
+    row.className = `turn ${turn.who === 'you' ? 'you' : 'other'} interim`;
+    row.innerHTML = `<span class="turn-time">${this.escapeHtml(turn.t)}</span>
+      <span><span class="turn-speaker">${turn.who === 'you' ? 'You' : 'Insurer rep'}</span>
+      <span class="turn-text">${this.escapeHtml(turn.text.slice(0, Math.max(8, Math.floor(turn.text.length * 0.6))))}…</span></span>`;
+    transcript.appendChild(row);
+    row.scrollIntoView({ block: 'end' });
+    setTimeout(() => {
+      row.classList.remove('interim');
+      const txt = row.querySelector('.turn-text');
+      if (txt) txt.textContent = turn.text;
+      if (turn.who === 'gap') {
+        row.classList.add('gap');
+        const sp = row.querySelector('.turn-speaker');
+        if (sp) sp.textContent = 'Unclear';
+      }
+    }, 700);
+  },
+
+  recorderStop() {
+    if (this._recState !== 'recording') return;
+    this._recState = 'summarized';
+    clearInterval(this._recTimerInt);
+    document.body.classList.remove('is-recording');
+    const sticky = document.getElementById('rec-sticky');
+    if (sticky) sticky.setAttribute('aria-hidden', 'true');
+    const live = document.getElementById('rec-live');
+    if (live) live.hidden = true;
+    const recent = document.getElementById('rec-recent');
+    if (recent) recent.hidden = false;
+    this._renderRecSummary();
+    const id = 'c9';
+    if (!this.CATALOG.some(it => it.id === id)) {
+      this.CATALOG.unshift({
+        id, kind: 'call', when: 'Sep 24 · today', matter: 'MRI denial (Aetna)',
+        title: 'Aetna — appeal call (demo recording)',
+        desc: 'Recorded in demo mode. Synthetic transcript saved to the Library with analysis.',
+        entities: [['appeal — 30 days', 'pii'], ['$1,200.00', 'pii'], ['itemized bill', 'pii']],
+        links: [['Insurance', 'insurance'], ['Appointments', 'appointments']],
+      });
+    }
+    this.renderRecentRecordings();
+    this.toast('Saved to the Library (demo — synthetic only).');
+  },
+
+  _renderRecSummary() {
+    const el = document.getElementById('rec-summary');
+    if (!el) return;
+    el.hidden = false;
+    el.innerHTML = `
+      <div class="result-section">
+        <h3>Call summary <span class="demo-badge">Demo · synthetic</span></h3>
+        <p class="result-text">You called Aetna about the knee MRI denial (ref A-2291). The rep confirmed a first-level appeal is possible within 30 days of the September 8 letter, and that an itemized bill will be mailed within five business days. A case manager will call back with the appeal reference number. Generated on this device from the demo transcript.</p>
+      </div>
+      <div class="result-section rec-summary-section">
+        <h3>Commitments people made</h3>
+        <div class="analysis-item"><span>“A case manager will call you back by Friday with the appeal reference number.”</span>${this.provChip('extracted', 'from transcript')}</div>
+        <div class="analysis-item"><span>“The itemized statement will be mailed within five business days.”</span>${this.provChip('extracted', 'from transcript')}</div>
+      </div>
+      <div class="result-section rec-summary-section">
+        <h3>Deadlines detected</h3>
+        <div class="analysis-item"><span class="when">Oct 8</span><span>Appeal window closes — 30 days from the September 8 denial letter.</span>${this.provChip('extracted', 'from transcript')}</div>
+        <div class="analysis-item unverified-row"><span class="when">no date</span><span>A second-level deadline was mentioned, but the rep\'s wording was unclear — no date could be read reliably from the audio.</span>${this.provChip('unverified', 'unverified')}</div>
+        <div class="flag-item flag-danger needs-human-banner" role="alert" data-testid="unverified-deadline">
+          <p><strong>This needs a human decision.</strong></p>
+          <p>The unverified deadline is not shown as certain anywhere. Confirm the second-level deadline in writing with Aetna before relying on it.</p>
+        </div>
+      </div>
+      <div class="result-section rec-summary-section">
+        <h3>Suggested actions</h3>
+        <div class="analysis-item"><span>Send the appeal with the six weeks of therapy records this week.</span>${this.provChip('inferred', 'model-inferred')}</div>
+        <div class="analysis-item"><span>Check the itemized bill against the $1,200 total when it arrives.</span>${this.provChip('inferred', 'model-inferred')}</div>
+      </div>
+      <div class="result-section rec-summary-section">
+        <h3>Use this call</h3>
+        <div class="cat-links">
+          <button type="button" class="btn-secondary" data-action="recorder-feed-appt">Prepare for the callback</button>
+          <button type="button" class="btn-secondary" data-action="recorder-feed-doc">Decode as document</button>
+          <button type="button" class="btn-secondary" data-goto="library">Open in Library</button>
+        </div>
+      </div>`;
+    el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    this.focusInto(el);
+  },
+
+  renderRecentRecordings() {
+    const el = document.getElementById('rec-recent');
+    if (!el) return;
+    const calls = this.CATALOG.filter(it => it.kind === 'call');
+    el.hidden = calls.length === 0;
+    el.innerHTML = `<div class="result-section rec-summary-section">
+      <h3>Your recordings (demo)</h3>
+      ${calls.map(it => `<div class="analysis-item">
+        <span>${this.escapeHtml(it.title)} — ${this.escapeHtml(it.when)}</span>
+        <span style="display:flex;gap:8px;flex-wrap:wrap">
+          <button type="button" class="btn-ghost btn-sm" data-goto="library">Library</button>
+          <button type="button" class="btn-danger btn-sm" data-action="recorder-delete" data-cat-id="${this.escapeHtml(it.id)}">Delete</button>
+        </span>
+      </div>`).join('')}
+      <div class="analysis-item">
+        <span>Start over with the synthetic call script.</span>
+        <button type="button" class="btn-ghost btn-sm" data-action="recorder-reset">Replay the demo call</button>
+      </div>
+    </div>`;
+  },
+
+  recorderFeedAppt() {
+    const input = document.getElementById('appt-symptoms');
+    if (input && !input.value.trim()) {
+      input.value = 'Callback expected from Aetna case manager about MRI appeal reference A-2291; appointment with Dr. Patel Sep 30.';
+    }
+    this.showView('appointments');
+  },
+
+  recorderFeedDoc() {
+    const input = document.getElementById('doc-input');
+    if (input && !input.value.trim()) {
+      input.value = 'Denial letter (dictated from the call): MRI of right knee denied as not medically necessary on Sep 8; first-level appeal must be filed within 30 days; PT notes for six weeks submitted; itemized bill to follow.';
+    }
+    this.showView('documents');
+  },
+
+  recorderReset() {
+    if (this._recState === 'recording') this.recorderStop();
+    this._recState = 'idle';
+    this._recTurnIdx = 0;
+    const consent = document.getElementById('rec-consent');
+    const live = document.getElementById('rec-live');
+    const summary = document.getElementById('rec-summary');
+    if (consent) consent.hidden = false;
+    if (live) live.hidden = true;
+    if (summary) summary.hidden = true;
+    const check = document.getElementById('rec-consent-check');
+    if (check) check.checked = false;
+    const start = document.getElementById('rec-start');
+    if (start) start.disabled = true;
+  },
+
+  openDeleteDialog(catId) {
+    const dlg = document.getElementById('rec-delete-dialog');
+    if (!dlg) { this.deleteCatalogItem(catId); return; }
+    dlg.dataset.catId = catId;
+    if (typeof dlg.showModal === 'function') dlg.showModal();
+    else this.deleteCatalogItem(catId);
+  },
 };
 
 /* ── Initialize ── */
@@ -973,9 +1534,26 @@ const HA = {
 document.addEventListener('DOMContentLoaded', () => {
   HA.initTheme();
   HA.loadDashStrip();
+  HA.renderReminders();
+  HA.renderDirectory();
+  HA.renderRecentRecordings();
 
   /* Scroll reveal for home view elements */
   HA.initScrollReveal();
+
+  /* bfcache restore: never leave content hidden as pending */
+  window.addEventListener('pageshow', () => {
+    document.querySelectorAll('.reveal[data-reveal="pending"]').forEach(el => {
+      if (el.getBoundingClientRect().top <= window.innerHeight) el.setAttribute('data-reveal', 'revealed');
+    });
+  });
+
+  /* PWA: offline shell for static assets ONLY. /api/* is never cached —
+     no patient data in the service worker, by law. */
+  if ('serviceWorker' in navigator
+      && (location.protocol === 'https:' || ['localhost', '127.0.0.1'].includes(location.hostname))) {
+    navigator.serviceWorker.register('/sw.js').catch(() => { /* offline shell is optional */ });
+  }
 
   /* Navigation */
   document.getElementById('main-nav').addEventListener('click', (e) => {
@@ -986,15 +1564,37 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('btn-home').addEventListener('click', () => HA.showView('home'));
   document.getElementById('btn-theme').addEventListener('click', () => HA.toggleTheme());
 
-  /* Entry card clicks */
-  document.querySelectorAll('.entry-card').forEach(card => {
+  /* Entry card clicks (cards that are themselves controls; the featured
+     first card delegates to its CTA button instead) */
+  document.querySelectorAll('.entry-card[data-goto]').forEach(card => {
     const go = () => HA.showView(card.dataset.goto);
     card.addEventListener('click', go);
     card.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); go(); } });
   });
 
+  /* Consent checkbox gates the demo recorder */
+  const consentCheck = document.getElementById('rec-consent-check');
+  if (consentCheck) {
+    consentCheck.addEventListener('change', () => {
+      const start = document.getElementById('rec-start');
+      if (start) start.disabled = !consentCheck.checked;
+    });
+  }
+
+  /* Library + Directory search */
+  const libSearch = document.getElementById('lib-search');
+  if (libSearch) libSearch.addEventListener('input', () => { HA._libQuery = libSearch.value; HA.renderLibrary(); });
+  const dirSearch = document.getElementById('dir-search');
+  if (dirSearch) dirSearch.addEventListener('input', () => { HA._dirQuery = dirSearch.value; HA.renderDirectory(); });
+
   /* Delegated click handler for app actions. */
   document.addEventListener('click', (e) => {
+    /* generic in-app navigation (entry cards, xref chips, reminders) */
+    const gotoEl = e.target.closest('[data-goto]');
+    if (gotoEl && !gotoEl.classList.contains('entry-card')) {
+      HA.showView(gotoEl.dataset.goto);
+      return;
+    }
     const btn = e.target.closest('[data-action]');
     if (!btn) return;
     const action = btn.dataset.action;
@@ -1037,6 +1637,46 @@ document.addEventListener('DOMContentLoaded', () => {
       const trackId = btn.dataset.trackId;
       const status = btn.dataset.status;
       if (trackId && status) HA.updateTrackStatus(trackId, status);
+    } else if (action === 'recorder-start') {
+      HA.recorderStart();
+    } else if (action === 'recorder-stop') {
+      HA.recorderStop();
+    } else if (action === 'recorder-feed-appt') {
+      HA.recorderFeedAppt();
+    } else if (action === 'recorder-feed-doc') {
+      HA.recorderFeedDoc();
+    } else if (action === 'recorder-delete') {
+      const catId = btn.dataset.catId;
+      if (catId) HA.openDeleteDialog(catId);
+    } else if (action === 'recorder-delete-confirm') {
+      const dlg = document.getElementById('rec-delete-dialog');
+      const catId = dlg && dlg.dataset.catId;
+      if (dlg && typeof dlg.close === 'function') dlg.close();
+      if (catId) HA.deleteCatalogItem(catId);
+    } else if (action === 'recorder-delete-cancel') {
+      const dlg = document.getElementById('rec-delete-dialog');
+      if (dlg && typeof dlg.close === 'function') dlg.close();
+    } else if (action === 'recorder-reset') {
+      HA.recorderReset();
+    } else if (action === 'dir-confirm-field') {
+      HA.confirmDirectoryField(btn.dataset.contact, btn.dataset.field);
+    }
+  });
+
+  /* Library + Directory filter chips (aria-pressed group) */
+  document.addEventListener('click', (e) => {
+    const libChip = e.target.closest('[data-lib-filter]');
+    if (libChip) {
+      document.querySelectorAll('[data-lib-filter]').forEach(c => c.setAttribute('aria-pressed', String(c === libChip)));
+      HA._libFilter = libChip.dataset.libFilter;
+      HA.renderLibrary();
+      return;
+    }
+    const dirChip = e.target.closest('[data-dir-filter]');
+    if (dirChip) {
+      document.querySelectorAll('[data-dir-filter]').forEach(c => c.setAttribute('aria-pressed', String(c === dirChip)));
+      HA._dirFilter = dirChip.dataset.dirFilter;
+      HA.renderDirectory();
     }
   });
 });

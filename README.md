@@ -8,9 +8,11 @@
 
 ### Your health deserves an advocate.
 
+A free, open-source tool to help people have some hope against the medical system.
+
 Navigate the medical system. Fight insurance denials. Decode bills. Understand your care.
 
-**Free. Private. Runs on your machine.**
+**Free. Private. Local-first. Runs on your machine.**
 
 [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
 [![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
@@ -29,7 +31,7 @@ The healthcare system is overwhelming. Medical bills are incomprehensible. Insur
 **HealthAdvocate exists to change that.**
 
 It's a free, open-source tool that sits on your machine and helps you:
-- Understand what your symptoms might mean — and how urgent they are
+- Understand what your symptoms might mean — and how urgent they might be
 - Decode medical bills and spot suspicious charges
 - Fight back when insurance denies your claim — with a drafted appeal letter
 - Translate discharge instructions into language you can actually follow
@@ -41,13 +43,23 @@ It's a free, open-source tool that sits on your machine and helps you:
 
 ---
 
+## Why this exists
+
+The medical system is hard to fight alone, and the people it exhausts most are the ones with the least energy left to fight it. HealthAdvocate is a free tool to help people have some hope against the medical system — free, open source, and local-first, so cost and privacy are never the reason someone goes without support.
+
+**What this is not:** it is not a doctor, not a diagnosis, and not verified medical advice. It prepares, explains, and drafts — you and your clinicians decide. If something feels like an emergency, contact emergency services.
+
+---
+
 ## Features
 
+The first nine features have two halves: a **deterministic half** (local entity extraction and preparation that always runs) and a **generative half** (drafts and plain-language explanations) that needs the optional local model. See [What works without a model](#what-works-without-a-model) for the exact split.
+
 ### Symptom Assessment
-Describe how you feel in your own words. Two AI layers — medical entity recognition and clinical reasoning — cross-validate each other to give you a reliable urgency assessment, possible conditions, and clear next steps. If they disagree on urgency, the system defaults to "high" for your safety.
+Describe how you feel in your own words. Two layers — local medical entity recognition and an optional local reasoning model — cross-check each other to surface possible conditions and next steps. When both are live and disagree on urgency, the system defaults to the conservative "high" for your safety. Without the model, entity extraction still runs and urgency reads honestly as unavailable rather than guessed.
 
 ### Insurance Denial Fighter
-Paste your denial letter. HealthAdvocate identifies the denial reason, builds specific appeal arguments, and generates a ready-to-send appeal letter you can take straight to your insurer.
+Paste your denial letter. HealthAdvocate identifies the denial reason, builds specific appeal arguments, and drafts an appeal letter you can take straight to your insurer.
 
 ### Medical Bill Decoder
 Paste your bill. It extracts every charge, flags suspicious or duplicate items, explains what each line means, and tells you your rights as a patient.
@@ -95,7 +107,7 @@ HealthAdvocate uses a **dual-layer AI architecture** where two independent syste
   [PII Deidentification] ── Masks all personal data (names, SSN, dates, addresses)
       |
       v
-  [Local LLM] ── Generates structured clinical assessment (runs on your machine)
+  [Local LLM] ── Generates structured clinical assessment (optional, off by default)
       |
       v
   [Cross-Validation] ── Compares NER findings vs LLM reasoning
@@ -104,13 +116,38 @@ HealthAdvocate uses a **dual-layer AI architecture** where two independent syste
   Your result
 ```
 
-**Layer 1 — OpenMed NER**: Extracts medical entities from your text using state-of-the-art transformer models. Identifies diseases, medications, anatomical terms, and personally identifiable information with confidence scores.
+**Layer 1 — OpenMed NER**: Extracts medical entities from your text using state-of-the-art transformer models. Identifies diseases, medications, anatomical terms, and personally identifiable information with confidence scores. This layer is deterministic and always runs.
 
-**Layer 2 — Local LLM**: Generates a structured assessment — urgency level, action items, red flags, and plain-language explanations. Runs entirely on your machine via LM Studio.
+**Layer 2 — Local LLM** *(optional, off by default)*: Generates a structured assessment — urgency level, action items, red flags, and plain-language explanations. Runs entirely on your machine via any OpenAI-compatible loopback runtime (LM Studio, Ollama). It only goes live when you set `HEALTHADVOCATE_MODEL_ENABLED=1`.
 
-**Cross-validation**: Every result goes through a reliability check. If NER finds a high-urgency entity (like "chest pain" at 90%+ confidence) but the LLM rates urgency as "low", the system overrides to "high". Safety first, always.
+**Cross-validation**: Every result goes through a reliability check. If NER finds a high-urgency entity (like "chest pain" at 80%+ confidence) but the LLM rates urgency as "low", the system overrides to "high". Safety first, always.
 
 **PII protection**: Before any text reaches the LLM, all personal identifiers are stripped. Names become `[first_name] [last_name]`, dates become `[date]`, SSNs become `[ssn]`. The `pii_scrubbed` flag in every response confirms this happened.
+
+---
+
+## What works without a model
+
+The model runtime is **opt-in and off by default**. With it off, every generative feature answers with the same honest fallback shape (`unavailable_structured_fallback` in `healthadvocate/core/llm_client.py`): a summary that says the optional local model is unavailable, action items pointing at the manual workflows, empty red flags, and a `_model_blocked: true` marker. **Urgency shows an honest "unavailable" state — never a guessed level, never an alarm.** No endpoint errors out; deterministic preparation keeps working.
+
+| Feature | Deterministic — works with no model | Generative — needs `HEALTHADVOCATE_MODEL_ENABLED=1` |
+|---------|-------------------------------------|------------------------------------------------------|
+| Symptom Assessment | Condition/drug entity extraction with confidence scores; deidentification | Plain-language assessment, possible conditions, specialist suggestion; urgency assessment |
+| Insurance Denial Fighter | Entity extraction from the denial letter; deidentification | Denial-reason classification, appeal arguments, draft appeal letter |
+| Medical Bill Decoder | Charge extraction with line items and totals; entity extraction | Suspicious-charge flags, billing-rights explanations, plain-language summary |
+| Document Decoder | Medical-term and PII entity extraction (diseases, drugs, anatomy) | Plain-language explanation, term explanations, follow-up actions |
+| Drug Checker | Drug-name verification via NER | Drug class, generic availability, side effects, warnings, doctor questions |
+| Appointment Prep | Entity extraction from your symptoms and concerns | Talking points, questions to ask, advocacy script |
+| Discharge Translator | Medication, condition, and anatomy detection | Plain-language instructions, medication schedule, warning signs |
+| Second Opinion Brief | De-identified records output; entity extraction | Structured brief, key questions, records-to-bring list |
+| Community Health Scanner | Claim entity extraction | Credibility read, scientific context, recommended action |
+| Family Health Tracker | Fully functional — no model involved (profiles live in memory) | — |
+| Health Tracks | Fully functional — no model involved (in memory) | — |
+| Coverage Continuity Track | Fully functional — manual workflow, encrypted local cases, scripts, Commitment Gate; no model, no external dataset | — |
+| CLI (`python -m healthadvocate.cli`) | Fully functional — project brief, visit questions, denial checklists, server health | — |
+| MCP server (`python -m healthadvocate.mcp_server`) | Fully functional — preparation tools only | — |
+
+The optional open-data adapters (RxNorm, DailyMed, openFDA, NPPES, NADAC, DrugCentral) are separate from the model runtime: they are off unless invoked and each declares exactly what it can and cannot claim.
 
 ---
 
@@ -119,8 +156,8 @@ HealthAdvocate uses a **dual-layer AI architecture** where two independent syste
 ### What you need
 
 - **Python 3.11+**
-- **[OpenMed](https://github.com/maziyarpanahi/openmed)** — medical NLP toolkit (installed automatically)
-- **Optional: [LM Studio](https://lmstudio.ai/)** — only if you enable the generative layer (see [Enable the optional model runtime](#enable-the-optional-model-runtime)); a free app to run LLMs locally with a medical model like [Meditron3-8B](https://huggingface.co/epfl-llm/meditron-3)
+- **[OpenMed](https://github.com/maziyarpanahi/openmed)** — medical NLP toolkit (installed automatically). Runs locally; powers the always-on entity extraction.
+- **Optional: an OpenAI-compatible local model runtime** — e.g. [LM Studio](https://lmstudio.ai/) or Ollama, loaded with a model like [Meditron3-8B](https://huggingface.co/epfl-llm/meditron-3). Needed only for the generative half of the features; everything in the deterministic column of [What works without a model](#what-works-without-a-model) runs without it.>>>>>>> 4c38f56 (docs(honesty): README tells one true story — no-model table, real env vars, why-this-exists (Lane C))
 
 ### Install
 
@@ -136,36 +173,22 @@ pip install openmed[hf]
 1. Start HealthAdvocate:
 
 ```bash
-1. Open LM Studio, load a medical model, start the local server (default port 1234)
-
-2. Start HealthAdvocate with the model runtime enabled (it is **off by default** — without step 3 below, generative features run in their deterministic fallback mode):
-
-```bash
-export HEALTHADVOCATE_MODEL_ENABLED=1
-export HEALTHADVOCATE_MODEL_URL=http://localhost:1234/v1uvicorn healthadvocate.app:app --host 127.0.0.1 --port 8080
-```
-
-2. Open **http://localhost:8080** in your browser
-
-That's it. No sign-up, no API keys, no cloud — and no model runtime required: the documented quick start runs fully deterministic. NER extraction, cross-validation, PII masking, coverage workflows, and the Commitment Gate all work with the model off; LLM-assisted fields stay in their model-unavailable fallback (symptom urgency reports `unavailable` instead of fabricating a level). To turn the generative layer on, see the next section.
-
-### Enable the optional model runtime
-
-The model runtime is opt-in: it stays off until you explicitly enable it.
-
-```bash
-# 1. Open LM Studio, load a medical model, start the local server (default port 1234)
-
-# 2. Enable the runtime and point it at your server:
-export HEALTHADVOCATE_MODEL_ENABLED=1
-export HEALTHADVOCATE_MODEL_URL=http://localhost:1234/v1
-export MEDICAL_LLM_MODEL=meditron3-8b   # the model you actually loaded
-
-# 3. Start HealthAdvocate:
 uvicorn healthadvocate.app:app --host 127.0.0.1 --port 8080
 ```
 
-Without `HEALTHADVOCATE_MODEL_ENABLED=1` the runtime stays off — setting only the URL (or the deprecated `LM_STUDIO_URL` alias) changes nothing. The URL must be loopback; redirects are refused.
+2. Open **http://localhost:8080** in your browser. Deterministic features (entity extraction, bill charge extraction, Coverage workflow, CLI, MCP) work immediately — generative features answer with their honest unavailable fallback.
+
+3. Optional — make the generative features live. Start your local runtime with a loaded model, then point HealthAdvocate at it:
+
+```bash
+export HEALTHADVOCATE_MODEL_ENABLED=1
+export HEALTHADVOCATE_MODEL_URL=http://localhost:1234/v1   # LM Studio; Ollama serves http://127.0.0.1:11434/v1
+export MEDICAL_LLM_MODEL=meditron3-8b                       # the name of the model you actually loaded
+```
+
+`LM_STUDIO_URL` still works as a deprecated alias for `HEALTHADVOCATE_MODEL_URL`. The model URL must be loopback (`127.0.0.1`/`localhost`) — anything else is rejected fail-closed, and the runtime stays off until you set `HEALTHADVOCATE_MODEL_ENABLED=1`.
+
+That's it. No sign-up, no API keys, no cloud.>>>>>>> 4c38f56 (docs(honesty): README tells one true story — no-model table, real env vars, why-this-exists (Lane C))
 
 ### CLI, MCP, and Agent Skill
 
@@ -200,15 +223,11 @@ Example MCP config:
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `HEALTHADVOCATE_MODEL_ENABLED` | `0` (off) | Opt-in switch for the optional local model runtime. `1` enables it; `0`, `false`, `no`, `off`, or unset keep it off. |
-| `HEALTHADVOCATE_MODEL_URL` | `http://127.0.0.1:11434/v1` | Base URL of the loopback OpenAI-compatible runtime (LM Studio, Ollama, llama.cpp server). Loopback-only; redirects are refused. |
-| `LM_STUDIO_URL` | — (deprecated) | Legacy alias for `HEALTHADVOCATE_MODEL_URL`; only read when the preferred variable is unset. |
-| `MEDICAL_LLM_MODEL` | `local-model` | Model name requested from the runtime. Set it to the model you actually loaded (e.g. `meditron3-8b`). |
-| `HEALTHADVOCATE_CASE_DIR` | platform user-data dir (macOS: `~/Library/Application Support/HealthAdvocate/cases`) | Overrides the encrypted Coverage Case store directory. |
-| `HEALTHADVOCATE_MODEL_ENABLED` | `0` (off) | Master switch for the model runtime. The runtime is opt-in: with the default `0`, generative features return deterministic fallback payloads and the UI shows the model-unavailable state. Set to `1` to enable. |
-| `HEALTHADVOCATE_MODEL_URL` | `http://127.0.0.1:11434/v1` | OpenAI-compatible loopback model URL (preferred variable). Must resolve to a loopback address. |
-| `LM_STUDIO_URL` | *(deprecated alias)* | Legacy alias for `HEALTHADVOCATE_MODEL_URL`; `HEALTHADVOCATE_MODEL_URL` wins when both are set. |
-| `MEDICAL_LLM_MODEL` | `local-model` | Model name requested from the runtime (must match the model loaded in LM Studio, e.g. `meditron3-8b`). || `HEALTHADVOCATE_ALLOW_ORIGINS` | `http://127.0.0.1:8080,http://localhost:8080` | Comma-separated browser origins allowed by CORS |
+| `HEALTHADVOCATE_MODEL_ENABLED` | `0` (off by default) | Master switch for the generative features. Off: generative surfaces return the honest unavailable fallback. Set `1` to make them live (a valid loopback model URL is still required). |
+| `HEALTHADVOCATE_MODEL_URL` | `http://127.0.0.1:11434/v1` | Base URL of the OpenAI-compatible local model runtime. Must be loopback (`127.0.0.1`/`localhost`); non-loopback hosts and HTTP redirects are rejected fail-closed. |
+| `LM_STUDIO_URL` | unset | Deprecated alias for `HEALTHADVOCATE_MODEL_URL`, kept for compatibility. |
+| `MEDICAL_LLM_MODEL` | `local-model` | Model name sent to the runtime — set it to the model you actually loaded (e.g. `meditron3-8b`). |
+| `HEALTHADVOCATE_ALLOW_ORIGINS` | `http://127.0.0.1:8080,http://localhost:8080` | Comma-separated browser origins allowed by CORS |>>>>>>> 4c38f56 (docs(honesty): README tells one true story — no-model table, real env vars, why-this-exists (Lane C))
 
 ---
 
@@ -300,6 +319,8 @@ Every feature endpoint returns a consistent structure:
 
 Module-specific fields (like `suspicious_charges`, `draft_appeal`, `medication_instructions`) are included alongside these common fields.
 
+When the model runtime is off (the default), generative endpoints do not error — they answer with the honest unavailable fallback described in [What works without a model](#what-works-without-a-model): the unavailable summary, manual-workflow action items, empty red flags, and `_model_blocked: true`.
+
 ---
 
 ## Threat model & honest boundaries
@@ -308,10 +329,12 @@ Module-specific fields (like `suspicious_charges`, `draft_appeal`, `medication_i
 what is controlled versus assumed. Two boundaries stated plainly here:
 **the model runtime is opt-in** — the documented quick start runs fully
 deterministic/local with generative features in their fallback mode until a
-loopback model runtime is configured — and **every text box is synthetic-only
-by policy until the real-case era**: the release gate (real-case import
-disabled, independent-verifier pending) is enforced on the coverage store;
-free-text surfaces rely on that policy, not yet on enforcement.
+loopback model runtime is configured (see
+[What works without a model](#what-works-without-a-model)) — and **every
+text box is synthetic-only by policy until the real-case era**: the release
+gate (real-case import disabled, independent-verifier pending) is enforced on
+the coverage store; free-text surfaces rely on that policy, not yet on
+enforcement.
 
 ### What works with the model runtime off (the default build)
 
@@ -360,7 +383,7 @@ The UI uses accessibility-minded patterns because health tools should work for e
 |-------|-----------|-----|
 | Backend | [FastAPI](https://fastapi.tiangolo.com/) + [Pydantic](https://docs.pydantic.dev/) | Fast async Python API with type-safe validation |
 | Medical NER | [OpenMed](https://github.com/maziyarpanahi/openmed) | State-of-the-art medical entity extraction, 12+ models |
-| LLM | [Meditron3-8B](https://huggingface.co/epfl-llm/meditron-3) via [LM Studio](https://lmstudio.ai/) | Clinical reasoning running locally |
+| LLM | Any OpenAI-compatible loopback runtime (e.g. [LM Studio](https://lmstudio.ai/), Ollama); [Meditron3-8B](https://huggingface.co/epfl-llm/meditron-3) suggested | Clinical reasoning running locally — optional and off by default |
 | Frontend | Vanilla HTML/CSS/JS | Zero dependencies, fast load, works everywhere |
 | Design | Custom humanistic design system | Light and dark themes, warm and accessible |
 
@@ -402,8 +425,8 @@ healthadvocate/
 ## Known Limitations
 
 - **In-memory storage**: Family profiles and health tracks live in memory and are lost on server restart. This is intentional — no persistent data means no data to breach.
-- **Optional model runtime**: LM Studio (or any loopback OpenAI-compatible runtime) is only needed for the generative layer, which is opt-in (`HEALTHADVOCATE_MODEL_ENABLED`). Without it, nothing errors — every feature still responds with LLM-assisted fields in their deterministic model-unavailable fallback (symptom triage reports urgency `unavailable` rather than fabricating a level), while NER cross-validation still escalates high-urgency findings to HIGH.
-- **Optional model runtime (LM Studio or any OpenAI-compatible loopback server)**: the runtime is off by default. Without it, generative feature endpoints still return HTTP 200 with deterministic fallback payloads — urgency reads `unavailable` (rendered as a neutral "model unavailable — no urgency assessment was made" notice, never as an urgency level) and symptom assessment surfaces the "This needs a human decision" notice with real-human resources. No endpoint errors.- **LLM output quality**: Results depend on the model you choose. Meditron3-8B is a strong medical model, but no LLM is a substitute for a real doctor.
+- **Generative features are opt-in**: without `HEALTHADVOCATE_MODEL_ENABLED=1` and a loopback model runtime, generative surfaces return the honest unavailable fallback — never a raw error, never a guessed answer — while deterministic preparation (entity extraction, bill charge extraction, Coverage workflow, CLI, MCP) keeps working. See [What works without a model](#what-works-without-a-model).
+- **LLM output quality**: Results depend on the model you choose and run locally. Meditron3-8B is a reasonable open clinical-reasoning model, but no LLM is a substitute for a real doctor, and nothing here is verified medical advice.>>>>>>> 4c38f56 (docs(honesty): README tells one true story — no-model table, real env vars, why-this-exists (Lane C))
 
 ---
 
@@ -461,6 +484,7 @@ OpenMed is a separate project by Maziyar Panahi, used here as a dependency under
 | **Category** | health advocacy and patient-navigation tooling |
 | **Best for** | people navigating healthcare systems and builders of advocacy tools |
 | **Not** | a medical device or clinical diagnosis product |
+| **Price** | Free, open source (Apache-2.0); runs local-first on your machine |
 | **Source** | [GitHub](https://github.com/simongonzalezdc/healthadvocate) · [Forgejo](https://git.kyanitelabs.tech/simon/healthadvocate) |
 | **Keywords** | health advocate, patient navigation tool |
 

@@ -211,6 +211,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   claims endpoints error without LM Studio — they return HTTP 200
   deterministic fallback payloads with the model-unavailable state.- Incomplete `.gitignore` entry that left local artifacts unignored.
 
+### Docs
+- README docs-honesty pass (Lane C, audit C3): new
+  "What works without a model" table enumerating every feature surface's
+  no-model behavior from
+  the real fallback shape (`unavailable_structured_fallback` in
+  `healthadvocate/core/llm_client.py`) — deterministic preparation vs
+  degraded generative, with urgency documented as an honest "unavailable"
+  state rather than an alarm. The configuration table now documents
+  `HEALTHADVOCATE_MODEL_ENABLED` (off by default — the switch that makes
+  generative features live), `HEALTHADVOCATE_MODEL_URL`, `LM_STUDIO_URL`
+  (deprecated alias), and the real `MEDICAL_LLM_MODEL` default
+  (`local-model`, not `meditron3-8b`); the contradictory "Without it,
+  feature endpoints return errors" claim is retired in favor of the actual
+  silent-fallback behavior. New "Why this exists" section states the
+  mission plainly (a free tool to help people have some hope against the
+  medical system; free, open source, local-first; not a doctor, not a
+  diagnosis, not verified medical advice), the hero and quick start are
+  aligned with it, and the cross-validation confidence figure now matches
+  the code (80%+, not 90%+). Pins: `tests/test_docs_honesty.py`.
+
 ### Dependencies
 - `fastapi`, `uvicorn`, `pydantic`, `openai`, `openmed`, `faker`, `pysbd`,
   `transformers`, `huggingface-hub`, `accelerate`, and `tokenizers` pinned to

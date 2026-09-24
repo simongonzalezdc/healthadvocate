@@ -8,6 +8,15 @@ PORT_B ?= 8081
 NODE_PATH ?= /opt/homebrew/lib/node_modules
 CASES_DIR ?= /tmp/ha-ax-coverage-cases
 
+# Clean-room HTTP acceptance gate (audit 2026-09-24 remediation 4).
+# Boots the documented runtime through fastapi.testclient and drives every
+# named route in BOTH model-failure (default env) and model-success (an
+# in-process loopback OpenAI-compatible fake server) modes. Mirrors CI
+# Gate 2.5. Loopback only; synthetic data only; no new dependencies.
+.PHONY: acceptance
+acceptance:
+	$(PY) -m pytest tests/acceptance/ -q
+
 # Machine announcement-equivalent AX audit (screen-reader-half a11y gate).
 # Boots both loopback servers from this checkout, runs
 # tests/browser/ax-audit.js, tears everything down. Exit 0 = all journeys

@@ -123,9 +123,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   backend's `unavailable` value through instead of laundering it to a
   MEDIUM badge — a neutral `.urgency-unavailable` style (no high/danger
   styling) renders the no-judgment state as itself. Pins in
-  `tests/test_presentability.py`; dynamic glass check passes 14/14.
+  `tests/test_presentability.py`; browser-frame checks: `tools/browserframe/honesty_matrix.mjs` (glass lane).
 - **README honesty (docs audit)** — the Configuration table now
-  documents all six environment variables the code reads
+  documents the generative-path environment variables; the full set the code reads (incl. HEALTHADVOCATE_BIND_HOST, HEALTHADVOCATE_CMS_TIC_ENABLED, HEALTHADVOCATE_POLICYENGINE_ENABLED) lands with the docs lane
   (`HEALTHADVOCATE_MODEL_ENABLED` opt-in switch, preferred
   `HEALTHADVOCATE_MODEL_URL`, deprecated `LM_STUDIO_URL` alias,
   `HEALTHADVOCATE_CASE_DIR`, and the corrected defaults:

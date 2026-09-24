@@ -204,6 +204,18 @@ def unavailable_structured_fallback(reason: str = "model_unavailable") -> dict:
     }
 
 
+
+def _strip_internal_markers(payload: dict) -> dict:
+    """Remove underscore-prefixed keys from MODEL-returned JSON.
+
+    Internal pipeline markers (_model_blocked, _block_reason, ...) are set
+    by this module, never by the model. Without stripping, a hallucinated or
+    injected '_model_blocked': true in a live-model response could suppress
+    the conservative escalation path downstream (audit round 3, 2026-09-24).
+    """
+    return {k: v for k, v in payload.items() if not k.startswith("_")}
+
+
 def chat_structured(
     user_message: str,
     module_type: str = "general",
@@ -272,7 +284,7 @@ def chat_structured(
     try:
         result = json.loads(text)
         if isinstance(result, dict):
-            return result
+            return _strip_internal_markers(result)
     except json.JSONDecodeError:
         pass
 
@@ -282,7 +294,7 @@ def chat_structured(
         try:
             result = json.loads(match.group(0))
             if isinstance(result, dict):
-                return result
+                return _strip_internal_markers(result)
         except json.JSONDecodeError:
             pass
 
@@ -293,7 +305,7 @@ def chat_structured(
             result = json.loads(sanitized)
             if isinstance(result, dict):
                 logger.debug("Parsed JSON after sanitizing control characters")
-                return result
+                return _strip_internal_markers(result)
         except json.JSONDecodeError:
             pass
 

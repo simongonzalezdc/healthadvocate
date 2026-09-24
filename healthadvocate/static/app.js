@@ -92,7 +92,7 @@ const HA = {
     } else {
       stepsHtml = `<p>HealthAdvocate would not answer this on its own, and no allowed next steps were attached — treat this as a decision for a person.</p>`;
     }
-    return `<div class="flag-item flag-danger needs-human-banner" data-testid="needs-human-banner">
+    return `<div class="flag-item flag-danger needs-human-banner" role="alert" data-testid="needs-human-banner">
       <p><strong>This needs a human decision.</strong></p>
       ${stepsHtml}
       ${this.HUMAN_RESOURCES_HTML}

@@ -147,6 +147,8 @@ const HA = {
     document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
     const btn = document.querySelector(`.nav-btn[data-view="${name}"]`);
     if (btn) btn.classList.add('active');
+    const homeBtn = document.getElementById('btn-home');
+    if (homeBtn) homeBtn.classList.toggle('active', name === 'home');
 
     if (name === 'family') this.loadFamilyProfiles();
     if (name === 'tracks') this.loadTrackDashboard();
@@ -325,7 +327,10 @@ const HA = {
        hide the hero (micro-motion law). */
     document.querySelectorAll('.reveal').forEach(el => {
       if (el.getAttribute('data-reveal') === 'revealed') return;
-      const below = el.getBoundingClientRect().top > window.innerHeight;
+      /* only mark content clearly below the fold (plus a grace band) —
+         near-fold sections stay visible on first paint so home never
+         reads as an empty page */
+      const below = el.getBoundingClientRect().top > window.innerHeight * 1.2;
       if (below) el.setAttribute('data-reveal', 'pending');
       this._scrollObserver.observe(el);
     });
@@ -417,11 +422,15 @@ const HA = {
       </div>`;
 
     if (data.conditions?.length) {
-      html += `<div class="result-section"><h3>Possible Conditions</h3>`;
+      /* dictionary name-matches, honestly labeled — recognition is not
+         a diagnosis (GLM-5.3-Flash honesty receipt r1: confident-looking
+         percentages under a needs-human banner read as an answer) */
+      html += `<div class="result-section"><h3>Name Matches — Not a Diagnosis</h3>
+        <p class="condition-confidence" style="margin-bottom:10px">These are dictionary name matches found in your text. They are not an assessment${data.urgency === 'unavailable' ? ' — no urgency assessment was made either' : ''}.</p>`;
       for (const c of data.conditions) {
         html += `<div class="condition-item">
           <span class="condition-name">${this.escapeHtml(c.name)}</span>
-          <span class="condition-confidence">(${Math.round(c.confidence * 100)}%)</span>
+          <span class="condition-confidence">(name match, ${Math.round(c.confidence * 100)}% string similarity)</span>
         </div>`;
       }
       html += `</div>`;
@@ -648,6 +657,11 @@ const HA = {
     }
     if (data.generic_available === true) html += `<div class="drug-generic">${this.escapeHtml(data.generic_name)}</div>`;
     else if (data.generic_available === "Unknown") html += `<p class="result-text">Generic availability unknown. ${this.escapeHtml(data.cost_note || '')}</p>`;
+    /* honesty law (GLM-5.3-Flash receipt r1): a name-match-only response
+       must never read like a completed drug review */
+    if (data.generic_available !== true && !(data.alternatives || []).length && !data.cost_note) {
+      html += `<div class="flag-item flag-info urgency-unavailable">No drug details were generated — the optional model is off. Only the name match above is real; this is not a drug review.</div>`;
+    }
     if (data.alternatives?.length) {
       html += `<h4 style="margin-top:14px;font-size:11px;text-transform:uppercase;letter-spacing:0.06em;color:var(--text-3)">Alternatives</h4><ul class="alt-list">`;
       for (const a of data.alternatives) html += `<li>${this.escapeHtml(a)}</li>`;
@@ -1008,6 +1022,7 @@ const HA = {
       when: { top: 'FRI', main: '26' },
       contact: { name: 'Aetna member services', phone: '+1-800-555-0142' },
       gotoView: 'library',
+      prov: ['extracted', 'from the call'],
     },
     {
       id: 'r2', state: 'upcoming',
@@ -1055,6 +1070,7 @@ const HA = {
         <span class="reminder-body">
           <span class="reminder-title">${this.escapeHtml(r.title)}</span>
           <span class="reminder-context">${this.escapeHtml(r.context)}</span>
+          ${r.prov ? `<span class="reminder-prov">${this.provChip(r.prov[0], r.prov[1])}</span>` : ''}
           ${call}
         </span>
         <span class="reminder-state ${this.escapeHtml(r.state)}">${this.reminderStateLabel[r.state]}</span>
@@ -1066,7 +1082,7 @@ const HA = {
     const count = document.getElementById('due-badge-count');
     if (badge) {
       if (dueCount > 0) {
-        if (count) count.textContent = String(dueCount);
+        if (count) count.textContent = dueCount + (dueCount === 1 ? ' reminder due soon' : ' reminders due soon');
         badge.hidden = false;
       } else {
         badge.hidden = true;
@@ -1104,6 +1120,7 @@ const HA = {
       desc: 'Deadline detected in the denial letter: 30 days from Sep 8 notice date.',
       entities: [['30-day appeal window', 'pii'], ['Aetna', 'pii']],
       links: [['Insurance', 'insurance']],
+      prov: ['extracted', 'from the denial letter'],
     },
   ],
 
@@ -1145,6 +1162,7 @@ const HA = {
       </div>
       <p class="cat-desc">${this.escapeHtml(it.matter)} — ${this.escapeHtml(it.desc)}</p>
       <div class="cat-links">
+        ${it.prov ? this.provChip(it.prov[0], it.prov[1]) : ''}
         ${it.entities.map(e => `<span class="entity-chip ${this.safeEntityClass(e[1])}">${this.escapeHtml(e[0])}</span>`).join('')}
         ${it.links.map(l => `<button type="button" class="xref-chip" data-goto="${this.escapeHtml(l[1])}">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="7" y1="17" x2="17" y2="7"/><polyline points="7 7 17 7 17 17"/></svg>
@@ -1541,8 +1559,9 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('btn-home').addEventListener('click', () => HA.showView('home'));
   document.getElementById('btn-theme').addEventListener('click', () => HA.toggleTheme());
 
-  /* Entry card clicks */
-  document.querySelectorAll('.entry-card').forEach(card => {
+  /* Entry card clicks (cards that are themselves controls; the featured
+     first card delegates to its CTA button instead) */
+  document.querySelectorAll('.entry-card[data-goto]').forEach(card => {
     const go = () => HA.showView(card.dataset.goto);
     card.addEventListener('click', go);
     card.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); go(); } });

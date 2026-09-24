@@ -104,16 +104,21 @@
     <!-- Home View -->
     <section id="view-home" class="view active">
       <div class="hero reveal">
-        <span class="eyebrow">Your Health Advocate</span>
+        <span class="eyebrow">Free · Open source · Private by design</span>
         <h1>You deserve to understand your care.</h1>
         <p>Navigate symptoms, decode bills, fight insurance denials, and advocate for your family. Everything stays private on your device.</p>
+        <div class="hero-actions">
+          <button type="button" class="btn-primary btn-lg" data-goto="symptoms">Describe your symptoms</button>
+          <button type="button" class="btn-ghost" data-goto="insurance">Fight a denial</button>
+        </div>
         <div class="entry-grid">
-          <div class="entry-card" tabindex="0" data-goto="symptoms" role="button" aria-label="I don't feel well">
+          <div class="entry-card entry-card-primary">
             <div class="entry-icon">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
             </div>
             <h2>Something doesn't feel right</h2>
             <p>Describe how you're feeling and we'll help you understand what might be happening and what to do next.</p>
+            <button type="button" class="btn-primary" data-goto="symptoms">Start a symptom check</button>
             <div class="entry-card-meta">
               <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>Private by design</span>
               <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6L9 17l-5-5"/></svg>No account needed</span>
@@ -593,10 +598,10 @@
         </div>
         <div class="result-section">
           <h3>Crisis support (US)</h3>
-          <ul>
-            <li class="result-text"><strong>988 Suicide &amp; Crisis Lifeline</strong> — call or text <strong>988</strong>, any time.</li>
-            <li class="result-text"><strong>SAMHSA National Helpline</strong> — call <strong>1-800-662-4357</strong> (1-800-662-HELP; 24/7 treatment referral).</li>
-          </ul>
+          <div class="crisis-card">
+            <p class="crisis-line"><strong>988 Suicide &amp; Crisis Lifeline</strong> — call or text <a class="crisis-number" href="tel:988">988</a>, any time.</p>
+            <p class="crisis-line"><strong>SAMHSA National Helpline</strong> — call <a class="crisis-number" href="tel:18006624357">1-800-662-4357</a> (1-800-662-HELP; 24/7 treatment referral).</p>
+          </div>
         </div>
         <div class="result-section">
           <h3>Find help with coverage and care</h3>

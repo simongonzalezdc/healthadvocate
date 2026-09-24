@@ -136,11 +136,11 @@
 
 /* ── Dark theme: tuned, not inverted ────────────────────────────── */
 [data-theme="dark"] {
-  --bg-body: #181716;
-  --bg-surface: #222120;
-  --bg-elevated: #1c1b1a;
-  --bg-muted: #2c2a28;
-  --bg-input: #1c1b1a;
+  --bg-body: #191714;
+  --bg-surface: #242119;
+  --bg-elevated: #1e1b16;
+  --bg-muted: #2d2a24;
+  --bg-input: #1e1b16;
 
   --accent: #72a880;
   --accent-hover: #84be92;
@@ -159,11 +159,11 @@
   --slate-light: rgba(122, 157, 190, 0.1);
   --slate-medium: rgba(122, 157, 190, 0.17);
 
-  --text-1: #e8e4de;
-  --text-2: #a39e98;
-  --text-3: #8e8a85;
-  --border: #353230;
-  --border-light: #2c2a28;
+  --text-1: #e9e5de;
+  --text-2: #a8a399;
+  --text-3: #999581;
+  --border: #3a352c;
+  --border-light: #2d2a24;
 
   --ochre-ink-700: #dfa489;
   --coral-ink-700: #eba29a;
@@ -179,7 +179,7 @@
   --status-info-ink: var(--slate-ink-700);
   --status-info-tint: var(--slate-light);
 
-  --shadow-diffused: 0 24px 64px -16px rgba(0, 0, 0, 0.35);
+  --shadow-diffused: 0 24px 64px -16px rgba(19, 14, 8, 0.45);
   --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.15), 0 8px 28px rgba(0, 0, 0, 0.12);
   --shadow-elevated: 0 8px 32px rgba(0, 0, 0, 0.25);
   --shadow-hover: 0 12px 40px rgba(0, 0, 0, 0.3);
@@ -285,6 +285,7 @@ header {
 .icon-btn:hover { background: var(--color-surface-2); color: var(--color-text); border-color: var(--color-border-soft); }
 .icon-btn:focus-visible { outline: 2px solid var(--color-focus-ring); outline-offset: 2px; }
 .icon-btn:active { transform: scale(0.95); }
+.icon-btn.active { color: var(--color-primary); background: var(--color-primary-tint); border-color: var(--color-primary); }
 .icon-btn svg { width: 16px; height: 16px; }
 
 /* due-soon badge in header (proactive surfacing) */
@@ -389,10 +390,16 @@ main {
 
 .hero > p {
   color: var(--color-text-muted);
-  font-size: var(--step-0);
-  max-width: 46ch;
+  font-size: 1rem;
+  max-width: 50ch;
   line-height: 1.65;
 }
+.hero-actions {
+  display: flex; align-items: center; gap: var(--space-4);
+  margin-top: var(--space-5);
+  flex-wrap: wrap;
+}
+.btn-lg { font-size: var(--step-1); padding: 13px 28px; min-height: 48px; }
 
 /* ── Entry Cards (Asymmetric Bento) ─── */
 .entry-grid {
@@ -420,6 +427,17 @@ main {
   flex-direction: column;
 }
 .entry-card:first-child .entry-icon { margin-bottom: var(--space-4); }
+/* the featured card is the one unmistakable primary surface: sage crown,
+   inner bezel highlight, and its CTA lives inside it */
+.entry-card-primary {
+  border-top: 3px solid var(--accent);
+  box-shadow: var(--shadow-card), inset 0 1px 0 rgba(255, 255, 255, 0.55);
+  cursor: default;
+}
+[data-theme="dark"] .entry-card-primary {
+  box-shadow: var(--shadow-card), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+.entry-card-primary .btn-primary { margin-top: var(--space-4); align-self: flex-start; }
 .entry-card-meta {
   margin-top: auto;
   padding-top: var(--space-5);
@@ -448,22 +466,22 @@ main {
 .entry-icon svg { width: 20px; height: 20px; }
 .entry-card:nth-child(1) .entry-icon { background: var(--color-primary-tint); color: var(--color-primary); }
 .entry-card:nth-child(2) .entry-icon { background: var(--status-info-tint); color: var(--status-info); }
-.entry-card:nth-child(3) .entry-icon { background: var(--status-caution-tint); color: var(--status-caution); }
+.entry-card:nth-child(3) .entry-icon { background: var(--status-info-tint); color: var(--status-info); }
 
 .entry-card h2 {
-  font-size: var(--step-0);
-  font-weight: 600;
+  font-size: var(--step-1);
+  font-weight: 700;
   margin-bottom: var(--space-2);
-  letter-spacing: -0.01em;
+  letter-spacing: -0.015em;
   color: var(--color-text);
 }
 .entry-card p {
-  font-size: var(--step--1);
-  color: var(--color-text-subtle);
-  line-height: 1.55;
+  font-size: var(--step-0);
+  color: var(--color-text-muted);
+  line-height: 1.6;
 }
-.entry-card:first-child h2 { font-size: var(--step-1); }
-.entry-card:first-child p { font-size: var(--step--1); }
+.entry-card:first-child h2 { font-size: var(--step-2); }
+.entry-card:first-child p { font-size: var(--step-0); }
 
 /* ── "What's coming up" (proactive reminders) ─── */
 .coming-up { margin-top: var(--space-7); }
@@ -509,7 +527,7 @@ main {
 
 .reminder-body { flex: 1; min-width: 0; }
 .reminder-title { font-weight: 600; font-size: var(--step-0); color: var(--color-text); }
-.reminder-context { font-size: var(--step--2); color: var(--color-text-subtle); margin-top: 2px; }
+.reminder-context { font-size: var(--step--1); color: var(--color-text-subtle); margin-top: 2px; }
 
 .reminder-state {
   font-size: var(--step--2); font-weight: 700;
@@ -523,6 +541,7 @@ main {
 .reminder-card[data-state="due-soon"]  { border-left-color: var(--status-caution); }
 .reminder-card[data-state="overdue"]   { border-left-color: var(--status-danger); }
 .reminder-card[data-state="done"]      { border-left-color: var(--color-border); opacity: 0.72; }
+.reminder-prov { display: block; margin-top: 6px; }
 .reminder-state.upcoming  { background: var(--status-info-tint); color: var(--status-info-ink); }
 .reminder-state.due-soon  { background: var(--status-caution-tint); color: var(--status-caution-ink); }
 .reminder-state.overdue   { background: var(--status-danger-tint); color: var(--status-danger-ink); }
@@ -624,10 +643,10 @@ main {
 }
 
 .panel-desc {
-  font-size: var(--step--1);
+  font-size: var(--step-0);
   color: var(--color-text-muted);
   margin-top: 3px;
-  line-height: 1.55;
+  line-height: 1.6;
   max-width: 62ch;
 }
 
@@ -781,7 +800,7 @@ textarea { resize: vertical; min-height: 100px; line-height: 1.55; }
   margin-bottom: var(--space-3);
 }
 
-.result-text { color: var(--color-text-muted); font-size: var(--step--1); line-height: 1.65; }
+.result-text { color: var(--color-text-muted); font-size: var(--step-0); line-height: 1.65; }
 
 /* ── THE HONESTY LANE ─────────────────────────────────────────────── */
 
@@ -825,8 +844,8 @@ textarea { resize: vertical; min-height: 100px; line-height: 1.55; }
   transition: border-color var(--dur-2) var(--ease), background-color var(--dur-2) var(--ease);
 }
 .entity-chip:hover { border-color: var(--color-primary); background: var(--color-primary-tint-strong); }
-.entity-chip.disease { background: var(--status-danger-tint); color: var(--status-danger-ink); }
-.entity-chip.disease:hover { border-color: var(--status-danger); background: rgba(184, 85, 72, 0.16); }
+.entity-chip.disease { background: var(--status-info-tint); color: var(--status-info-ink); }
+.entity-chip.disease:hover { border-color: var(--status-info); background: rgba(85, 116, 154, 0.16); }
 .entity-chip.drug { background: var(--status-info-tint); color: var(--status-info-ink); }
 .entity-chip.drug:hover { border-color: var(--status-info); background: rgba(85, 116, 154, 0.16); }
 .entity-chip.anatomy { background: var(--color-primary-tint); color: var(--color-primary); }
@@ -879,7 +898,7 @@ textarea { resize: vertical; min-height: 100px; line-height: 1.55; }
   margin-bottom: var(--space-2);
   font-size: var(--step--1);
   font-weight: 500;
-  line-height: 1.5;
+  line-height: 1.55;
 }
 .flag-warning { background: var(--status-caution-tint); color: var(--status-caution-ink); border-left: 3px solid var(--status-caution); }
 .flag-info { background: var(--status-info-tint); color: var(--status-info-ink); border-left: 3px solid var(--status-info); }
@@ -919,6 +938,26 @@ span.flag-item.flag-info.urgency-unavailable {
 }
 .needs-human-banner .human-resources ul { margin: 4px 0 0 18px; }
 
+/* Crisis card (Help): real humans outrank every quiet UI element on the page */
+.crisis-card {
+  background: var(--status-danger-tint);
+  border: 1px solid var(--status-danger);
+  border-left: 4px solid var(--status-danger);
+  border-radius: var(--radius);
+  padding: var(--space-4) var(--space-5);
+  display: grid;
+  gap: var(--space-2);
+}
+.crisis-line { font-size: var(--step-0); color: var(--color-text); line-height: 1.6; }
+.crisis-number {
+  font-weight: 800;
+  font-size: var(--step-2);
+  letter-spacing: 0.01em;
+  color: var(--status-danger-ink);
+  white-space: nowrap;
+}
+.crisis-number:focus-visible { outline: 2px solid var(--color-focus-ring); outline-offset: 2px; border-radius: 4px; }
+
 /* Provenance species (analysis honesty) — extracted / inferred / unverified */
 .prov-chip {
   display: inline-flex; align-items: center; gap: 5px;
@@ -933,7 +972,7 @@ span.flag-item.flag-info.urgency-unavailable {
 .prov-chip::before { content: ''; width: 6px; height: 6px; border-radius: 2px; background: currentColor; }
 .prov-extracted { background: var(--status-info-tint); color: var(--status-info-ink); }
 .prov-extracted::before { border-radius: 50%; }
-.prov-inferred { background: var(--status-caution-tint); color: var(--status-caution-ink); }
+.prov-inferred { background: var(--status-caution-tint); color: var(--status-caution-ink); border: 1px dashed var(--status-caution); }
 .prov-unverified { background: var(--status-neutral-tint); color: var(--status-neutral-ink); border: 1px dashed var(--color-border); }
 .prov-unverified::before { transform: rotate(45deg); }
 /* user-confirmed outranks inference: solid species, never used for inferred data */
@@ -953,7 +992,7 @@ span.flag-item.flag-info.urgency-unavailable {
 .profile-card:hover { box-shadow: var(--shadow-card); }
 .profile-name { font-weight: 700; font-size: var(--step-0); }
 .profile-relationship { font-size: var(--step--2); color: var(--color-text-subtle); }
-.profile-detail { font-size: var(--step--1); color: var(--color-text-muted); margin-top: 6px; }
+.profile-detail { font-size: var(--step-0); color: var(--color-text-muted); margin-top: 6px; }
 
 /* ── Track Items ─── */
 .track-item {
@@ -1215,7 +1254,7 @@ dialog.ha-dialog p { font-size: var(--step--1); color: var(--color-text-muted); 
 }
 .rec-consent h3 { font-size: var(--step--1); margin-bottom: var(--space-2); }
 .rec-consent .law-note {
-  font-size: var(--step--1);
+  font-size: var(--step-0);
   color: var(--color-text-muted);
   line-height: 1.6;
   margin-bottom: var(--space-4);
@@ -1337,7 +1376,7 @@ dialog.ha-dialog p { font-size: var(--step--1); color: var(--color-text-muted); 
 }
 .turn.you .turn-speaker { color: var(--color-primary); }
 .turn.other .turn-speaker { color: var(--status-info-ink); }
-.turn-text { font-size: var(--step--1); color: var(--color-text); line-height: 1.6; }
+.turn-text { font-size: var(--step-0); color: var(--color-text); line-height: 1.6; }
 /* interim/draft ASR text is NEVER indistinguishable from final */
 .turn.interim .turn-text { color: var(--color-text-subtle); font-style: italic; }
 .turn.gap .turn-text { color: var(--color-text-subtle); font-style: italic; }
@@ -1356,7 +1395,7 @@ dialog.ha-dialog p { font-size: var(--step--1); color: var(--color-text-muted); 
   display: flex; align-items: flex-start; justify-content: space-between; gap: var(--space-3);
   padding: var(--space-3) 0;
   border-bottom: 1px solid var(--color-border-soft);
-  font-size: var(--step--1);
+  font-size: var(--step-0);
   color: var(--color-text-muted);
   line-height: 1.55;
 }
@@ -1443,7 +1482,7 @@ body.is-recording { padding-bottom: 88px; }
 .cat-kind.reminder { background: var(--status-info-tint); color: var(--status-info); }
 .cat-title { font-weight: 600; font-size: var(--step-0); color: var(--color-text); flex: 1; min-width: 12ch; }
 .cat-when { font-family: var(--font-mono); font-size: var(--step--2); color: var(--color-text-subtle); white-space: nowrap; }
-.cat-desc { font-size: var(--step--1); color: var(--color-text-muted); line-height: 1.55; margin-bottom: var(--space-3); }
+.cat-desc { font-size: var(--step-0); color: var(--color-text-muted); line-height: 1.55; margin-bottom: var(--space-3); }
 .cat-links { display: flex; flex-wrap: wrap; gap: var(--space-2); align-items: center; }
 .xref-chip {
   display: inline-flex; align-items: center; gap: 5px;
@@ -1487,7 +1526,7 @@ body.is-recording { padding-bottom: 88px; }
 .tl-item.kind-reminder::before { border-color: var(--status-info); }
 .tl-when { font-family: var(--font-mono); font-size: var(--step--2); color: var(--color-text-subtle); }
 .tl-title { font-weight: 600; font-size: var(--step--1); color: var(--color-text); margin: 2px 0; }
-.tl-note { font-size: var(--step--1); color: var(--color-text-muted); line-height: 1.5; }
+.tl-note { font-size: var(--step-0); color: var(--color-text-muted); line-height: 1.5; }
 
 /* ═══════════ DIRECTORY (self-building provider cards) ═══════════ */
 

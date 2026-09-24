@@ -252,6 +252,9 @@ class FailClosedLegsEscalateTests(unittest.TestCase):
         self.assertIsNone(decision(result)["answer"])
 
     def test_unparseable_raw_text_placeholder_escalates(self):
+        # urgency "low" is a compliant pick, so the candidate builds and
+        # the leg is below-threshold (confidence 0.0 from the placeholder
+        # marker) — conservative escalation with the original audit trail.
         output = dict(BENIGN_OUTPUT, urgency="low", _raw_text=True)
         result = run_assessment(make_engine(), output)
         self.assertEqual(result["urgency"], "high")
@@ -353,10 +356,12 @@ class SevereModelOffSafetyTests(unittest.TestCase):
                 # The payload self-explains the escalation (the glass
                 # renders the disagreement safety flag from this).
                 self.assertTrue(result["validation"]["urgency_disagreement"])
-                # The audit trail is unchanged: still below-threshold
-                # with the zero-measurement numbers attached.
+                # Audit trail: the honest fallback carries urgency
+                # "unavailable" (out-of-rubric) so the leg types as
+                # invalid-answer — the escalation comes from the
+                # disagreement override, not a below-threshold answer.
                 self.assertEqual(decision(result)["reason_kind"],
-                                 "below-threshold")
+                                 "invalid-answer")
 
     def test_sub_trigger_confidence_severe_term_stays_unavailable(self):
         # 0.79 < the 0.80 trigger bar: no NER signal, so the honest
@@ -416,14 +421,18 @@ class ModelUnavailableHonestyTests(unittest.TestCase):
         # "high" (and never a rubric label at all).
         self.assertEqual(result["urgency"], "unavailable")
         self.assertNotEqual(result["urgency"], "high")
-        # The audit trail is unchanged: the placeholder pick is still
-        # below-threshold with zero-measurement confidence attached.
+        # Audit trail: with the honest fallback carrying urgency
+        # "unavailable" (out-of-rubric by design), the candidate is
+        # absent and the wrapper leg is invalid-answer — the merge-fix
+        # carve-out covers both no-judgment legs identically.
         wrapper = decision(result)
-        self.assertEqual(wrapper["reason_kind"], "below-threshold")
+        self.assertEqual(wrapper["reason_kind"], "invalid-answer")
         self.assertEqual(wrapper["outcome"], "NEEDS_HUMAN")
-        self.assertEqual(wrapper["answer"]["confidence"], 0.0)
-        self.assertEqual(wrapper["answer"]["level"], 1)
-        self.assertEqual(wrapper["threshold_applied"], 0.5)
+        # No candidate exists to attach: the honest fallback's "unavailable"
+        # urgency is out-of-rubric by design, so the answer slot is empty —
+        # and with no answer there is no threshold comparison to record.
+        self.assertIsNone(wrapper["answer"])
+        self.assertIsNone(wrapper["threshold_applied"])
 
     def test_model_off_explanation_names_model_off_and_deterministic_prep(self):
         from healthadvocate.decisions.symptom_triage import (

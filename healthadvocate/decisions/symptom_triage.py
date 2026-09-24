@@ -238,7 +238,15 @@ def external_urgency(
     """
     if urgency_disagreement:
         return CONSERVATIVE_URGENCY
-    if model_unavailable and outcome.reason_kind == "below-threshold":
+    if model_unavailable and outcome.reason_kind in (
+        "below-threshold",
+        # invalid-answer on a no-judgment output: the fallback's honest
+        # urgency value ("unavailable") is out-of-rubric by design, so
+        # the candidate is absent — that is the model saying nothing,
+        # not the model answering badly (merge-regression fix 2026-09-24:
+        # glass fallback shape + triage carve-out must compose).
+        "invalid-answer",
+    ):
         return MODEL_UNAVAILABLE_URGENCY
     if outcome.outcome is not Outcome.ANSWERED:
         return CONSERVATIVE_URGENCY

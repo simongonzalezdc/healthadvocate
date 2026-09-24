@@ -1080,9 +1080,11 @@ const HA = {
     const dueCount = this.REMINDERS.filter(r => r.state === 'due-soon').length;
     const badge = document.getElementById('due-badge');
     const count = document.getElementById('due-badge-count');
+    const words = badge ? badge.querySelector('.due-badge-words') : null;
     if (badge) {
       if (dueCount > 0) {
-        if (count) count.textContent = dueCount + (dueCount === 1 ? ' reminder due soon' : ' reminders due soon');
+        if (count) count.textContent = String(dueCount);
+        if (words) words.textContent = dueCount === 1 ? ' reminder due soon' : ' reminders due soon';
         badge.hidden = false;
       } else {
         badge.hidden = true;
@@ -1168,7 +1170,7 @@ const HA = {
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="7" y1="17" x2="17" y2="7"/><polyline points="7 7 17 7 17 17"/></svg>
           ${this.escapeHtml(l[0])}
         </button>`).join('')}
-        ${it.kind === 'call' ? `<button type="button" class="xref-chip" data-action="recorder-delete" data-cat-id="${this.escapeHtml(it.id)}" aria-label="Delete ${this.escapeHtml(it.title)}">Delete</button>` : ''}
+        ${it.kind === 'call' ? `<button type="button" class="xref-chip xref-danger" data-action="recorder-delete" data-cat-id="${this.escapeHtml(it.id)}" aria-label="Delete ${this.escapeHtml(it.title)}">Delete</button>` : ''}
       </div>
     </article>`).join('');
     if (timeline) {
@@ -1473,12 +1475,12 @@ const HA = {
         <span>${this.escapeHtml(it.title)} — ${this.escapeHtml(it.when)}</span>
         <span style="display:flex;gap:8px;flex-wrap:wrap">
           <button type="button" class="btn-ghost btn-sm" data-goto="library">Library</button>
-          <button type="button" class="btn-ghost btn-sm" data-action="recorder-delete" data-cat-id="${this.escapeHtml(it.id)}">Delete</button>
+          <button type="button" class="btn-danger btn-sm" data-action="recorder-delete" data-cat-id="${this.escapeHtml(it.id)}">Delete</button>
         </span>
       </div>`).join('')}
       <div class="analysis-item">
         <span>Start over with the synthetic call script.</span>
-        <button type="button" class="btn-ghost btn-sm" data-action="recorder-reset">New demo recording</button>
+        <button type="button" class="btn-ghost btn-sm" data-action="recorder-reset">Replay the demo call</button>
       </div>
     </div>`;
   },

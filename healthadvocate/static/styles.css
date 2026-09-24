@@ -309,6 +309,11 @@ header {
 .due-badge:hover { background: rgba(184, 120, 72, 0.16); }
 .due-badge:focus-visible { outline: 2px solid var(--color-focus-ring); outline-offset: 2px; }
 .due-badge .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--status-caution); }
+/* narrow screens: count + dot only, so the badge never crowds the icon buttons */
+@media (max-width: 560px) {
+  .due-badge { padding: 7px 10px; }
+  .due-badge-words { display: none; }
+}
 
 /* ── Navigation (mobile-first scroll rail) ─── */
 nav {
@@ -330,9 +335,9 @@ nav::-webkit-scrollbar { display: none; }
   background: transparent;
   border: none;
   padding: 9px 14px;
-  font-size: var(--step--1);
+  font-size: 13px;
   font-weight: 500;
-  color: var(--color-text-subtle);
+  color: var(--color-text-muted);
   border-radius: var(--radius-full);
   white-space: nowrap;
   min-height: 40px; /* touch floor */
@@ -343,7 +348,8 @@ nav::-webkit-scrollbar { display: none; }
 .nav-btn.active {
   color: var(--color-primary);
   background: var(--color-primary-tint);
-  font-weight: 600;
+  font-weight: 700;
+  box-shadow: inset 0 -2px 0 var(--color-primary);
 }
 .nav-btn:focus-visible { outline: 2px solid var(--color-focus-ring); outline-offset: 2px; }
 
@@ -620,7 +626,7 @@ main {
 .panel-icon.appointments { background: var(--color-primary-tint); color: var(--color-primary); }
 .panel-icon.discharge { background: var(--color-primary-tint); color: var(--color-primary); }
 .panel-icon.secondopinion { background: var(--color-primary-tint); color: var(--color-primary); }
-.panel-icon.recorder { background: var(--status-danger-tint); color: var(--status-danger); }
+.panel-icon.recorder { background: var(--status-info-tint); color: var(--status-info); }
 .panel-icon.library { background: var(--status-info-tint); color: var(--status-info); }
 .panel-icon.community { background: var(--status-caution-tint); color: var(--status-caution); }
 .panel-icon.family { background: var(--color-primary-tint); color: var(--color-primary); }
@@ -628,11 +634,10 @@ main {
 
 .panel-eyebrow {
   display: inline-block;
-  font-size: var(--step--2);
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.15em;
-  color: var(--color-primary);
+  font-size: var(--step-2);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--color-text);
   margin-bottom: 2px;
 }
 
@@ -694,7 +699,7 @@ textarea { resize: vertical; min-height: 100px; line-height: 1.55; }
   color: var(--color-text);
 }
 .check-row input[type="checkbox"] {
-  width: 20px; height: 20px; margin-top: 3px;
+  width: 24px; height: 24px; margin-top: 2px;
   accent-color: var(--color-primary);
   flex-shrink: 0;
   cursor: pointer;
@@ -961,7 +966,7 @@ span.flag-item.flag-info.urgency-unavailable {
 /* Provenance species (analysis honesty) — extracted / inferred / unverified */
 .prov-chip {
   display: inline-flex; align-items: center; gap: 5px;
-  font-size: var(--step--2);
+  font-size: 12.5px;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.05em;
@@ -1499,6 +1504,9 @@ body.is-recording { padding-bottom: 88px; }
 }
 .xref-chip:hover { border-color: var(--color-primary); color: var(--color-primary); }
 .xref-chip:focus-visible { outline: 2px solid var(--color-focus-ring); outline-offset: 2px; }
+.xref-chip { color: var(--color-text-muted); font-weight: 600; }
+.xref-danger { color: var(--status-danger-ink); border-color: var(--status-danger); }
+.xref-danger:hover { color: var(--status-danger-ink); border-color: var(--status-danger); background: var(--status-danger-tint); }
 .xref-chip svg { width: 12px; height: 12px; }
 
 /* per-matter timeline */
@@ -1569,16 +1577,16 @@ body.is-recording { padding-bottom: 88px; }
   color: var(--color-text-muted);
 }
 .contact-field .k {
-  font-size: var(--step--2); font-weight: 600;
+  font-size: var(--step--2); font-weight: 700;
   text-transform: uppercase; letter-spacing: 0.05em;
-  color: var(--color-text-subtle);
+  color: var(--color-text-muted);
   min-width: 6ch;
 }
 .contact-field .v { color: var(--color-text); }
 .contact-field .v a { color: var(--color-primary); }
 .contact-merge-note {
-  font-size: var(--step--2);
-  color: var(--color-text-subtle);
+  font-size: var(--step--1);
+  color: var(--color-text-muted);
   border-top: 1px dashed var(--color-border);
   padding-top: var(--space-2);
   margin-bottom: var(--space-3);
@@ -1616,7 +1624,7 @@ body.is-recording { padding-bottom: 88px; }
 footer {
   text-align: center;
   padding: 56px 28px;
-  color: var(--color-text-subtle);
+  color: var(--color-text-muted);
   font-size: var(--step--1);
   max-width: var(--max-w);
   margin: 0 auto;

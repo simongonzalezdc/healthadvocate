@@ -29,6 +29,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Renovate dependency automation configuration.
 
 ### Changed
+- **Symptom-triage honesty on model-unavailable outputs (audit D2,
+  CRITICAL)** — the documented default build runs with the optional
+  local model off, and that build no longer labels every symptom
+  HIGH. The triage surface (`healthadvocate/decisions/symptom_triage.py`
+  + `healthadvocate/core/symptom_assessor.py` wiring) now distinguishes
+  MODEL-UNAVAILABLE outputs (`unavailable_structured_fallback` shape,
+  `_model_blocked` marker — model disabled, blocked, or transport
+  failure: no structured judgment exists) from
+  GENUINELY-ANSWERED-BELOW-THRESHOLD picks. External behavior: the
+  model-unavailable leg surfaces urgency `"unavailable"` (a new
+  external value, deliberately not a rubric level, so no high badge
+  can render) with the deterministic explanation that the optional
+  local model is off while deterministic preparation steps remain.
+  The safety escalations are untouched and pinned in both directions:
+  a genuinely answered below-threshold pick still escalates to
+  `"high"`, and every `urgency_disagreement` still dominates the
+  carve-out. Unparseable model answers (`_raw_text` — the model ran)
+  and the deidentification-failed leg keep their conservative
+  escalation; the audit wrapper still records below-threshold with
+  the zero-measurement numbers. Regression tests:
+  `tests/test_symptom_triage_jev.py` (`ModelUnavailableHonestyTests`,
+  `BelowThresholdDirectionTests`).
 - **Insurance denial-reason classification routes through the HA-JEV
   typed-decision layer** (J2-b; design
   `docs/HA-JEV-TYPED-DECISIONS-DESIGN-2026-09-22.md` §5). The free-text

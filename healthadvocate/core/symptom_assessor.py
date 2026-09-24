@@ -7,6 +7,14 @@ typed layer adds auditability (identification receipt, calibrated
 gate, NEEDS_HUMAN wrapper) and never lowers urgency — any fail-closed
 leg and any urgency_disagreement surfaces as the conservative
 highest urgency, exactly as the disagreement rule did before.
+
+Triage honesty (audit D2, 2026-09-24): the one carve-out is the
+model-UNAVAILABLE placeholder (`unavailable_structured_fallback`
+shape, `_model_blocked` marker). The documented default build runs
+with the optional local model off; labeling every symptom HIGH there
+fabricated assessments. That one leg externalizes as "unavailable"
+with a model-off explanation; a genuinely answered below-threshold
+pick and every disagreement keep the conservative escalation.
 Deidentify-before-reasoning order is untouched: the gated model call
 still assembles and deidentifies the full context itself.
 """
@@ -19,10 +27,13 @@ from healthadvocate.privacy.gated_model import structured_model_call
 from healthadvocate.decisions.assess import invalid_receipt_outcome
 from healthadvocate.decisions.receipt import receipt_from_analysis
 from healthadvocate.decisions.symptom_triage import (
+    MODEL_UNAVAILABLE_EXPLANATION,
+    MODEL_UNAVAILABLE_URGENCY,
     URGENCY_QUESTION,
     assess_urgency,
     deidentification_status_from_output,
     external_urgency,
+    is_model_unavailable,
 )
 
 
@@ -82,13 +93,29 @@ def assess_symptoms(engine: HealthEngine, symptoms: str, profile_id: str | None 
         decision = assess_urgency(
             receipt=built.receipt, llm_output=llm_output
         )
-    urgency = external_urgency(decision, validation.urgency_disagreement)
+    # Audit D2: the wiring hands the mapping the model-unavailable
+    # signal from the SAME output the candidate was built from, so the
+    # below-threshold placeholder leg externalizes as "unavailable"
+    # while every safety escalation (disagreement, genuine
+    # below-threshold answers, every other fail-closed leg) is decided
+    # inside the mapping exactly as before.
+    urgency = external_urgency(
+        decision,
+        validation.urgency_disagreement,
+        model_unavailable=is_model_unavailable(llm_output),
+    )
+    explanation = llm_output.get("summary", "")
+    if urgency == MODEL_UNAVAILABLE_URGENCY:
+        # Deterministic, total pairing: whenever the external urgency
+        # says no model judgment was made, the explanation says so too
+        # (the model is off; deterministic preparation remains).
+        explanation = MODEL_UNAVAILABLE_EXPLANATION
 
     status = llm_output.get("deidentification_status", "unknown")
     return {
         "conditions": conditions,
         "urgency": urgency,
-        "explanation": llm_output.get("summary", ""),
+        "explanation": explanation,
         "action_items": llm_output.get("action_items", []),
         "red_flags": llm_output.get("red_flags", []),
         "possible_conditions": llm_output.get("possible_conditions", []),

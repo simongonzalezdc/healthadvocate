@@ -357,7 +357,8 @@ const HA = {
   /* ── Loading / Errors ── */
 
   setLoading(el) {
-    el.innerHTML = `<div class="skeleton-wrap">
+    el.innerHTML = `<div class="skeleton-wrap" role="status">
+      <p class="condition-confidence" style="margin-bottom:12px">Working on this device — local analysis can take a few seconds.</p>
       <div class="skeleton-line h-xl"></div>
       <div class="skeleton-line w-100"></div>
       <div class="skeleton-line w-80"></div>
@@ -1116,7 +1117,7 @@ const HA = {
     },
     {
       id: 'c4', kind: 'reminder', when: 'Oct 8', matter: 'MRI denial (Aetna)',
-      title: 'Appeal window closes (detected)',
+      title: 'Appeal window closes — date read from the letter',
       desc: 'Deadline detected in the denial letter: 30 days from Sep 8 notice date.',
       entities: [['30-day appeal window', 'pii'], ['Aetna', 'pii']],
       links: [['Insurance', 'insurance']],
@@ -1158,11 +1159,11 @@ const HA = {
       <div class="cat-card-head">
         <span class="cat-kind ${this.escapeHtml(it.kind)}">${this.KIND_ICON[it.kind] || ''}</span>
         <span class="cat-title">${this.escapeHtml(it.title)}</span>
+        ${it.prov ? this.provChip(it.prov[0], it.prov[1]) : ''}
         <span class="cat-when">${this.escapeHtml(it.when)}</span>
       </div>
       <p class="cat-desc">${this.escapeHtml(it.matter)} — ${this.escapeHtml(it.desc)}</p>
       <div class="cat-links">
-        ${it.prov ? this.provChip(it.prov[0], it.prov[1]) : ''}
         ${it.entities.map(e => `<span class="entity-chip ${this.safeEntityClass(e[1])}">${this.escapeHtml(e[0])}</span>`).join('')}
         ${it.links.map(l => `<button type="button" class="xref-chip" data-goto="${this.escapeHtml(l[1])}">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="7" y1="17" x2="17" y2="7"/><polyline points="7 7 17 7 17 17"/></svg>

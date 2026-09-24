@@ -566,12 +566,12 @@ main {
 /* state = shape+color: left bar tone changes AND the label text differs */
 .reminder-card[data-state="upcoming"]  { border-left-color: var(--status-info); }
 .reminder-card[data-state="due-soon"]  { border-left-color: var(--status-caution); }
-.reminder-card[data-state="overdue"]   { border-left-color: var(--status-danger); }
+.reminder-card[data-state="overdue"]   { border-left: 4px solid var(--status-danger); border-color: var(--status-danger); }
 .reminder-card[data-state="done"]      { border-left-color: var(--color-border); opacity: 0.72; }
 .reminder-prov { display: block; margin-top: 6px; }
 .reminder-state.upcoming  { background: var(--status-info-tint); color: var(--status-info-ink); }
 .reminder-state.due-soon  { background: var(--status-caution-tint); color: var(--status-caution-ink); }
-.reminder-state.overdue   { background: var(--status-danger-tint); color: var(--status-danger-ink); }
+.reminder-state.overdue   { background: var(--status-danger-tint); color: var(--status-danger-ink); border: 1px solid var(--status-danger); font-weight: 800; }
 .reminder-state.done      { background: var(--status-neutral-tint); color: var(--status-neutral-ink); border: 1px dashed var(--color-border); }
 
 /* ── Dashboard Strip ─── */

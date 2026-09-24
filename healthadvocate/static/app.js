@@ -280,25 +280,23 @@ const HA = {
 
   initTheme() {
     const saved = localStorage.getItem('ha-theme');
-    if (saved === 'dark') document.documentElement.setAttribute('data-theme', 'dark');
+    document.documentElement.setAttribute('data-theme', saved === 'light' ? 'light' : 'dark');
     this.updateThemeIcon();
   },
 
   toggleTheme() {
-    const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
-    if (isDark) {
-      document.documentElement.removeAttribute('data-theme');
-      localStorage.setItem('ha-theme', 'light');
-    } else {
-      document.documentElement.setAttribute('data-theme', 'dark');
-      localStorage.setItem('ha-theme', 'dark');
-    }
+    /* dark-first home mode: the attribute is always explicit (light|dark);
+       the pre-paint head script sets dark unless the user chose light */
+    const isDark = document.documentElement.getAttribute('data-theme') !== 'light';
+    const next = isDark ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', next);
+    localStorage.setItem('ha-theme', next);
     this.updateThemeIcon();
   },
 
   updateThemeIcon() {
     const icon = document.getElementById('theme-icon');
-    const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+    const isDark = document.documentElement.getAttribute('data-theme') !== 'light';
     const btn = document.getElementById('btn-theme');
     if (isDark) {
       icon.innerHTML = '<path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/>';

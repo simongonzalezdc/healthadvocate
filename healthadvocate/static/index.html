@@ -17,15 +17,24 @@
   <meta name="twitter:description" content="Free, private health advocacy tool. Decode bills, fight denials, understand symptoms, translate medical jargon.">
   <!-- PWA: installability + theme. No third-party asset hosts — local-first law. -->
   <link rel="manifest" href="/static/manifest.webmanifest">
-  <meta name="theme-color" content="#faf8f5" media="(prefers-color-scheme: light)">
-  <meta name="theme-color" content="#181716" media="(prefers-color-scheme: dark)">
+  <meta name="theme-color" content="#191714">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="HealthAdvocate">
   <link rel="icon" href="/static/icons/favicon.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" href="/static/icons/icon-192.png">
   <link rel="stylesheet" href="/static/styles.css">
+  <script>
+    /* Dark-first home mode, resolved before first paint (no wrong-theme flash).
+       The 2 a.m. truth: the lamp is already on when the page opens. */
+    try {
+      var t = localStorage.getItem('ha-theme');
+      document.documentElement.setAttribute('data-theme', t === 'light' ? 'light' : 'dark');
+    } catch (e) {
+      document.documentElement.setAttribute('data-theme', 'dark');
+    }
+  </script>
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",

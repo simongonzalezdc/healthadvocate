@@ -1,56 +1,165 @@
 # Design System — HealthAdvocate
 
-**Status:** approved (mission-delegated: 2026-09-24 design-system build, branch `feat/design-system-20260924`)
-**Next move:** implement `styles.css` token re-architecture → Call Recorder view → 3-round visual audit (all done in this branch; see §12)
+**Status:** approved (interview re-run per CEO order 2026-09-24; branch `feat/design-system-20260924`)
+**Next move:** §0 interview → derived deltas landed in the build → GLM-5.3-Flash judged rounds (receipts under `docs/design/vision-pass-receipts-2026-09-24/`)
 
-`approved` here means: every dimension below is decided from the mission's non-negotiable
-product truths plus the shipped code, and is buildable without further confirmation. Where a
-choice is an assumption rather than a brief-decided fact, the decision map says so.
+`approved` means: every dimension is decided from the product truths in the §0
+interview transcript, is buildable, and the build has been brought to the derivation.
+
+## Design direction summary (derived in §0)
+
+> **North star (one line):** "A lamp left on in a dark house" — dark-first warm umber
+> rooms, one cream lamp-lit task per screen, vitals-green advocate accent, serif
+> letter-voice display, numbered plain-language steps; signature = the lamp (attention
+> is light).
+
+- **Reference / anchor:** ACLU Know-Your-Rights card (glanceable numbered advocacy under
+  fear) + Starling/Monzo loss flows (calm stepwise hand-holding). What they earn, not
+  their layouts.
+- **Aesthetic territory:** a lamp left on in a dark house — matte warm dark, cream
+  reading light, no glass/gloss, wool-and-paper materials.
+- **Personality:** the friend beside you in the waiting room (pole), never the
+  institution's counter being polite.
+- **Structure and rhythm:** the triage card (one lit card per tool view, state line
+  first, numbered findings); home = the night table; steady 24/32 cadence; emergencies
+  break rhythm full-width.
+- **Signature:** the lamp — light tracks attention; the only glow in the product.
+- **Imagery and iconography:** none photographic; one inline line-SVG wayfinding system.
 
 ---
 
-## 0. The interview (decision snapshot)
+## 0. The design-system interview (full transcript, 2026-09-24)
 
-Run against the product truths (free open-source advocacy tool; users at their most
-vulnerable; local-first privacy-absolute; honest-at-the-glass law) and the shipped
-surface (`healthadvocate/static/`: 13 views, warm light/dark themes, founder-built
-"Humanistic Medical Advocacy UI").
+Method note: this is the question-by-question interview required by the
+design-system-interview contract, answered against the product truths only. Truths cited
+as **T1** free open-source advocacy for people at their most vulnerable (sick,
+overwhelmed, fighting insurers) · **T2** local-first, privacy-absolute · **T3**
+honest-at-the-glass law (a fallback never looks like an answer; unavailable is neutral;
+NEEDS_HUMAN first-class; urgency badges only for real verdicts; the emergency exception
+escalates) · **T4** the surfaces: symptom/bill/denial/document/appointment tools + the
+call recorder (consent, transcripts) · **T5** mobile/PWA is the primary case (calls
+happen on phones) · **T6** catalog/directory/reminders carry machine-derived facts that
+must wear provenance. An earlier draft of this section "formalized the founder-built
+skin" — voided by CEO order 2026-09-24; every answer below is derived, not inherited.
 
-**What I see:** the strongest signal in the brief is that honesty outranks beauty — the
-design must never let a fallback look like an answer. The shipped product already carries a
-coherent, brief-supported direction (warm sage green on warm paper, soft structuralism,
-bento home) with AA-proven core pairs.
-**My recommendation:** formalize and deepen that direction into a token system — "a warm
-paper clinic" — rather than replace it. Replacement would be slop-by-preference.
-**Why it fits:** vulnerable, overwhelmed people need calm and warmth, not clinical cold and
-not startup gloss; the founder-built palette already encodes that correctly.
-**Choose:** Fork A formalize (committed) / Fork B re-skin cool-clinical (rejected —
-contradicts the advocate-warmth truth and discards AA-proven pairs).
+---
 
-### Decision map (nine dimensions)
+**Q — reference.** Name a real artifact this system learns from, and what it earns HERE.
 
-| Dimension | Evidence | Decision | Consequence |
-| --- | --- | --- | --- |
-| `reference` | Shipped styles.css header ("Humanistic Medical Advocacy UI / Soft Structuralism / Asymmetric Bento"); product truths | **committed:** the product's own founder direction, formalized; calm-health restraint (Apple Health/Oura register), never agency-splash | Keep hue families and structure; add the missing token/motion/state layers |
-| `personality` | "Used by people at their most vulnerable" | **committed:** calm advocate pole — warm, steady, unhurried; confidence through clarity, not tech gloss | Spacious density, one primary action per view, no celebratory motion |
-| `aesthetic` | Derived | **committed:** "A warm paper clinic" — soft structuralism, matte surfaces, hairline borders, diffused ambient shadows; hero on warm paper, tools in double-bezel workbenches | No glass blur on content, no gradients as decoration, no pure-white glare |
-| `type` | Local-first privacy-absolute truth vs. shipped Google Fonts CDN; web-typography skill ("a fast system stack is deliberate for operational UI") | **committed:** drop the third-party font CDN entirely; deliberate system stack, personality from scale/weight/tracking; mono role for timestamps/IDs | Zero third-party requests, offline-perfect rendering, no font-flash; `-webkit-font-smoothing` kept |
-| `color_mode` | Shipped toggle + AA-proven pairs (test_theme_colors_meet_wcag_aa_contrast) | **committed:** light default + tuned dark (not inverted); dominant warm paper neutrals; green = advocate/primary action; warm ochre = caution; coral = danger/high/needs-human; slate = information | Contrast pairs are pinned by tests; dark theme re-tunes inks per surface |
-| `density_shape` | Overwhelmed-audience truth | **committed:** comfortable density; radius ladder 10/16/24/32px; elevation = flat + borders + one diffused shadow scale | Controls never below 40px hit height; cards breathe (24–32px padding) |
-| `structure_rhythm` | Shipped home (bento) + tool panels | **committed:** home = hero + asymmetric bento (first card spans) + quiet stat strip; every tool = ONE workbench panel (double-bezel), one primary action; section cadence chapter(view) → region(panel) → group(result-section) | Coverage view folds into the same panel grammar; nav stays a horizontal scroll rail |
-| `signature` | Honest-at-the-glass law | **committed:** **the Honesty Lane** — the state-band grammar where NEEDS_HUMAN, unavailable, and urgency verdicts are mutually exclusive visual species and can never impersonate each other (§6) | This is the memorable move: honesty rendered as a system, not a disclaimer |
-| `imagery_iconography` | Privacy + seriousness; art-direction skill | **committed:** one inline-SVG icon system (1.5 stroke, round caps, functional only); NO photography, illustration, or decorative imagery anywhere | Icons orient; states carry a non-color cue (shape/pattern) alongside color |
+**A.** Two, one for the voice and one for the mechanics. The **ACLU "Know Your Rights"
+card** is the voice reference: a tool carried by a scared person into an encounter with
+an institution that outweighs them, designed to be read with shaking hands — plain
+words, enormous numbered steps, zero decoration, one glance to the answer. What it
+earns for HealthAdvocate (T1, T3): proof that power asymmetry is a *design problem*,
+solved with hierarchy and plain language, not reassurance graphics. The mechanical
+reference is **Starling/Monzo's fraud-and-loss flows**: banking interfaces that stay
+warm and stepwise during a panic ("your money is safe — here is the next step"), showing
+that a screen can hold a frightened person's hand without being childish. What it earns
+(T1): the calm-next-step cadence for denial appeals and bill fights. We learn the
+numbered glance and the calm step; we copy neither layout nor brand.
 
-Motion level (optional dimension): **restrained** — acknowledgement 120–160ms, entrances
-200–320ms ease-out, one live-state animation in the whole product (the recording pulse;
-glow/pulse = live state only).
+**Q — personality.** A chosen pole, not a middle.
 
-### Assumptions awaiting confirmation (not blocking; documented, reversible)
+**A.** The pole is **"the friend who sits beside you in the waiting room."** On one
+pole: a person on your side of the desk — warm, low-voiced, unhurried, never surprised,
+never performing. On the other: the institution's counter — efficient, coded,
+self-protecting. Every middle point reads as the counter being polite. T1 says users are
+fighting an institution; the interface must visibly sit on the user's side of the desk.
+Explicitly NOT: cheerful SaaS onboarding, clinical neutrality, "empowering" dashboards.
 
-- System-font stance over a self-hosted brand webfont. If a brand face is later desired, it
-  must be self-hosted (bundled) — never a third-party CDN. Owner: product seat.
-- "Recorder" as the nav label (noun cadence of the existing rail). View title is "Call
-  Recorder". Owner: product seat.
+**Q — aesthetic.** One concrete phrase predicting hierarchy and material.
+
+**A.** **"A lamp left on in a dark house."** The moment of use is often 2 a.m., a phone,
+a denial letter, a symptom scare (T1, T5). The material: deep warm darkness as the room,
+one warm-lit reading field as the task, cream paper light for words, a single green
+"still here" accent — the vitals-monitor green that means *alive and being watched
+over* (T1). Hierarchy prediction: exactly one lit task per screen; everything the user
+is not doing recedes into warm dark; emergencies light the whole room (T3's escalation).
+Matte surfaces, soft edges, no glass, no gloss — wool and paper, not chrome.
+
+**Q — type.** Binding evidence, display/body stance, measure risk.
+
+**A.** Binding evidence (T4): the product's artifacts are *letters and records* — appeal
+letters, denial letters, discharge summaries, transcripts. Its text is dense medical
+plain-language read under stress (T1). Stance: **display = a book serif** (Charter /
+Georgia stack) — the voice of a brief written on your behalf, warm and adult, never
+techie; **body = the system sans** — maximum operational legibility at 15-16px;
+**mono = system mono** for timestamps, money, reference numbers — the receipt voice that
+makes "$1,200.00" and "A-2291" feel like evidence. Measure risk: dense medical
+explanations at wide measure exhaust a tired reader — hard cap 62ch for reading copy,
+68ch absolute; transcripts wrap at ~54ch with speaker labels intact. No third-party
+font CDN ever (T2) — serif display is satisfiable from every OS's charter/georgia class.
+
+**Q — color_mode.** Dominant hue, accent job, light/dark commitment — derived from what
+hope-against-the-system feels like.
+
+**A.** What it feels like (T1): night, and someone left the light on. **Dark-first** is
+therefore the product's home mode (T5: the phone at 2 a.m.); light is the daytime
+clinic variant — both shipped, both tuned (never inverted). Dominant hue: **warm
+umber-dark rooms** (not cold charcoal, not pure black — the room is warm because
+someone is home) with **cream lamp fields** for reading surfaces. Accent jobs, one hue
+each (T3/T6 make these laws): **vitals green = the advocate acting** (primary actions,
+live states, confirmed facts) — it may glow only while something is live; **amber = the
+clock** (deadlines, due-soon, inferred data) — time pressure without panic; **coral =
+the alarm** (danger, HIGH, needs-human, recording) — loudest and rarest; **slate = the
+record** (extracted facts, information). Neutral-gray reserved for the honest absences:
+unavailable, unverified (T3).
+
+**Q — density_shape.** Density, radius range, elevation for stressed users.
+
+**A.** Comfortable density with **big-type scannability** (T1): a tired reader scans
+18-22px titles and 15-16px body, never 12px walls. Radius: **12/16/20px** — soft
+everyday edges (nothing institutional-sharp), one 24px for the hero workbench; no 32px
+blobbiness: this is a tool, not a toy. Elevation = **light, not shadow**: the lit field
+is brighter than the room (lamp semantics); borders are warm hairlines; shadows exist
+only as the lamp's soft warm spill on the active surface. One glow law (T3 by way of
+the glass laws): light tracks attention and liveness, nothing else may glow.
+
+**Q — structure_rhythm.** Composition, motif, sectional cadence for scanability.
+
+**A.** Composition: **the triage card** — every tool view is one lit card in the dark
+with a title, one input story, one primary action, and results that arrive beneath as
+numbered findings (T4's forms + T3's state-first law). Home is **the night table**: a
+short greeting, the one thing due now (reminders, T6), then the three doors. Motif:
+**the state line first** — every result opens with its honesty state (needs-human /
+unavailable / verdict) before any content (T3). Cadence: card → breathe → card at a
+steady 24/32px rhythm; metronomic inside cards (predictability under stress), air
+between regions. Emergencies break the rhythm deliberately with a full-width alarm band
+(T3).
+
+**Q — signature.** One memorable move — the thing someone screenshots.
+
+**A.** **The lamp.** A dark room; one warm page glowing like a reading lamp, edges soft
+with light-spill; a green accent that means "still here." It screenshots as: *someone
+left a light on for me and it is on my side.* The honesty lane (mutually exclusive
+state species, §6) is the system's law; the lamp is how it feels.
+
+**Q — imagery_iconography.** Source/treatment or absence; one icon system.
+
+**A.** **No photographs, no illustration, no decorative imagery** (T2 seriousness; T1
+dignity — clip-art sympathy cheapens a fight for care). One icon system only: inline
+line SVG, 1.5-1.75 stroke, round caps, clinical-wayfinding spirit — orientation, not
+decoration; sized 16-24px, naked line icons everywhere except the primary action where
+they may sit in a soft pill. The product's only "art" is typography, light, and the
+state species (T3).
+
+**Q — motion (optional dimension).** Level and character.
+
+**A.** **A calm hand.** 140ms acknowledgement, 200-320ms ease-out entrances; one pulse
+in the whole product (the live recording dot, T4); light rises when a card gains
+attention, dims when it loses it. Nothing bounces, nothing celebrates (T1: triumph is
+not the register — relief is). Reduced-motion: the lamp still lights, nothing moves.
+
+---
+
+**Derived deltas vs. the shipped draft (what the build must change):**
+1. **Dark-first default** (was light-default) — the 2 a.m. truth (T1/T5).
+2. **Serif display voice** for titles/hero (was all-sans) — the letter/brief evidence (T4).
+3. **Accent job sharpened to vitals green** with glow reserved for live/attending states.
+4. **Radius tightened to 12/16/20(+24)** (was 10/16/24/32).
+5. **Lamp material**: brightness-as-elevation + warm light-spill on the attending card
+   (one glow), warm-dark room tones.
+6. Numbered-findings cadence in results (rights-card glance, T3 state line first).
 
 ---
 

@@ -275,6 +275,17 @@ Module-specific fields (like `suspicious_charges`, `draft_appeal`, `medication_i
 
 ---
 
+## Threat model & honest boundaries
+
+`docs/THREAT-MODEL.md` names the adversaries and accident classes and states
+what is controlled versus assumed. Two boundaries stated plainly here:
+**the model runtime is opt-in** — the documented quick start runs fully
+deterministic/local with generative features in their fallback mode until a
+loopback model runtime is configured — and **every text box is synthetic-only
+by policy until the real-case era**: the release gate (real-case import
+disabled, independent-verifier pending) is enforced on the coverage store;
+free-text surfaces rely on that policy, not yet on enforcement.
+
 ## Privacy & Security
 
 HealthAdvocate is designed as a privacy-preserving local-first health tool:

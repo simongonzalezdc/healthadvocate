@@ -8,6 +8,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Glass honesty: the safety truth reaches the screen** (lane B, audits
+  E1/E2/D5/D3/B3, 2026-09-24). When a response payload carries a typed
+  decision wrapper whose outcome is `NEEDS_HUMAN` (e.g. the symptom
+  assessor's `urgency_decision`), `static/app.js` renders a visible
+  banner — "This needs a human decision." with the wrapper's
+  `allowed_next_steps` list — above any results; the detection helper is
+  generic (any payload key shaped `outcome` + `allowed_next_steps`), so
+  other surfaces can adopt it without new plumbing. The banner and a new
+  Help view name real humans (E2), exactly two widely published US
+  crisis lines (988 Suicide & Crisis Lifeline, call/text 988; SAMHSA
+  National Helpline, 1-800-662-4357 / 1-800-662-HELP — pairing verified against samhsa.gov 2026-09-24; the earlier draft mislabeled the Disaster Distress number) plus link-only resources
+  (HealthCare.gov navigator finder, NAIC state-insurance lookup) and the
+  plain-language line "Ask the hospital for the Patient Advocate /
+  Patient Relations office" — nothing scraped, nothing invented.
+  Urgency value `unavailable` — which the backend now emits whenever the
+  gated call made no real judgment — renders as a neutral "Model
+  unavailable — no urgency assessment was made" state with no urgency
+  badge and no high/red styling, defensively for either landing order.
+  Browser-level checks in
+  `tools/browserframe/honesty_matrix.mjs` (playwright, chromium): the
+  fallback-shaped symptoms response renders the banner; `unavailable`
+  renders without high-urgency styling; no rendered home/symptoms string
+  claims "verified"/"confirmed" (old `Validation`/`Reliability` badge
+  strings absent).
 - `healthadvocate/decisions/` — the HA-JEV typed, calibrated decision layer
   (J1; design `docs/HA-JEV-TYPED-DECISIONS-DESIGN-2026-09-22.md`):
   Choice/Score/Noul question and answer schemas with strict real-float
@@ -52,7 +76,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   the zero-measurement numbers. Regression tests:
   `tests/test_symptom_triage_jev.py` (`ModelUnavailableHonestyTests`,
   `BelowThresholdDirectionTests`).
-- **Insurance denial-reason classification routes through the HA-JEV
+- **Flag honesty (audit B3)**: payload flags no longer overstate what
+  happened. Every core surface that reported `pii_scrubbed` now also
+  reports `pii_found_and_masked` with honest semantics — true only when
+  PII was found and masked; false/absent means none was found, never a
+  guarantee that none slipped through (`pii_scrubbed` is kept one
+  release with a deprecation comment, then removed). The drug checker's
+  `ner_verified` (a dictionary name match presented as verification) is
+  joined by `ner_name_match`, and its prompt note now says "recognized
+  by name matching". UI copy follows the flags: the document decoder
+  states what was found and masked (or that the automated scan found
+  nothing, not a guarantee), the drug view says "recognized by name
+  matching", and the symptoms cross-check badge is relabeled "Name
+  overlap (informal)" — never presented as validation or a Reliability
+  score.- **Insurance denial-reason classification routes through the HA-JEV
   typed-decision layer** (J2-b; design
   `docs/HA-JEV-TYPED-DECISIONS-DESIGN-2026-09-22.md` §5). The free-text
   `denial_reason` the structured model returns is normalized by a
@@ -137,7 +174,42 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   endpoints return errors" falsehood is replaced with the real
   fallback behavior; and a "What works with the model runtime off"
   table now exists in the honest-boundaries section.
-- Incomplete `.gitignore` entry that left local artifacts unignored.
+- **No-judgment outputs never surface a fabricated urgency verdict**
+  (verified findings, 2026-09-24): with the model runtime disabled (the
+  default), a mild symptom input no longer returns `urgency: "high"`
+  with a red HIGH badge next to the NEEDS_HUMAN banner — the API and
+  the screen now agree that no urgency assessment was made. The
+  no-judgment placeholder markers (`_model_blocked`/`_raw_text`, which
+  also cover deidentification failure and transport failure) make the
+  symptom surface and all eight other llm-backed surfaces
+  (documents, bills, insurance, discharge, second opinion, community,
+  appointments, drugs) emit the honest `urgency: "unavailable"` via the
+  new `healthadvocate.core.llm_client.urgency_from_output`; real-signal
+  escalations (NER/LLM urgency disagreement, fail-closed legs on actual
+  model responses) still surface the conservative `high`.
+- **A NEEDS_HUMAN refusal can no longer silently disappear**
+  (drift hole): banner detection keys on `outcome: NEEDS_HUMAN` alone;
+  a missing, empty, non-array, or string `allowed_next_steps` still
+  renders the banner (defensively formatted) with the named-human
+  resources — never a normal-looking answer.
+- **Absence is never a MEDIUM verdict**: the UI renders an urgency
+  badge only for a real low/medium/high pick; missing, null, or
+  unrecognized urgency values render the neutral "No urgency assessment
+  was made" notice instead of coercing to a confident MEDIUM badge.
+- **The model's silence is no longer fully trusted**
+  (`build_urgency_candidate`): a missing or null `urgency` key types to
+  no candidate and fails closed (invalid-answer → NEEDS_HUMAN →
+  conservative external urgency) instead of defaulting to a
+  confidence-1.0 "medium" answer; the compliant `null` and plain key
+  omission now behave identically.
+- **README configuration honesty**: the Configuration table now lists
+  `HEALTHADVOCATE_MODEL_ENABLED` (default `0`, opt-in master switch)
+  and `HEALTHADVOCATE_MODEL_URL` (preferred; `LM_STUDIO_URL` marked
+  deprecated alias), with truthful defaults
+  (`http://127.0.0.1:11434/v1`, `local-model`); the Quick Start sets
+  the enable switch explicitly; the Known Limitations bullet no longer
+  claims endpoints error without LM Studio — they return HTTP 200
+  deterministic fallback payloads with the model-unavailable state.- Incomplete `.gitignore` entry that left local artifacts unignored.
 
 ### Dependencies
 - `fastapi`, `uvicorn`, `pydantic`, `openai`, `openmed`, `faker`, `pysbd`,

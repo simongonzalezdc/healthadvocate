@@ -64,7 +64,7 @@ class PresentabilityTests(unittest.TestCase):
     def test_frontend_sanitizes_dynamic_css_classes(self):
         app_js = (ROOT / "healthadvocate" / "static" / "app.js").read_text()
 
-        self.assertIn("safeUrgency", app_js)
+        self.assertIn("urgencyBadgeHtml", app_js)
         self.assertIn("safeTrackStatus", app_js)
         self.assertNotRegex(app_js, re.compile(r'urgency-\\$\\{this\\.escapeHtml\\(data\\.urgency\\)\\}'))
         self.assertNotRegex(app_js, re.compile(r'class="track-status \\$\\{safeStatus\\}"'))

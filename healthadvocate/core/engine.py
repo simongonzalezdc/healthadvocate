@@ -217,6 +217,20 @@ class HealthEngine:
             mapping["_deidentification_failed"] = result.error_code or "failed"
         return result.safe_text, mapping
 
+    @staticmethod
+    def pii_was_found_and_masked(deidentify_mapping: dict) -> bool:
+        """B3 glass honesty (2026-09-24): True only when the deidentify
+        pass over the caller's own text actually found and masked PII.
+
+        The mapping ALWAYS carries underscore-prefixed status keys, so a
+        bare ``len(mapping) > 0`` is vacuously true for every input —
+        exactly the overclaim audit B3 kills. False/absent means none
+        was found; it is never a guarantee that none slipped through.
+        """
+        return deidentify_mapping.get("_deidentification_status") == "success" and any(
+            not str(key).startswith("_") for key in deidentify_mapping
+        )
+
     def deidentify_for_llm_result(
         self,
         text: str,

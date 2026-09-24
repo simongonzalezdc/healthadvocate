@@ -85,6 +85,14 @@ def assess_symptoms(engine: HealthEngine, symptoms: str, profile_id: str | None 
     urgency = external_urgency(decision, validation.urgency_disagreement)
 
     status = llm_output.get("deidentification_status", "unknown")
+    # B3 glass honesty: the flag must describe the PERSON's text, so it
+    # derives from a deidentify pass over the raw symptoms (the same
+    # pattern the document/bill/discharge surfaces use for their PII
+    # flags) — NOT from the assembled-context mapping size, whose fixed
+    # prompt scaffolding ("health advocate" masked as an [occupation])
+    # would make the flag vacuously true for every input.
+    symptom_pii_map = engine.deidentify_for_llm(symptoms)[1]
+    pii_found_and_masked = HealthEngine.pii_was_found_and_masked(symptom_pii_map)
     return {
         "conditions": conditions,
         "urgency": urgency,
@@ -104,7 +112,14 @@ def assess_symptoms(engine: HealthEngine, symptoms: str, profile_id: str | None 
         "model_used": result.model_used,
         "processing_time": result.processing_time,
         "deidentification_status": status,
+        # DEPRECATED 2026-09-24 (glass honesty, audit B3): `pii_scrubbed`
+        # reported the deidentification status, which reads as a guarantee;
+        # kept one release for older clients. The honest key is
+        # `pii_found_and_masked` — True only when PII in the person's own
+        # text was found and masked; False/absent means none was found,
+        # never a guarantee that none slipped through.
         "pii_scrubbed": status == "success",
+        "pii_found_and_masked": pii_found_and_masked,
         "urgency_decision": decision.model_dump(mode="json"),
         "urgency_receipt": (
             built.receipt.model_dump(mode="json") if built.receipt else None

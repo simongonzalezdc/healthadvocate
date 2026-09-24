@@ -42,7 +42,10 @@ BENIGN_OUTPUT = {
 
 def make_engine(entities=None, model_used="disease_detection_superclinical"):
     """A stub HealthEngine whose identify stage is deterministic."""
-    engine = mock.Mock(spec=["extract_diseases"])
+    engine = mock.Mock(spec=["extract_diseases", "deidentify_for_llm"])
+    # B3 glass honesty: the honest PII flag reads a deidentify pass over
+    # the raw symptoms; the stub finds no PII by default.
+    engine.deidentify_for_llm.return_value = ("", {"_deidentification_status": "no_pii_found"})
     engine.extract_diseases.return_value = AnalysisResult(
         entities=[
             EntityMatch(
@@ -376,17 +379,20 @@ class ApiStabilityTests(unittest.TestCase):
     def test_original_keys_all_present(self):
         result = run_assessment(make_engine(), dict(BENIGN_OUTPUT))
         self.assertTrue(self.ORIGINAL_KEYS <= set(result))
-        # Additive typing only.
+        # Additive typing only, plus the 2026-09-24 glass-honesty key:
+        # `pii_found_and_masked` (true only when PII was found and
+        # masked; false means none found — never a guarantee).
         self.assertEqual(
             set(result) - self.ORIGINAL_KEYS,
-            {"urgency_decision", "urgency_receipt"},
+            {"urgency_decision", "urgency_receipt", "pii_found_and_masked"},
         )
 
 
 class IdentifyBeforeAssessOrderTests(unittest.TestCase):
     def test_identify_runs_before_gated_reasoning(self):
         calls = []
-        engine = mock.Mock(spec=["extract_diseases"])
+        engine = mock.Mock(spec=["extract_diseases", "deidentify_for_llm"])
+        engine.deidentify_for_llm.return_value = ("", {"_deidentification_status": "no_pii_found"})
         engine.extract_diseases.side_effect = (
             lambda text: (calls.append("identify"),
                           AnalysisResult(entities=[], model_used="m",

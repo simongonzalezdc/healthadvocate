@@ -1,4 +1,4 @@
-"""Drug checker — NER verification + structured LLM drug information."""
+"""Drug checker — dictionary name matching + structured LLM drug information."""
 
 from __future__ import annotations
 
@@ -12,11 +12,18 @@ def check_drug(engine: HealthEngine, drug_name: str, profile_id: str | None = No
         return {"drug": "", "explanation": "No drug name provided.", "action_items": [], "red_flags": [], "validation": None}
 
     ner_result = engine.extract_drugs(drug_name, confidence=0.3)
-    ner_verified = any(e.text.lower() == drug_name.strip().lower() for e in ner_result.entities)
+    # B3 (2026-09-24, glass honesty): a dictionary name match is
+    # recognition, not verification — the flag and the copy say so.
+    ner_name_match = any(e.text.lower() == drug_name.strip().lower() for e in ner_result.entities)
 
     entity_desc = format_entities_with_confidence(ner_result.entities)
 
-    ner_note = "NER verified this is a recognized drug." if ner_verified else "NER could not verify this drug name — provide information cautiously."
+    ner_note = (
+        "The drug name was recognized by name matching against the "
+        "medical dictionary."
+        if ner_name_match
+        else "The drug name was not recognized by name matching — provide information cautiously."
+    )
 
     prompt = (
         f"A patient wants to know about the drug: {drug_name.strip()}\n\n"
@@ -38,7 +45,11 @@ def check_drug(engine: HealthEngine, drug_name: str, profile_id: str | None = No
 
     return {
         "drug": drug_name.strip(),
-        "ner_verified": ner_verified,
+        # DEPRECATED 2026-09-24 (glass honesty, audit B3): `ner_verified`
+        # overstated a dictionary name match as verification; kept one
+        # release for older clients. The honest key is `ner_name_match`.
+        "ner_verified": ner_name_match,
+        "ner_name_match": ner_name_match,
         "explanation": llm_output.get("summary", ""),
         "urgency": llm_output.get("urgency", "medium"),
         "action_items": llm_output.get("action_items", []),

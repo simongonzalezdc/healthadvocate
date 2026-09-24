@@ -60,5 +60,11 @@ def create_brief(engine: HealthEngine, records: str, lang: str = "en", profile_i
             "reliability": validation.reliability,
             "urgency_disagreement": validation.urgency_disagreement,
         },
+        # DEPRECATED 2026-09-24 (glass honesty, audit B3): `pii_scrubbed`
+        # reads as a guarantee that scrubbing happened; kept one release
+        # for older clients. The honest key is `pii_found_and_masked` —
+        # True only when PII was found AND masked; False/absent means
+        # none was found, never a guarantee that none slipped through.
         "pii_scrubbed": len(pii_map) > 0,
+        "pii_found_and_masked": HealthEngine.pii_was_found_and_masked(pii_map),
     }

@@ -412,7 +412,13 @@ def fight_denial(engine: HealthEngine, denial_text: str, patient_info: str = "",
             "reliability": validation.reliability,
             "urgency_disagreement": validation.urgency_disagreement,
         },
+        # DEPRECATED 2026-09-24 (glass honesty, audit B3): `pii_scrubbed`
+        # reads as a guarantee that scrubbing happened; kept one release
+        # for older clients. The honest key is `pii_found_and_masked` —
+        # True only when PII was found AND masked; False/absent means
+        # none was found, never a guarantee that none slipped through.
         "pii_scrubbed": len(denial_pii) > 0,
+        "pii_found_and_masked": HealthEngine.pii_was_found_and_masked(denial_pii),
         # Additive J2-b audit: the wrapper (numbers, never prose) and the
         # consumed receipt — both canary-free by construction and pinned so.
         "denial_reason_decision": decision.model_dump(),

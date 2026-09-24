@@ -136,7 +136,13 @@ pip install openmed[hf]
 1. Start HealthAdvocate:
 
 ```bash
-uvicorn healthadvocate.app:app --host 127.0.0.1 --port 8080
+1. Open LM Studio, load a medical model, start the local server (default port 1234)
+
+2. Start HealthAdvocate with the model runtime enabled (it is **off by default** — without step 3 below, generative features run in their deterministic fallback mode):
+
+```bash
+export HEALTHADVOCATE_MODEL_ENABLED=1
+export HEALTHADVOCATE_MODEL_URL=http://localhost:1234/v1uvicorn healthadvocate.app:app --host 127.0.0.1 --port 8080
 ```
 
 2. Open **http://localhost:8080** in your browser
@@ -199,7 +205,10 @@ Example MCP config:
 | `LM_STUDIO_URL` | — (deprecated) | Legacy alias for `HEALTHADVOCATE_MODEL_URL`; only read when the preferred variable is unset. |
 | `MEDICAL_LLM_MODEL` | `local-model` | Model name requested from the runtime. Set it to the model you actually loaded (e.g. `meditron3-8b`). |
 | `HEALTHADVOCATE_CASE_DIR` | platform user-data dir (macOS: `~/Library/Application Support/HealthAdvocate/cases`) | Overrides the encrypted Coverage Case store directory. |
-| `HEALTHADVOCATE_ALLOW_ORIGINS` | `http://127.0.0.1:8080,http://localhost:8080` | Comma-separated browser origins allowed by CORS |
+| `HEALTHADVOCATE_MODEL_ENABLED` | `0` (off) | Master switch for the model runtime. The runtime is opt-in: with the default `0`, generative features return deterministic fallback payloads and the UI shows the model-unavailable state. Set to `1` to enable. |
+| `HEALTHADVOCATE_MODEL_URL` | `http://127.0.0.1:11434/v1` | OpenAI-compatible loopback model URL (preferred variable). Must resolve to a loopback address. |
+| `LM_STUDIO_URL` | *(deprecated alias)* | Legacy alias for `HEALTHADVOCATE_MODEL_URL`; `HEALTHADVOCATE_MODEL_URL` wins when both are set. |
+| `MEDICAL_LLM_MODEL` | `local-model` | Model name requested from the runtime (must match the model loaded in LM Studio, e.g. `meditron3-8b`). || `HEALTHADVOCATE_ALLOW_ORIGINS` | `http://127.0.0.1:8080,http://localhost:8080` | Comma-separated browser origins allowed by CORS |
 
 ---
 
@@ -394,7 +403,7 @@ healthadvocate/
 
 - **In-memory storage**: Family profiles and health tracks live in memory and are lost on server restart. This is intentional — no persistent data means no data to breach.
 - **Optional model runtime**: LM Studio (or any loopback OpenAI-compatible runtime) is only needed for the generative layer, which is opt-in (`HEALTHADVOCATE_MODEL_ENABLED`). Without it, nothing errors — every feature still responds with LLM-assisted fields in their deterministic model-unavailable fallback (symptom triage reports urgency `unavailable` rather than fabricating a level), while NER cross-validation still escalates high-urgency findings to HIGH.
-- **LLM output quality**: Results depend on the model you choose. Meditron3-8B is a strong medical model, but no LLM is a substitute for a real doctor.
+- **Optional model runtime (LM Studio or any OpenAI-compatible loopback server)**: the runtime is off by default. Without it, generative feature endpoints still return HTTP 200 with deterministic fallback payloads — urgency reads `unavailable` (rendered as a neutral "model unavailable — no urgency assessment was made" notice, never as an urgency level) and symptom assessment surfaces the "This needs a human decision" notice with real-human resources. No endpoint errors.- **LLM output quality**: Results depend on the model you choose. Meditron3-8B is a strong medical model, but no LLM is a substitute for a real doctor.
 
 ---
 

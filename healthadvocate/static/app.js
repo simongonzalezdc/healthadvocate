@@ -39,11 +39,81 @@ const HA = {
     return this._VALID_ENTITY_CLASSES.has(c) ? c : 'entity';
   },
 
-  safeUrgency(value) {
-    const u = (value || '').toLowerCase();
-    // 'unavailable' is the backend's honest no-model-judgment state
-    // (audit D2): it must render as itself, never as a rubric level.
-    return ['low', 'medium', 'high', 'unavailable'].includes(u) ? u : 'medium';
+  /* ── Honesty rendering (audit E1/E2/D5/D3/B3, 2026-09-24) ── */
+
+  /* E2: the only human contacts HealthAdvocate will ever name — two
+     widely published US crisis lines plus links to find real help.
+     Nothing scraped, nothing invented. Rendered with every NEEDS_HUMAN
+     banner and on the Help view (index.html carries the same list). */
+  HUMAN_RESOURCES_HTML: `
+      <div class="human-resources">
+        <p><strong>Talk to a real person:</strong></p>
+        <ul>
+          <li>988 Suicide &amp; Crisis Lifeline — call or text <strong>988</strong> (US)</li>
+          <li>SAMHSA National Helpline — <strong>1-800-662-4357</strong> (1-800-662-HELP, US)</li>
+        </ul>
+        <p><strong>Find help near you:</strong></p>
+        <ul>
+          <li><a href="https://localhelp.healthcare.gov" target="_blank" rel="noopener noreferrer">Local health insurance help — HealthCare.gov navigator finder</a></li>
+          <li><a href="https://www.naic.org" target="_blank" rel="noopener noreferrer">Your state insurance department — NAIC lookup</a></li>
+          <li>Ask the hospital for the <strong>Patient Advocate / Patient Relations</strong> office.</li>
+        </ul>
+      </div>`,
+
+  /* E1/D3: find a typed decision wrapper (HA-JEV DecisionOutcome shape)
+     that refused to decide for the person. Generic on purpose — any
+     payload key whose value carries `outcome: NEEDS_HUMAN` qualifies
+     (allowed_next_steps is rendered defensively, never required for
+     detection), so surfaces beyond symptoms can adopt without new
+     plumbing. A refusal must never silently disappear because its steps
+     key was missing or malformed. */
+  needsHumanDecision(payload) {
+    for (const value of Object.values(payload || {})) {
+      if (value && typeof value === 'object' && !Array.isArray(value)
+        && String(value.outcome || '').toUpperCase() === 'NEEDS_HUMAN') {
+        return value;
+      }
+    }
+    return null;
+  },
+
+  needsHumanHtml(payload) {
+    const decision = this.needsHumanDecision(payload);
+    if (!decision) return '';
+    let stepsHtml;
+    const raw = decision.allowed_next_steps;
+    if (Array.isArray(raw) && raw.length) {
+      const steps = raw.map(s => `<li>${this.escapeHtml(String(s))}</li>`).join('');
+      stepsHtml = `<p>HealthAdvocate would not answer this on its own. Allowed next steps:</p>
+      <ul>${steps}</ul>`;
+    } else if (typeof raw === 'string' && raw.trim()) {
+      stepsHtml = `<p>HealthAdvocate would not answer this on its own. Allowed next steps:</p>
+      <ul><li>${this.escapeHtml(raw)}</li></ul>`;
+    } else {
+      stepsHtml = `<p>HealthAdvocate would not answer this on its own, and no allowed next steps were attached — treat this as a decision for a person.</p>`;
+    }
+    return `<div class="flag-item flag-danger needs-human-banner" role="alert" data-testid="needs-human-banner">
+      <p><strong>This needs a human decision.</strong></p>
+      ${stepsHtml}
+      ${this.HUMAN_RESOURCES_HTML}
+    </div>`;
+  },
+
+  /* D5: an urgency verdict is rendered ONLY for a real low/medium/high
+     pick. "unavailable" is the honest model-off state; any other
+     missing, null, or unrecognized value is an honest absence too —
+     never coerced into a confident MEDIUM badge (an absent verdict is
+     not a medium verdict). Neutral notice, no urgency badge class, no
+     high/red styling, in every landing order. */
+  urgencyBadgeHtml(value) {
+    const u = String(value ?? '').trim().toLowerCase();
+    if (u === 'unavailable') {
+      return `<span class="flag-item flag-info urgency-unavailable" data-testid="urgency-unavailable">Model unavailable — no urgency assessment was made.</span>`;
+    }
+    if (!['low', 'medium', 'high'].includes(u)) {
+      return `<span class="flag-item flag-info urgency-unavailable" data-testid="urgency-unavailable">No urgency assessment was made.</span>`;
+    }
+    return `<span class="urgency-badge urgency-${u}">${u.toUpperCase()}</span>`;
   },
 
   safeTrackStatus(value) {
@@ -323,17 +393,12 @@ const HA = {
   },
 
   renderSymptoms(data, el) {
-    const u = this.safeUrgency(data.urgency);
-    const decision = data.urgency_decision || null;
-    let html = `
-      ${decision && decision.outcome === 'NEEDS_HUMAN' ? `
-      <div class="needs-human-banner" role="alert">
-        <strong>Human decision required.</strong>
-        <p class="result-text">${this.escapeHtml(decision.reason || '')}</p>
-        ${decision.allowed_next_steps?.length ? `<ol>${decision.allowed_next_steps.map((step) => `<li class="result-text">${this.escapeHtml(step)}</li>`).join('')}</ol>` : ''}
-      </div>` : ''}
+    /* E1: the typed wrapper's refusal leads — before any urgency color,
+       so a NEEDS_HUMAN answer can never read as an assessment. */
+    let html = this.needsHumanHtml(data);
+    html += `
       <div class="result-section"><h3>Urgency Level</h3>
-        <span class="urgency-badge urgency-${u}">${u.toUpperCase()}</span>
+        ${this.urgencyBadgeHtml(data.urgency)}
       </div>
       <div class="result-section"><h3>Explanation</h3>
         <p class="result-text">${this.escapeHtml(data.explanation)}</p>
@@ -370,8 +435,11 @@ const HA = {
       html += `</div>`;
     }
     if (data.validation) {
-      html += `<div class="result-section"><h3>Validation</h3>
-        <div class="condition-item"><span class="condition-name">Reliability</span> <span class="condition-confidence">${this.escapeHtml(data.validation.reliability || 'N/A')}</span></div>
+      /* B3: this number is informal name overlap between two extraction
+         methods — honest label, never presented as clinical validation. */
+      html += `<div class="result-section"><h3>Name overlap (informal)</h3>
+        <div class="condition-item"><span class="condition-name">Name overlap</span> <span class="condition-confidence">${this.escapeHtml(data.validation.reliability || 'N/A')}</span></div>
+        <p class="condition-confidence">An informal overlap check between two extraction methods — not a check of clinical accuracy.</p>
         ${data.validation.urgency_disagreement ? '<div class="flag-item flag-danger">Urgency disagreement detected — upgraded to HIGH for safety.</div>' : ''}
       </div>`;
     }
@@ -396,9 +464,8 @@ const HA = {
   renderDocument(data, el) {
     let html = `<div class="result-section"><h3>Summary</h3><p class="result-text">${this.escapeHtml(data.explanation)}</p></div>`;
     if (data.urgency) {
-      const urgency = this.safeUrgency(data.urgency);
       html += `<div class="result-section"><h3>Urgency</h3>
-        <span class="urgency-badge urgency-${urgency}">${urgency.toUpperCase()}</span></div>`;
+        ${this.urgencyBadgeHtml(data.urgency)}</div>`;
     }
     if (data.entities?.length) {
       html += `<div class="result-section"><h3>Medical Entities</h3><div class="entity-list">`;
@@ -420,10 +487,23 @@ const HA = {
       for (const r of data.red_flags) html += `<div class="flag-item flag-danger">${this.escapeHtml(r)}</div>`;
       html += `</div>`;
     }
+    /* B3: honest PII reporting. `pii_found_and_masked` is true ONLY when
+       the scan found and masked personal information; false/absent means
+       none was found — never a guarantee that none slipped through.
+       (DEPRECATED fallback: `pii_scrubbed` is kept one release; it read
+       like a confirmation.) */
+    const piiMasked = data.pii_found_and_masked !== undefined
+      ? data.pii_found_and_masked
+      : data.pii_scrubbed;
     if (data.pii_found?.length) {
       html += `<div class="result-section"><h3>Personal Information Detected</h3>`;
       for (const p of data.pii_found) html += `<div class="flag-item flag-warning">Found ${this.escapeHtml(p.category || 'PII')}: "${this.escapeHtml(p.text)}"</div>`;
+      if (piiMasked === true) html += `<p class="condition-confidence">These items were found and masked before analysis.</p>`;
       html += `</div>`;
+    } else if (piiMasked === false) {
+      html += `<div class="result-section"><h3>Personal Information</h3>
+        <p class="condition-confidence">No personal information was found by the automated scan — this is not a guarantee.</p>
+      </div>`;
     }
     el.innerHTML = html;
   },
@@ -447,9 +527,8 @@ const HA = {
     let html = '';
     if (data.total) html += `<div class="result-section"><h3>Total</h3><div class="bill-total">${this.escapeHtml(data.total)}</div></div>`;
     if (data.urgency) {
-      const urgency = this.safeUrgency(data.urgency);
       html += `<div class="result-section"><h3>Urgency</h3>
-        <span class="urgency-badge urgency-${urgency}">${urgency.toUpperCase()}</span></div>`;
+        ${this.urgencyBadgeHtml(data.urgency)}</div>`;
     }
     if (data.explanation) html += `<div class="result-section"><h3>Explanation</h3><p class="result-text">${this.escapeHtml(data.explanation)}</p></div>`;
     if (data.action_items?.length) {
@@ -493,11 +572,10 @@ const HA = {
   },
 
   renderDenial(data, el) {
-    let html = '';
+    let html = this.needsHumanHtml(data.denial_reason_decision ? { ...data, urgency_decision: data.denial_reason_decision } : data);
     if (data.urgency) {
-      const urgency = this.safeUrgency(data.urgency);
       html += `<div class="result-section"><h3>Urgency</h3>
-        <span class="urgency-badge urgency-${urgency}">${urgency.toUpperCase()}</span></div>`;
+        ${this.urgencyBadgeHtml(data.urgency)}</div>`;
     }
     if (data.explanation) html += `<div class="result-section"><h3>What This Denial Means</h3><p class="result-text">${this.escapeHtml(data.explanation)}</p></div>`;
     if (data.denial_reason) html += `<div class="result-section"><h3>Denial Reason</h3><p class="result-text">${this.escapeHtml(data.denial_reason)}</p></div>`;
@@ -547,6 +625,15 @@ const HA = {
 
   renderDrug(data, el) {
     let html = `<div class="result-section"><h3>${this.escapeHtml(data.drug)}</h3><div class="drug-class">${this.escapeHtml(data.drug_class)}</div>`;
+    /* B3: name matching, honestly labeled — a dictionary name match is
+       recognition, not verification. (DEPRECATED fallback: `ner_verified`
+       is kept one release; it overstated the check.) */
+    const nameMatch = data.ner_name_match !== undefined ? data.ner_name_match : data.ner_verified;
+    if (nameMatch === true) {
+      html += `<p class="condition-confidence">This name was recognized by name matching against the medical dictionary.</p>`;
+    } else if (nameMatch === false) {
+      html += `<p class="condition-confidence">This name was not recognized by name matching — treat the information below with extra caution.</p>`;
+    }
     if (data.generic_available === true) html += `<div class="drug-generic">${this.escapeHtml(data.generic_name)}</div>`;
     else if (data.generic_available === "Unknown") html += `<p class="result-text">Generic availability unknown. ${this.escapeHtml(data.cost_note || '')}</p>`;
     if (data.alternatives?.length) {
@@ -609,9 +696,8 @@ const HA = {
   renderDischarge(data, el) {
     let html = '';
     if (data.urgency) {
-      const urgency = this.safeUrgency(data.urgency);
       html += `<div class="result-section"><h3>Urgency</h3>
-        <span class="urgency-badge urgency-${urgency}">${urgency.toUpperCase()}</span></div>`;
+        ${this.urgencyBadgeHtml(data.urgency)}</div>`;
     }
     if (data.explanation) html += `<div class="result-section"><h3>Plain Language Summary</h3><div class="plain-language">${this.escapeHtml(data.explanation)}</div></div>`;
     if (data.medication_instructions?.length) {
@@ -665,9 +751,8 @@ const HA = {
   renderSecondOpinion(data, el) {
     let html = '';
     if (data.urgency) {
-      const urgency = this.safeUrgency(data.urgency);
       html += `<div class="result-section"><h3>Urgency</h3>
-        <span class="urgency-badge urgency-${urgency}">${urgency.toUpperCase()}</span></div>`;
+        ${this.urgencyBadgeHtml(data.urgency)}</div>`;
     }
     if (data.explanation) html += `<div class="result-section"><h3>Summary for Second Opinion</h3><p class="result-text">${this.escapeHtml(data.explanation)}</p></div>`;
     if (data.conditions?.length) {
@@ -722,9 +807,8 @@ const HA = {
   renderCommunity(data, el) {
     let html = '';
     if (data.urgency) {
-      const urgency = this.safeUrgency(data.urgency);
       html += `<div class="result-section"><h3>Urgency</h3>
-        <span class="urgency-badge urgency-${urgency}">${urgency.toUpperCase()}</span></div>`;
+        ${this.urgencyBadgeHtml(data.urgency)}</div>`;
     }
     if (data.explanation) html += `<div class="result-section"><h3>Summary</h3><p class="result-text">${this.escapeHtml(data.explanation)}</p></div>`;
     if (data.credibility) {

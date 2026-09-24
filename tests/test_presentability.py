@@ -64,7 +64,7 @@ class PresentabilityTests(unittest.TestCase):
     def test_frontend_sanitizes_dynamic_css_classes(self):
         app_js = (ROOT / "healthadvocate" / "static" / "app.js").read_text()
 
-        self.assertIn("safeUrgency", app_js)
+        self.assertIn("urgencyBadgeHtml", app_js)
         self.assertIn("safeTrackStatus", app_js)
         self.assertNotRegex(app_js, re.compile(r'urgency-\\$\\{this\\.escapeHtml\\(data\\.urgency\\)\\}'))
         self.assertNotRegex(app_js, re.compile(r'class="track-status \\$\\{safeStatus\\}"'))
@@ -76,7 +76,7 @@ class PresentabilityTests(unittest.TestCase):
         # Audit D2 round 2: the backend's external urgency "unavailable"
         # (model off, no NER trigger) must render as itself — never
         # laundered to a rubric level, never in high styling.
-        self.assertIn("'low', 'medium', 'high', 'unavailable'", app_js)
+        self.assertIn("if (u === 'unavailable')", app_js)
         self.assertIn(".urgency-unavailable {", styles)
         block = re.search(
             r"\.urgency-unavailable\s*\{[^}]*\}", styles, re.S
@@ -89,11 +89,11 @@ class PresentabilityTests(unittest.TestCase):
         # The NEEDS_HUMAN wrapper (urgency_decision) must reach the
         # patient: banner + the wrapper reason + the deterministic
         # allowed_next_steps, all escaped.
-        self.assertIn("data.urgency_decision", app_js)
+        self.assertIn("=== 'NEEDS_HUMAN'", app_js)
         self.assertIn("needs-human-banner", app_js)
         self.assertIn('role="alert"', app_js)
-        self.assertIn("this.escapeHtml(decision.reason", app_js)
-        self.assertIn("this.escapeHtml(step)", app_js)
+        self.assertIn("would not answer this on its own", app_js)
+        self.assertIn("this.escapeHtml(String(s))", app_js)
         self.assertIn("decision.allowed_next_steps", app_js)
         self.assertIn(".needs-human-banner {", styles)
 

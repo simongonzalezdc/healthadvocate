@@ -44,6 +44,7 @@ from healthadvocate.decisions import (
     receipt_from_analysis,
 )
 from healthadvocate.privacy.boundary import DeidentificationStatus
+from .llm_client import urgency_from_output
 from healthadvocate.privacy.gated_model import structured_model_call
 
 #: The converted surface name (threshold provenance is surface-linked).
@@ -398,7 +399,7 @@ def fight_denial(engine: HealthEngine, denial_text: str, patient_info: str = "",
             "medications": [{"text": e.text, "confidence": round(e.confidence, 2)} for e in drugs.entities],
         },
         "explanation": llm_output.get("summary", ""),
-        "urgency": llm_output.get("urgency", "medium"),
+        "urgency": urgency_from_output(llm_output),
         "action_items": llm_output.get("action_items", []),
         "red_flags": llm_output.get("red_flags", []),
         "denial_reason": denial_reason,
@@ -412,7 +413,13 @@ def fight_denial(engine: HealthEngine, denial_text: str, patient_info: str = "",
             "reliability": validation.reliability,
             "urgency_disagreement": validation.urgency_disagreement,
         },
+        # DEPRECATED 2026-09-24 (glass honesty, audit B3): `pii_scrubbed`
+        # reads as a guarantee that scrubbing happened; kept one release
+        # for older clients. The honest key is `pii_found_and_masked` —
+        # True only when PII was found AND masked; False/absent means
+        # none was found, never a guarantee that none slipped through.
         "pii_scrubbed": len(denial_pii) > 0,
+        "pii_found_and_masked": HealthEngine.pii_was_found_and_masked(denial_pii),
         # Additive J2-b audit: the wrapper (numbers, never prose) and the
         # consumed receipt — both canary-free by construction and pinned so.
         "denial_reason_decision": decision.model_dump(),

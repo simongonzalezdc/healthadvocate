@@ -188,12 +188,15 @@ class NormalLegsPreservedTests(unittest.TestCase):
                                  {"low": 0, "medium": 1, "high": 2}[urgency])
                 self.assertEqual(decision(result)["threshold_applied"], 0.5)
 
-    def test_missing_urgency_defaults_to_medium(self):
+    def test_missing_urgency_escalates_conservatively(self):
+        # Merged honesty semantics (triage+glass lanes): a REAL model response
+        # that omits its verdict is a rejected-judgment shape, not a medium
+        # pick — absent verdicts are never coerced into a confident MEDIUM;
+        # the conservative escalation governs.
         output = dict(BENIGN_OUTPUT)
         del output["urgency"]
         result = run_assessment(make_engine(), output)
-        self.assertEqual(result["urgency"], "medium")
-        self.assertEqual(decision(result)["answer"]["level"], 1)
+        self.assertEqual(result["urgency"], "high")
 
     def test_answered_carries_audit_numbers(self):
         result = run_assessment(make_engine(), dict(BENIGN_OUTPUT))

@@ -5,7 +5,9 @@ assessor's urgency pick becomes a typed decision: a ScoreQuestion with
 a fixed rubric, an IdentificationReceipt from the REAL identify stage
 (engine.extract_diseases), surface-linked threshold data, and the
 load-bearing safety mapping — every NEEDS_HUMAN leg and every
-urgency_disagreement surfaces as the conservative highest urgency.
+urgency_disagreement surfaces as the conservative highest urgency,
+with one honesty carve-out (audit D2, below): a model-UNAVAILABLE
+placeholder externalizes as "unavailable", never a fabricated "high".
 
 Rubric order (documented per the J2-c spec): `ScoreAnswer.level`
 indexes the rubric ASCENDING in severity — 0=low, 1=medium, 2=high —
@@ -34,6 +36,20 @@ unconditionally, the threshold is purely subtractive — it can remove
 trust, never grant it. `score_source=RAW` marks the numbers as raw,
 not calibrated. When measured distributions exist for this surface,
 they replace the policy tier (see thresholds.py).
+
+Triage honesty (audit D2, 2026-09-24): the below-threshold leg has
+TWO different external readings, and the surface distinguishes them.
+MODEL-UNAVAILABLE — the gated call returned the model-off fallback
+(`unavailable_structured_fallback` shape, `_model_blocked` marker;
+disabled, blocked, or transport failure) — carries NO structured
+judgment, so escalating its placeholder to the conservative urgency
+fabricated an assessment in the documented default build (model off
+labeled every symptom HIGH). `external_urgency` externalizes exactly
+that leg as MODEL_UNAVAILABLE_URGENCY with a model-off explanation.
+GENUINELY-ANSWERED-BELOW-THRESHOLD — a real structured pick whose
+confidence is under the bar — every other NEEDS_HUMAN leg, and every
+urgency_disagreement keep the conservative highest urgency unchanged
+(the safety rules are untouched; disagreement dominates the carve-out).
 
 `per_level_probabilities` is a point mass on the picked level: the
 pipeline makes a hard pick and claims no calibrated distribution —
@@ -69,6 +85,24 @@ URGENCY_RUBRIC: tuple[str, ...] = ("low", "medium", "high")
 
 #: The conservative (fail-closed / disagreement) external answer.
 CONSERVATIVE_URGENCY = URGENCY_RUBRIC[-1]
+
+#: External urgency when the gated model made NO structured judgment
+#: (model disabled, blocked, or transport failure — the
+#: `unavailable_structured_fallback` shape). An EXTERNAL value only:
+#: it is deliberately not a rubric level, so it can never be mistaken
+#: for a model assessment and never round-trips back in as a pick
+#: (`build_urgency_candidate` rejects it as out-of-rubric).
+MODEL_UNAVAILABLE_URGENCY = "unavailable"
+
+#: Deterministic explanation paired with MODEL_UNAVAILABLE_URGENCY —
+#: the honest statement that the optional local model is off while the
+#: deterministic preparation steps remain (mirrors the fallback's own
+#: sentence in `healthadvocate.core.llm_client`).
+MODEL_UNAVAILABLE_EXPLANATION = (
+    "The optional local model is unavailable or blocked by the privacy "
+    "boundary, so no model urgency judgment was made. Deterministic "
+    "preparation steps remain available."
+)
 
 #: The urgency question this surface asks.
 URGENCY_QUESTION = ScoreQuestion(
@@ -158,8 +192,27 @@ def deidentification_status_from_output(value: object) -> DeidentificationStatus
     return DeidentificationStatus.FAILED
 
 
+def is_model_unavailable(llm_output: object) -> bool:
+    """True when the gated call's output is the model-unavailable
+    fallback shape — NO structured judgment exists (model disabled,
+    blocked, or transport failure; `unavailable_structured_fallback`
+    sets `_model_blocked` on every path that produces it).
+
+    A `_raw_text` output is deliberately NOT model-unavailable: the
+    model ran and answered, just unparseably — its placeholder pick
+    keeps the conservative escalation (fail closed on an unknown
+    model answer, audit D2 changes nothing there).
+    """
+    return isinstance(llm_output, Mapping) and bool(
+        llm_output.get("_model_blocked")
+    )
+
+
 def external_urgency(
-    outcome: DecisionOutcome, urgency_disagreement: bool
+    outcome: DecisionOutcome,
+    urgency_disagreement: bool,
+    *,
+    model_unavailable: bool = False,
 ) -> str:
     """The external answer from the typed outcome (the safety mapping).
 
@@ -168,8 +221,25 @@ def external_urgency(
     ANSWERED outcome surfaces its rubric label; a missing or out-of-
     range answer on an ANSWERED outcome (unreachable via `assess`, but
     defended here anyway) is conservative too.
+
+    The audit-D2 honesty carve-out: a below-threshold outcome produced
+    by a MODEL-UNAVAILABLE placeholder (`model_unavailable=True`, from
+    `is_model_unavailable`) externalizes as MODEL_UNAVAILABLE_URGENCY —
+    "high" there fabricated an assessment in the documented default
+    build. The carve-out is scoped to exactly that leg: a genuinely
+    answered below-threshold pick (`model_unavailable=False`) and every
+    other NEEDS_HUMAN leg keep the conservative urgency, and an
+    urgency_disagreement dominates the carve-out — including the SEVERE
+    model-off input: cross_validation treats a placeholder urgency as
+    "no rating", so its NER high-urgency trigger fires as a
+    disagreement (audit D2 round 2), and severe inputs surface HIGH on
+    the default build exactly as they did before the carve-out existed.
     """
-    if urgency_disagreement or outcome.outcome is not Outcome.ANSWERED:
+    if urgency_disagreement:
+        return CONSERVATIVE_URGENCY
+    if model_unavailable and outcome.reason_kind == "below-threshold":
+        return MODEL_UNAVAILABLE_URGENCY
+    if outcome.outcome is not Outcome.ANSWERED:
         return CONSERVATIVE_URGENCY
     answer = outcome.answer
     if answer is None or not 0 <= answer.level < len(URGENCY_RUBRIC):
@@ -202,6 +272,8 @@ def assess_urgency(
 
 __all__ = [
     "CONSERVATIVE_URGENCY",
+    "MODEL_UNAVAILABLE_EXPLANATION",
+    "MODEL_UNAVAILABLE_URGENCY",
     "SYMPTOM_TRIAGE_THRESHOLDS",
     "TRIAGE_SURFACE",
     "URGENCY_QUESTION",
@@ -210,4 +282,5 @@ __all__ = [
     "build_urgency_candidate",
     "deidentification_status_from_output",
     "external_urgency",
+    "is_model_unavailable",
 ]

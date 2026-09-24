@@ -12,6 +12,16 @@ Pinned pre-conversion behaviors (the surface had no direct tests): the
 normal low/medium/high picks surface as-is; the missing-urgency default
 is "medium"; NER/LLM urgency disagreement escalates to "high"; empty
 input returns the early "low" dict unchanged. Synthetic fixtures only.
+
+Triage honesty (audit D2, 2026-09-24): the documented default build runs
+with the optional local model OFF, and that build must not label every
+symptom HIGH. A model-unavailable output (unavailable_structured_fallback
+shape, `_model_blocked` marker) carries NO structured judgment — its
+placeholder pick escalates to a fabricated "high". The external value for
+exactly that leg is now "unavailable" with a model-off explanation, while
+the two safety escalations are untouched and pinned in BOTH directions:
+a GENUINELY answered below-threshold pick still surfaces "high", and any
+urgency_disagreement still dominates everything.
 """
 
 from __future__ import annotations
@@ -224,7 +234,10 @@ class DisagreementEscalationTests(unittest.TestCase):
 
 class FailClosedLegsEscalateTests(unittest.TestCase):
     """Load-bearing: every NEEDS_HUMAN leg surfaces as the conservative
-    highest urgency with audit numbers — never "low", never silent."""
+    highest urgency with audit numbers — never "low", never silent.
+    (One carve-out since audit D2: the model-UNAVAILABLE placeholder leg
+    externalizes as "unavailable" — see ModelUnavailableHonestyTests; a
+    `_raw_text` output is NOT model-unavailable and still escalates.)"""
 
     def test_deidentification_failed_escalates(self):
         output = dict(BENIGN_OUTPUT, urgency="medium",
@@ -234,18 +247,6 @@ class FailClosedLegsEscalateTests(unittest.TestCase):
         self.assertEqual(decision(result)["reason_kind"],
                          "deidentification-failed")
         self.assertIsNone(decision(result)["answer"])
-
-    def test_model_blocked_placeholder_escalates(self):
-        output = dict(BENIGN_OUTPUT, urgency="medium", _model_blocked=True)
-        result = run_assessment(make_engine(), output)
-        # A placeholder pick is backed by zero measurement: below the
-        # policy bar, numbers attached, conservative external answer.
-        self.assertEqual(result["urgency"], "high")
-        wrapper = decision(result)
-        self.assertEqual(wrapper["reason_kind"], "below-threshold")
-        self.assertEqual(wrapper["answer"]["confidence"], 0.0)
-        self.assertEqual(wrapper["answer"]["level"], 1)
-        self.assertEqual(wrapper["threshold_applied"], 0.5)
 
     def test_unparseable_raw_text_placeholder_escalates(self):
         output = dict(BENIGN_OUTPUT, urgency="low", _raw_text=True)
@@ -311,6 +312,232 @@ class FailClosedLegsEscalateTests(unittest.TestCase):
         )
         self.assertEqual(external_urgency(answered, False), "low")
         self.assertEqual(external_urgency(answered, True), "high")
+
+
+class SevereModelOffSafetyTests(unittest.TestCase):
+    """Audit D2 round 2 (2026-09-24): the carve-out must not swallow the
+    SEVERE input leg on the real default build (model off). The fallback
+    placeholder urgency is "medium", so the original disagreement rule
+    (fires only on llm urgency "low") was unreachable model-off, and the
+    D2 carve-out surfaced every NER high-urgency term as "unavailable" —
+    while the parent commit escalated this same leg to HIGH. The
+    generalized rule pinned here: a PLACEHOLDER urgency is not a rating,
+    so the NER high-urgency trigger escalates regardless (README:111's
+    override is reachable on the default build)."""
+
+    def _model_off_output(self):
+        """The REAL default-build output: unavailable_structured_fallback
+        plus the fields structured_model_call adds on the success path."""
+        from healthadvocate.core.llm_client import unavailable_structured_fallback
+        output = unavailable_structured_fallback(reason="PrivacyBoundaryError")
+        output["deidentification_status"] = "success"
+        output["pii_mapping_size"] = 0
+        return output
+
+    def test_every_high_urgency_term_surfaces_high_with_model_off(self):
+        from healthadvocate.core.cross_validation import _HIGH_URGENCY_TERMS
+        self.assertEqual(len(_HIGH_URGENCY_TERMS), 13)  # the finding's count
+        for term in sorted(_HIGH_URGENCY_TERMS):
+            with self.subTest(term=term):
+                engine = make_engine([{"text": term, "confidence": 0.99}])
+                result = run_assessment(
+                    engine, self._model_off_output(),
+                    symptoms=f"patient reports {term}",
+                )
+                # NEVER "unavailable" when NER flags a severe input.
+                self.assertEqual(result["urgency"], "high")
+                self.assertNotEqual(result["urgency"], "unavailable")
+                # The payload self-explains the escalation (the glass
+                # renders the disagreement safety flag from this).
+                self.assertTrue(result["validation"]["urgency_disagreement"])
+                # The audit trail is unchanged: still below-threshold
+                # with the zero-measurement numbers attached.
+                self.assertEqual(decision(result)["reason_kind"],
+                                 "below-threshold")
+
+    def test_sub_trigger_confidence_severe_term_stays_unavailable(self):
+        # 0.79 < the 0.80 trigger bar: no NER signal, so the honest
+        # model-off value stands (same bar as the model-on rule).
+        engine = make_engine([{"text": "chest pain", "confidence": 0.79}])
+        result = run_assessment(engine, self._model_off_output())
+        self.assertEqual(result["urgency"], "unavailable")
+        self.assertFalse(result["validation"]["urgency_disagreement"])
+
+    def test_benign_entity_stays_unavailable_model_off(self):
+        engine = make_engine([{"text": "mild headache", "confidence": 0.95}])
+        result = run_assessment(engine, self._model_off_output())
+        self.assertEqual(result["urgency"], "unavailable")
+        self.assertFalse(result["validation"]["urgency_disagreement"])
+
+    def test_unparseable_with_severe_term_escalates_with_disagreement(self):
+        # The placeholder "urgency" in the _raw_text shape is not a
+        # rating either; the marker (not the value) drives the rule.
+        engine = make_engine([{"text": "chest pain", "confidence": 0.85}])
+        output = dict(BENIGN_OUTPUT, urgency="medium", _raw_text=True)
+        result = run_assessment(engine, output)
+        self.assertEqual(result["urgency"], "high")
+        self.assertTrue(result["validation"]["urgency_disagreement"])
+
+    def test_genuine_medium_answer_keeps_disagreement_off(self):
+        # A GENUINE "medium" rating is a real model judgment; the
+        # pre-existing rule's acceptance of it is unchanged.
+        engine = make_engine([{"text": "chest pain", "confidence": 0.85}])
+        result = run_assessment(engine, dict(BENIGN_OUTPUT, urgency="medium"))
+        self.assertFalse(result["validation"]["urgency_disagreement"])
+        self.assertEqual(result["urgency"], "medium")
+
+
+class ModelUnavailableHonestyTests(unittest.TestCase):
+    """Audit D2 (2026-09-24): the documented default build (model OFF)
+    must not label every symptom HIGH. A model-unavailable output is the
+    pipeline's own "no structured judgment was made" signal; escalating
+    its placeholder to "high" fabricates an assessment. External value:
+    "unavailable" (not a rubric level, so no high badge can render),
+    with an explanation naming the model being off and deterministic
+    preparation remaining. The audit wrapper keeps its honest audit
+    trail (below-threshold, confidence 0.0, threshold attached)."""
+
+    def _default_build_output(self):
+        """The REAL model-off shape: unavailable_structured_fallback plus
+        the fields structured_model_call adds on the deid-success path."""
+        from healthadvocate.core.llm_client import unavailable_structured_fallback
+        output = unavailable_structured_fallback(reason="PrivacyBoundaryError")
+        output["deidentification_status"] = "success"
+        output["pii_mapping_size"] = 0
+        return output
+
+    def test_model_off_mild_input_is_unavailable_never_high(self):
+        result = run_assessment(make_engine(), self._default_build_output())
+        # Direction (a) of the D2 split: model made no structured
+        # judgment, so the external urgency is "unavailable" — never
+        # "high" (and never a rubric label at all).
+        self.assertEqual(result["urgency"], "unavailable")
+        self.assertNotEqual(result["urgency"], "high")
+        # The audit trail is unchanged: the placeholder pick is still
+        # below-threshold with zero-measurement confidence attached.
+        wrapper = decision(result)
+        self.assertEqual(wrapper["reason_kind"], "below-threshold")
+        self.assertEqual(wrapper["outcome"], "NEEDS_HUMAN")
+        self.assertEqual(wrapper["answer"]["confidence"], 0.0)
+        self.assertEqual(wrapper["answer"]["level"], 1)
+        self.assertEqual(wrapper["threshold_applied"], 0.5)
+
+    def test_model_off_explanation_names_model_off_and_deterministic_prep(self):
+        from healthadvocate.decisions.symptom_triage import (
+            MODEL_UNAVAILABLE_EXPLANATION,
+        )
+        result = run_assessment(make_engine(), self._default_build_output())
+        explanation = result["explanation"]
+        self.assertEqual(explanation, MODEL_UNAVAILABLE_EXPLANATION)
+        lowered = explanation.lower()
+        self.assertIn("optional local model", lowered)
+        self.assertIn("unavailable", lowered)
+        self.assertIn("deterministic", lowered)
+
+    def test_marker_only_output_also_maps_unavailable(self):
+        # The marker alone (not the full fallback shape) is the
+        # model-unavailable signal; the explanation stays total even
+        # when the crafted output carried no summary of its own.
+        output = {"urgency": "medium", "_model_blocked": True,
+                  "deidentification_status": "success"}
+        result = run_assessment(make_engine(), output)
+        self.assertEqual(result["urgency"], "unavailable")
+        self.assertIn("optional local model",
+                      result["explanation"].lower())
+
+    def test_is_model_unavailable_detects_exactly_the_fallback_shape(self):
+        from healthadvocate.core.llm_client import (
+            unavailable_structured_fallback,
+        )
+        from healthadvocate.decisions.symptom_triage import (
+            MODEL_UNAVAILABLE_URGENCY, URGENCY_RUBRIC, build_urgency_candidate,
+            is_model_unavailable,
+        )
+        self.assertTrue(is_model_unavailable(
+            unavailable_structured_fallback()))
+        self.assertTrue(is_model_unavailable(
+            {"urgency": "low", "_model_blocked": True}))
+        # The model RAN here — unparseable output is NOT model-unavailable
+        # (its conservative escalation stays; see the fail-closed class).
+        self.assertFalse(is_model_unavailable(
+            {"urgency": "low", "_raw_text": True}))
+        self.assertFalse(is_model_unavailable(dict(BENIGN_OUTPUT)))
+        self.assertFalse(is_model_unavailable(None))
+        # "unavailable" is an EXTERNAL value only: it is not a rubric
+        # level, and a model emitting it as its urgency pick is
+        # out-of-rubric (invalid-answer -> conservative), so the value
+        # can never round-trip back in as a judgment.
+        self.assertEqual(MODEL_UNAVAILABLE_URGENCY, "unavailable")
+        self.assertNotIn(MODEL_UNAVAILABLE_URGENCY, URGENCY_RUBRIC)
+        self.assertIsNone(
+            build_urgency_candidate({"urgency": "unavailable"}))
+
+
+class BelowThresholdDirectionTests(unittest.TestCase):
+    """The D2 split in BOTH directions at the gate + mapping level.
+
+    The same below-threshold outcome is externalized two ways: with the
+    model-unavailable marker it is the honest "unavailable"; with a
+    GENUINE answer under the bar it keeps the conservative "high". The
+    urgency_disagreement safety rule dominates the carve-out."""
+
+    def _genuine_below_threshold_outcome(self):
+        """A real structured pick whose confidence is under the bar —
+        the model genuinely answered low, just weakly."""
+        from healthadvocate.decisions.symptom_triage import (
+            SYMPTOM_TRIAGE_THRESHOLDS, TRIAGE_SURFACE, URGENCY_QUESTION,
+        )
+        return assess(
+            URGENCY_QUESTION, receipt=_receipt(),
+            candidate=_candidate("low", confidence=0.3),
+            surface=TRIAGE_SURFACE, runner="code",
+            thresholds=SYMPTOM_TRIAGE_THRESHOLDS,
+        )
+
+    def test_genuine_below_threshold_answer_still_escalates_high(self):
+        # Direction (b): the pre-D2 safety rule is untouched — an
+        # answered-but-low-confidence pick surfaces conservative HIGH.
+        from healthadvocate.decisions.symptom_triage import external_urgency
+        outcome = self._genuine_below_threshold_outcome()
+        self.assertEqual(outcome.reason_kind, "below-threshold")
+        self.assertEqual(external_urgency(outcome, False), "high")
+        self.assertEqual(
+            external_urgency(outcome, False, model_unavailable=False),
+            "high")
+
+    def test_model_unavailable_marker_on_same_outcome_maps_unavailable(self):
+        # Direction (a): the SAME below-threshold outcome, produced by a
+        # model-unavailable placeholder, is the honest "unavailable".
+        from healthadvocate.decisions.symptom_triage import external_urgency
+        outcome = self._genuine_below_threshold_outcome()
+        self.assertEqual(
+            external_urgency(outcome, False, model_unavailable=True),
+            "unavailable")
+
+    def test_disagreement_dominates_the_unavailable_carve_out(self):
+        # Safety first: an urgency_disagreement escalates to high even
+        # when the model was unavailable (defensive — the real fallback
+        # never says "low", so the two cannot co-occur end to end).
+        from healthadvocate.decisions.symptom_triage import external_urgency
+        outcome = self._genuine_below_threshold_outcome()
+        self.assertEqual(
+            external_urgency(outcome, True, model_unavailable=True),
+            "high")
+
+    def test_carve_out_is_scoped_to_below_threshold_only(self):
+        # A model-unavailable marker cannot rename an ANSWERED decision
+        # (unreachable via assess_urgency; defended here anyway): only
+        # the below-threshold leg externalizes as "unavailable".
+        from healthadvocate.decisions.symptom_triage import external_urgency
+        answered = DecisionOutcome(
+            outcome=Outcome.ANSWERED, reason_kind="answered",
+            question_id="symptom-triage-urgency", question_class="score",
+            runner="code", reason="synthetic", allowed_next_steps=[],
+            answer=_candidate("low"), threshold_applied=0.5,
+        )
+        self.assertEqual(
+            external_urgency(answered, False, model_unavailable=True),
+            "low")
 
 
 class CanaryTripwireTests(unittest.TestCase):

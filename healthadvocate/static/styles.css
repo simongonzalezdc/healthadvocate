@@ -542,6 +542,7 @@ textarea { resize: vertical; min-height: 100px; line-height: 1.55; }
 .urgency-high { background: var(--coral-light); color: var(--coral); }
 .urgency-medium { background: var(--warm-light); color: var(--warm); }
 .urgency-low { background: var(--accent-light); color: var(--accent); }
+.urgency-unavailable { background: var(--bg-elevated); color: var(--text-3); border: 1px solid var(--border); }
 
 /* ─── Entity Chips ─── */
 .entity-list { display: flex; flex-wrap: wrap; gap: 8px; }
@@ -615,6 +616,19 @@ textarea { resize: vertical; min-height: 100px; line-height: 1.55; }
 .flag-warning { background: var(--warm-light); color: var(--warm); border-left: 3px solid var(--warm); }
 .flag-info { background: var(--slate-light); color: var(--slate); border-left: 3px solid var(--slate); }
 .flag-danger { background: var(--coral-light); color: var(--coral); border-left: 3px solid var(--coral); }
+
+/* ─── Needs-Human Banner (typed decision wrapper, audit D2) ─── */
+.needs-human-banner {
+  background: var(--coral-light);
+  color: var(--coral);
+  border-left: 3px solid var(--coral);
+  padding: 12px 18px;
+  border-radius: var(--radius-sm);
+  margin-bottom: 16px;
+  font-size: 13px;
+  line-height: 1.5;
+}
+.needs-human-banner ol { margin: 8px 0 0 18px; padding: 0; }
 
 /* ─── Profile Cards ─── */
 .profile-card {

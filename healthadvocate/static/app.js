@@ -41,7 +41,9 @@ const HA = {
 
   safeUrgency(value) {
     const u = (value || '').toLowerCase();
-    return ['low', 'medium', 'high'].includes(u) ? u : 'medium';
+    // 'unavailable' is the backend's honest no-model-judgment state
+    // (audit D2): it must render as itself, never as a rubric level.
+    return ['low', 'medium', 'high', 'unavailable'].includes(u) ? u : 'medium';
   },
 
   safeTrackStatus(value) {
@@ -322,7 +324,14 @@ const HA = {
 
   renderSymptoms(data, el) {
     const u = this.safeUrgency(data.urgency);
+    const decision = data.urgency_decision || null;
     let html = `
+      ${decision && decision.outcome === 'NEEDS_HUMAN' ? `
+      <div class="needs-human-banner" role="alert">
+        <strong>Human decision required.</strong>
+        <p class="result-text">${this.escapeHtml(decision.reason || '')}</p>
+        ${decision.allowed_next_steps?.length ? `<ol>${decision.allowed_next_steps.map((step) => `<li class="result-text">${this.escapeHtml(step)}</li>`).join('')}</ol>` : ''}
+      </div>` : ''}
       <div class="result-section"><h3>Urgency Level</h3>
         <span class="urgency-badge urgency-${u}">${u.toUpperCase()}</span>
       </div>

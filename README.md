@@ -128,7 +128,7 @@ HealthAdvocate uses a **dual-layer AI architecture** where two independent syste
 
 ## What works without a model
 
-The model runtime is **opt-in and off by default**. With it off, every generative feature answers with the same honest fallback shape (`unavailable_structured_fallback` in `healthadvocate/core/llm_client.py`): a summary that says the optional local model is unavailable, action items pointing at the manual workflows, empty red flags, and a `_model_blocked: true` marker. **Urgency shows an honest "unavailable" state — never a guessed level, never an alarm.** No endpoint errors out; deterministic preparation keeps working.
+The model runtime is **opt-in and off by default**. With it off, every generative feature answers with the same honest fallback shape (`unavailable_structured_fallback` in `healthadvocate/core/llm_client.py`): a summary that says the optional local model is unavailable, action items pointing at the manual workflows, empty red flags, and a `_model_blocked: true` marker. **Urgency shows an honest "unavailable" state — never a guessed level, never an alarm.** On the symptom surface the typed decision layer routes that no-judgment state through a `NEEDS_HUMAN` wrapper, which the UI renders as a "Human decision needed" banner (reason, gate state, next steps, and an emergency-services line) — safety legs that involve a real or unrejected judgment (unparseable model output, deidentification failure, urgency disagreement) still escalate to conservative "high". No endpoint errors out; deterministic preparation keeps working.
 
 | Feature | Deterministic — works with no model | Generative — needs `HEALTHADVOCATE_MODEL_ENABLED=1` |
 |---------|-------------------------------------|------------------------------------------------------|
@@ -228,6 +228,11 @@ Example MCP config:
 | `LM_STUDIO_URL` | unset | Deprecated alias for `HEALTHADVOCATE_MODEL_URL`, kept for compatibility. |
 | `MEDICAL_LLM_MODEL` | `local-model` | Model name sent to the runtime — set it to the model you actually loaded (e.g. `meditron3-8b`). |
 | `HEALTHADVOCATE_ALLOW_ORIGINS` | `http://127.0.0.1:8080,http://localhost:8080` | Comma-separated browser origins allowed by CORS |>>>>>>> 4c38f56 (docs(honesty): README tells one true story — no-model table, real env vars, why-this-exists (Lane C))
+| `HEALTHADVOCATE_ALLOW_ORIGINS` | `http://127.0.0.1:8080,http://localhost:8080` | Comma-separated browser origins allowed by CORS |
+| `HEALTHADVOCATE_BIND_HOST` | `127.0.0.1` | Host the app binds to. Validated at startup: anything that is not a loopback name/address makes the process refuse to start (fail-closed), which is what enforces the loopback-deployment default. |
+| `HEALTHADVOCATE_CASE_DIR` | unset → `~/Library/Application Support/HealthAdvocate/cases` | Directory for encrypted Coverage Case storage (key stays in your OS credential store). |
+| `HEALTHADVOCATE_CMS_TIC_ENABLED` | `0` (off) | Feature flag for the optional CMS Transparency in Coverage research adapter — disabled until measured resource budgets replace the placeholder limits. |
+| `HEALTHADVOCATE_POLICYENGINE_ENABLED` | `0` (off) | Feature flag for the unofficial, local-only PolicyEngine-style eligibility estimate (deterministic stub; no network, no submission). |>>>>>>> ed14a17 (fix(honesty): model-off urgency is an honest 'unavailable', not an alarm; NEEDS_HUMAN wrapper rendered; 2 XSS escapes; docs complete)
 
 ---
 
@@ -319,7 +324,7 @@ Every feature endpoint returns a consistent structure:
 
 Module-specific fields (like `suspicious_charges`, `draft_appeal`, `medication_instructions`) are included alongside these common fields.
 
-When the model runtime is off (the default), generative endpoints do not error — they answer with the honest unavailable fallback described in [What works without a model](#what-works-without-a-model): the unavailable summary, manual-workflow action items, empty red flags, and `_model_blocked: true`.
+When the model runtime is off (the default), generative endpoints do not error — they answer with the honest unavailable fallback described in [What works without a model](#what-works-without-a-model): the unavailable summary, manual-workflow action items, empty red flags, and `_model_blocked: true`. The symptom surface additionally returns `urgency_decision` — the typed decision wrapper — and when it says `NEEDS_HUMAN` (as it does whenever no automated assessment ran), the UI renders a "Human decision needed" banner with the wrapper's reason, gate state, and next steps.
 
 ---
 

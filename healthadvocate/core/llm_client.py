@@ -188,12 +188,17 @@ def chat(user_message: str, system: str = SYSTEM_PROMPT, max_tokens: int = 400, 
 
 
 def unavailable_structured_fallback(reason: str = "model_unavailable") -> dict:
+    # urgency is the honest no-judgment value: no model request produced
+    # an assessment, so the shape must not fabricate a level. Consumers
+    # that only forward the urgency key surface "unavailable" as-is; the
+    # symptom surface maps the `_model_blocked` marker to the same
+    # honest state through the typed decision layer.
     return {
         "summary": (
             "The optional local model is unavailable or blocked by the privacy "
             "boundary. Deterministic preparation steps remain available."
         ),
-        "urgency": "medium",
+        "urgency": "unavailable",
         "action_items": [
             "Continue with the manual Coverage workflow or local checklists.",
             "Enable a loopback-only model runtime only if you need generative drafts.",

@@ -54,8 +54,19 @@ class NoModelTableTests(unittest.TestCase):
         self.assertIn("unavailable", self.section.lower())
 
     def test_urgency_reads_unavailable_not_an_alarm(self):
-        # Lane A (landing in parallel): urgency shows an honest
-        # "unavailable" state rather than a guessed level or an alarm.
+        # The README claim must be TRUE IN CODE, not just prose: the
+        # no-judgment fallback carries the honest "unavailable" urgency
+        # (finding: the old pin only checked README text while the code
+        # shipped a guessed "medium" / an alarm "high").
+        from healthadvocate.core.llm_client import (
+            unavailable_structured_fallback,
+        )
+        from healthadvocate.decisions.symptom_triage import (
+            UNAVAILABLE_URGENCY,
+        )
+
+        self.assertEqual(unavailable_structured_fallback()["urgency"], "unavailable")
+        self.assertEqual(UNAVAILABLE_URGENCY, "unavailable")
         self.assertIn("unavailable", self.section.lower())
         self.assertIn("alarm", self.section.lower())
 
@@ -105,8 +116,30 @@ class ConfigurationTableTests(unittest.TestCase):
             "LM_STUDIO_URL",
             "MEDICAL_LLM_MODEL",
             "HEALTHADVOCATE_ALLOW_ORIGINS",
+            # The four vars the code reads but the table omitted
+            # (finding: 5 documented vs 9 read).
+            "HEALTHADVOCATE_BIND_HOST",
+            "HEALTHADVOCATE_CASE_DIR",
+            "HEALTHADVOCATE_CMS_TIC_ENABLED",
+            "HEALTHADVOCATE_POLICYENGINE_ENABLED",
         ):
             self.assertIn(f"`{var}`", self.table, f"{var} missing from config table")
+
+    def test_env_vars_table_matches_code_reads(self):
+        # Cross-check the table against every os.environ read in the
+        # package: a var the code reads must appear in the table.
+        import re
+
+        sources = "\n".join(
+            p.read_text() for p in (ROOT / "healthadvocate").rglob("*.py")
+        )
+        code_vars = set(re.findall(r'"(HEALTHADVOCATE_[A-Z_]+)"', sources)) | {
+            "LM_STUDIO_URL", "MEDICAL_LLM_MODEL"
+        }
+        table_vars = set(re.findall(r"`(HEALTHADVOCATE_[A-Z_]+|LM_STUDIO_URL|MEDICAL_LLM_MODEL)`", self.table))
+        self.assertEqual(code_vars - table_vars, set(),
+                         f"env vars read by code but missing from README table: "
+                         f"{sorted(code_vars - table_vars)}")
 
     def test_enabled_switch_is_documented_as_the_off_by_default_master(self):
         rows = [l for l in self.table.splitlines() if "HEALTHADVOCATE_MODEL_ENABLED" in l]

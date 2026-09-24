@@ -90,6 +90,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   matching", and the symptoms cross-check badge is relabeled "Name
   overlap (informal)" — never presented as validation or a Reliability
   score.- **Insurance denial-reason classification routes through the HA-JEV
+- **Model-off urgency is honest, not an alarm** (adversarial-audit
+  findings 1/2/4, 2026-09-24): with the model runtime off (the
+  default), `unavailable_structured_fallback` now carries
+  `urgency: "unavailable"` instead of a guessed `"medium"` — the
+  previous value surfaced a fabricated MEDIUM on 8 of 9 generative
+  endpoints. On the symptom surface the typed decision layer gained a
+  deliberate exception to the conservative escalation:
+  `external_urgency(..., no_judgment=True)` maps the
+  `_model_blocked` no-judgment leg (no candidate answer exists) to
+  the honest `UNAVAILABLE_URGENCY` instead of
+  `CONSERVATIVE_URGENCY` ("high"), which had made "model off"
+  indistinguishable from a real emergency. The safety guarantee is
+  otherwise unchanged and pinned: every NEEDS_HUMAN leg that involves
+  a real or unrejected judgment — unparseable `_raw_text` model
+  output, deidentification failure, invalid receipt, out-of-rubric
+  pick — and every NER/LLM urgency disagreement still escalates to
+  conservative "high", and disagreement dominates the no-judgment
+  waiver. The frontend passes `"unavailable"` through `safeUrgency`
+  (previously collapsed to a guessed MEDIUM badge), renders it with a
+  deliberately neutral `.urgency-unavailable` badge (no coral alarm),
+  and renders the `NEEDS_HUMAN` wrapper (`urgency_decision`) that the
+  backend already ships — reason, gate state, allowed next steps, and
+  an emergency-services line — instead of silently dropping it.
+  Pins: `tests/test_model_off_honesty.py`,
+  `tests/test_symptom_triage_jev.py` (contract updated),
+  `tests/test_docs_honesty.py` (README claim now pinned to code, not
+  prose), `tests/test_frontend_model_off_honesty.js`.
+- **Insurance denial-reason classification routes through the HA-JEV>>>>>>> ed14a17 (fix(honesty): model-off urgency is an honest 'unavailable', not an alarm; NEEDS_HUMAN wrapper rendered; 2 XSS escapes; docs complete)
   typed-decision layer** (J2-b; design
   `docs/HA-JEV-TYPED-DECISIONS-DESIGN-2026-09-22.md` §5). The free-text
   `denial_reason` the structured model returns is normalized by a
@@ -211,6 +239,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   claims endpoints error without LM Studio — they return HTTP 200
   deterministic fallback payloads with the model-unavailable state.- Incomplete `.gitignore` entry that left local artifacts unignored.
 
+### Security
+- **Two markup-injection escapes in the frontend** (adversarial-audit
+  findings, 2026-09-24): `renderCommunity` interpolated
+  `data.credibility.toUpperCase()` into `innerHTML` unescaped
+  (app.js) — raw model output, so a crafted credibility value parsed
+  as live markup — now escaped (uppercased before escaping; entities
+  are case-sensitive); `renderTrackDashboard` interpolated the
+  `active`/`monitoring`/`resolved` counters unescaped — now escaped as
+  defense-in-depth like every sibling field. Synthetic-payload render
+  proofs: `tests/test_frontend_model_off_honesty.js`.
+
 ### Docs
 - README docs-honesty pass (Lane C, audit C3): new
   "What works without a model" table enumerating every feature surface's
@@ -229,7 +268,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   medical system; free, open source, local-first; not a doctor, not a
   diagnosis, not verified medical advice), the hero and quick start are
   aligned with it, and the cross-validation confidence figure now matches
-  the code (80%+, not 90%+). Pins: `tests/test_docs_honesty.py`.
+  the code (80%+, not 90%+). The configuration table now documents every
+  environment variable the package reads (9, was 5): the four missing
+  ones are `HEALTHADVOCATE_BIND_HOST` (the loopback-only bind that the
+  fail-closed startup check enforces), `HEALTHADVOCATE_CASE_DIR`
+  (encrypted Coverage Case storage), `HEALTHADVOCATE_CMS_TIC_ENABLED`,
+  and `HEALTHADVOCATE_POLICYENGINE_ENABLED` (both off-by-default
+  adapter feature flags) — pinned by a test that cross-checks the table
+  against every env read in the code. Pins: `tests/test_docs_honesty.py`.
 
 ### Dependencies
 - `fastapi`, `uvicorn`, `pydantic`, `openai`, `openmed`, `faker`, `pysbd`,

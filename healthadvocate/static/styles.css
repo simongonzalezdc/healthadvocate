@@ -866,26 +866,28 @@ textarea { resize: vertical; min-height: 100px; line-height: 1.55; }
 
 /* Entity Chips ─── */
 .entity-list { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+/* entity chips are QUOTED TERMS, never status verdicts: outline grammar
+   (final-gate receipt: a filled 'denial' pill read as a confident answer) */
 .entity-chip {
   display: inline-flex; align-items: center; gap: 5px;
-  padding: 6px 15px;
+  padding: 5px 14px;
   border-radius: var(--radius-full);
   font-size: var(--step--1);
   font-weight: 500;
-  background: var(--color-primary-tint);
-  color: var(--color-primary);
-  border: 1px solid transparent;
-  transition: border-color var(--dur-2) var(--ease), background-color var(--dur-2) var(--ease);
+  background: transparent;
+  color: var(--color-text-muted);
+  border: 1px solid var(--color-border);
+  transition: border-color var(--dur-2) var(--ease), color var(--dur-2) var(--ease);
 }
-.entity-chip:hover { border-color: var(--color-primary); background: var(--color-primary-tint-strong); }
-.entity-chip.disease { background: var(--status-info-tint); color: var(--status-info-ink); }
-.entity-chip.disease:hover { border-color: var(--status-info); background: rgba(85, 116, 154, 0.16); }
-.entity-chip.drug { background: var(--status-info-tint); color: var(--status-info-ink); }
-.entity-chip.drug:hover { border-color: var(--status-info); background: rgba(85, 116, 154, 0.16); }
-.entity-chip.anatomy { background: var(--color-primary-tint); color: var(--color-primary); }
-.entity-chip.anatomy:hover { border-color: var(--color-primary); }
-.entity-chip.pii { background: var(--status-caution-tint); color: var(--status-caution-ink); }
-.entity-chip.pii:hover { border-color: var(--status-caution); background: rgba(184, 120, 72, 0.16); }
+.entity-chip:hover { border-color: var(--color-text-muted); color: var(--color-text); }
+.entity-chip.disease { color: var(--status-info-ink); border-color: var(--status-info); }
+.entity-chip.disease:hover { border-color: var(--status-info-ink); color: var(--status-info-ink); }
+.entity-chip.drug { color: var(--status-info-ink); border-color: var(--status-info); }
+.entity-chip.drug:hover { border-color: var(--status-info-ink); color: var(--status-info-ink); }
+.entity-chip.anatomy { color: var(--color-primary); border-color: var(--color-primary); }
+.entity-chip.anatomy:hover { color: var(--color-primary); }
+.entity-chip.pii { color: var(--status-caution-ink); border-color: var(--status-caution); }
+.entity-chip.pii:hover { border-color: var(--status-caution-ink); color: var(--status-caution-ink); }
 
 /* Condition Items ─── */
 .condition-item {

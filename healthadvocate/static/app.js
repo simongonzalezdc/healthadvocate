@@ -1117,11 +1117,11 @@ const HA = {
     },
     {
       id: 'c4', kind: 'reminder', when: 'Oct 8', matter: 'MRI denial (Aetna)',
-      title: 'Appeal window closes — date read from the letter',
-      desc: 'Deadline detected in the denial letter: 30 days from Sep 8 notice date.',
+      title: 'Appeal window closes (computed)',
+      desc: 'The letter states a 30-day window from the Sep 8 notice; the app computed Oct 8. Confirm the exact date with the insurer.',
       entities: [['30-day appeal window', 'pii'], ['Aetna', 'pii']],
       links: [['Insurance', 'insurance']],
-      prov: ['extracted', 'from the denial letter'],
+      prov: ['inferred', 'computed from the letter'],
     },
   ],
 
@@ -1155,7 +1155,11 @@ const HA = {
       if (timeline) timeline.hidden = true;
       return;
     }
-    list.innerHTML = items.map(it => `<article class="cat-card" data-cat-id="${this.escapeHtml(it.id)}">
+    const hasDerived = this.CATALOG.some(it => it.prov && it.prov[0] !== 'extracted');
+    const derivedNote = hasDerived
+      ? `<p class="condition-confidence" style="margin-bottom:12px"><strong>Machine-derived items:</strong> anything marked INFERRED or UNVERIFIED was computed by the app, not quoted — confirm it before relying on it.</p>`
+      : '';
+    list.innerHTML = derivedNote + items.map(it => `<article class="cat-card" data-cat-id="${this.escapeHtml(it.id)}">
       <div class="cat-card-head">
         <span class="cat-kind ${this.escapeHtml(it.kind)}">${this.KIND_ICON[it.kind] || ''}</span>
         <span class="cat-title">${this.escapeHtml(it.title)}</span>

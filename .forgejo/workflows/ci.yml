@@ -70,6 +70,15 @@ jobs:
       - name: Test (synthetic suite)
         run: .venv/bin/python -m pytest tests/ -q
 
+      # --- Gate 2.5: clean-room HTTP acceptance (audit 2026-09-24,
+      # remediation 4: "drive every named feature through HTTP in BOTH
+      # model-success and model-failure modes; mandatory in CI"). The
+      # module boots the documented runtime and runs real ASGI round
+      # trips per surface, with an in-process loopback OpenAI-compatible
+      # fake for model-success mode. No new dependencies. ---
+      - name: Acceptance gate (HTTP, model-failure + model-success)
+        run: .venv/bin/python -m pytest tests/acceptance/ -q
+
       # --- Gate 3: compile ---
       - name: Compile
         run: .venv/bin/python -m compileall -q healthadvocate

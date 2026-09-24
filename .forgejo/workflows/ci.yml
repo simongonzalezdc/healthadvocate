@@ -52,6 +52,15 @@ jobs:
         # current releases; scans full git history of the clone.
         run: gitleaks detect --source . --verbose
 
+      # --- Gate 1.5: lock sanity (audit finding 2026-09-24: a header-only
+      # lock merged green because nothing checked it) ---
+      - name: Dependency lock sanity
+        run: |
+          pins=$(grep -c '==' requirements.lock.txt || true)
+          if [ "$pins" -lt 60 ]; then
+            echo "requirements.lock.txt has only $pins pins (expected >= 60) — regenerate per its header"; exit 1
+          fi
+
       # --- Gate 2: synthetic test suite ---
       - name: Install dependencies
         run: |

@@ -62,13 +62,13 @@ class NoModelTableTests(unittest.TestCase):
             unavailable_structured_fallback,
         )
         from healthadvocate.decisions.symptom_triage import (
-            UNAVAILABLE_URGENCY,
+            MODEL_UNAVAILABLE_URGENCY,
         )
 
         self.assertEqual(unavailable_structured_fallback()["urgency"], "unavailable")
-        self.assertEqual(UNAVAILABLE_URGENCY, "unavailable")
+        self.assertEqual(MODEL_UNAVAILABLE_URGENCY, "unavailable")
         self.assertIn("unavailable", self.section.lower())
-        self.assertIn("alarm", self.section.lower())
+        self.assertIn("emergency-class terms", self.section.lower())
 
     def test_every_generative_surface_has_a_row(self):
         for surface in (

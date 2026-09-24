@@ -26,6 +26,7 @@ from healthadvocate.core import symptom_assessor
 from healthadvocate.core.llm_client import unavailable_structured_fallback
 from healthadvocate.decisions import DecisionOutcome, Outcome
 from healthadvocate.decisions.symptom_triage import (
+    MODEL_UNAVAILABLE_URGENCY as UNAVAILABLE_URGENCY,
     URGENCY_QUESTION,
     external_urgency,
 )
@@ -163,34 +164,44 @@ class ConservativeLegsUnchangedTests(unittest.TestCase):
 
 class TriageMappingContractTests(unittest.TestCase):
     def test_unavailable_constant_exists(self):
-        from healthadvocate.decisions.symptom_triage import UNAVAILABLE_URGENCY
+        from healthadvocate.decisions.symptom_triage import MODEL_UNAVAILABLE_URGENCY as UNAVAILABLE_URGENCY
         self.assertEqual(UNAVAILABLE_URGENCY, "unavailable")
 
     def test_no_judgment_leg_maps_unavailable(self):
         self.assertEqual(
-            external_urgency(needs_human(), False, no_judgment=True),
+            external_urgency(needs_human(), False, model_unavailable=True),
             "unavailable",
         )
 
-    def test_no_judgment_only_waives_invalid_answer_leg(self):
-        # Only the candidate-is-absent-because-no-judgment leg maps to
-        # "unavailable"; every other NEEDS_HUMAN kind stays conservative
-        # even when the output carried the placeholder marker.
+    def test_no_judgment_waives_exactly_the_silent_legs(self):
+        # The no-judgment carve-out covers BOTH silent legs — the fallback
+        # with a compliant-but-zero-confidence pick (below-threshold) and
+        # the fallback whose honest "unavailable" urgency leaves no
+        # candidate at all (invalid-answer). Every other NEEDS_HUMAN kind
+        # stays conservative even when the output carried the placeholder
+        # marker (merge-fix 2026-09-24: the narrower waiver was the
+        # regression that made the default build scream HIGH).
+        for waived in ("below-threshold", "invalid-answer"):
+            with self.subTest(kind=waived):
+                self.assertEqual(
+                    external_urgency(needs_human(waived), False, model_unavailable=True),
+                    "unavailable",
+                )
         for kind in (
-            "below-threshold", "threshold-data-missing",
+            "threshold-data-missing",
             "threshold-data-malformed", "threshold-surface-mismatch",
             "unknown-runner", "invalid-receipt", "deidentification-failed",
             "invalid-question",
         ):
             with self.subTest(kind=kind):
                 self.assertEqual(
-                    external_urgency(needs_human(kind), False, no_judgment=True),
+                    external_urgency(needs_human(kind), False, model_unavailable=True),
                     "high",
                 )
 
     def test_real_invalid_answer_still_conservative(self):
         self.assertEqual(
-            external_urgency(needs_human(), False, no_judgment=False),
+            external_urgency(needs_human(), False, model_unavailable=False),
             "high",
         )
 
@@ -202,7 +213,7 @@ class TriageMappingContractTests(unittest.TestCase):
             threshold_applied=0.5,
         )
         self.assertEqual(
-            external_urgency(answered, True, no_judgment=True), "high"
+            external_urgency(answered, True, model_unavailable=True), "high"
         )
 
     def test_default_mapping_unchanged_without_flag(self):

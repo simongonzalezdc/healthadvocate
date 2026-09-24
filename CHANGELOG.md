@@ -45,7 +45,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   The safety escalations are untouched and pinned in both directions:
   a genuinely answered below-threshold pick still escalates to
   `"high"`, and every `urgency_disagreement` still dominates the
-  carve-out. Unparseable model answers (`_raw_text` — the model ran)
+  carve-out — including SEVERE model-off inputs (see the round-2 Fixed
+  entry below). Unparseable model answers (`_raw_text` — the model ran)
   and the deidentification-failed leg keep their conservative
   escalation; the audit wrapper still records below-threshold with
   the zero-measurement numbers. Regression tests:
@@ -96,6 +97,46 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   table, and the encrypted-case + Commitment-Gate privacy bullets).
 
 ### Fixed
+- **Severe inputs escalate to HIGH on the model-off default build
+  (audit D2 round 2)** — the D2 carve-out had made the README:111
+  NER-safety override unreachable with the model off: the fallback
+  placeholder urgency is "medium", and the disagreement rule fired
+  only on "low", so all 13 NER high-urgency terms (chest pain, stroke,
+  …) at ≥0.80 confidence surfaced "unavailable" instead of the
+  parent-commit HIGH. `cross_validate` now treats a placeholder
+  urgency (`_model_blocked`/`_raw_text` markers) as NO rating — the
+  fallback's hardcoded "medium" is never consulted — so the NER
+  high-urgency trigger fires as an urgency_disagreement and the
+  surface externalizes conservative HIGH with the payload
+  self-explaining the escalation. Mild inputs without an NER trigger
+  keep the honest "unavailable"; the 0.80 trigger bar and the genuine
+  low/medium model ratings are unchanged. Regression tests:
+  `tests/test_symptom_triage_jev.py` (`SevereModelOffSafetyTests` —
+  all 13 terms, sub-threshold confidence, benign entity, `_raw_text`,
+  genuine-medium pins).
+- **The symptom glass renders the NEEDS_HUMAN decision wrapper** —
+  `renderSymptoms` dropped the entire `urgency_decision` subtree, so
+  the wrapper's human-decision reason and deterministic
+  `allowed_next_steps` never reached the patient. A
+  `needs-human-banner` (`role="alert"`, escaped) now leads the result
+  with the wrapper reason and steps, and `safeUrgency` passes the
+  backend's `unavailable` value through instead of laundering it to a
+  MEDIUM badge — a neutral `.urgency-unavailable` style (no high/danger
+  styling) renders the no-judgment state as itself. Pins in
+  `tests/test_presentability.py`; dynamic glass check passes 14/14.
+- **README honesty (docs audit)** — the Configuration table now
+  documents all six environment variables the code reads
+  (`HEALTHADVOCATE_MODEL_ENABLED` opt-in switch, preferred
+  `HEALTHADVOCATE_MODEL_URL`, deprecated `LM_STUDIO_URL` alias,
+  `HEALTHADVOCATE_CASE_DIR`, and the corrected defaults:
+  `MEDICAL_LLM_MODEL`=`local-model`, loopback default
+  `http://127.0.0.1:11434/v1`); the quick start no longer implies the
+  LLM runs after exporting only `LM_STUDIO_URL` — it runs fully
+  deterministic and points at a new explicit "Enable the optional
+  model runtime" section; the Known Limitations "Without it, feature
+  endpoints return errors" falsehood is replaced with the real
+  fallback behavior; and a "What works with the model runtime off"
+  table now exists in the honest-boundaries section.
 - Incomplete `.gitignore` entry that left local artifacts unignored.
 
 ### Dependencies

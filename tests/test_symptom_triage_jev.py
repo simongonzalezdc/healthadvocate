@@ -314,6 +314,79 @@ class FailClosedLegsEscalateTests(unittest.TestCase):
         self.assertEqual(external_urgency(answered, True), "high")
 
 
+class SevereModelOffSafetyTests(unittest.TestCase):
+    """Audit D2 round 2 (2026-09-24): the carve-out must not swallow the
+    SEVERE input leg on the real default build (model off). The fallback
+    placeholder urgency is "medium", so the original disagreement rule
+    (fires only on llm urgency "low") was unreachable model-off, and the
+    D2 carve-out surfaced every NER high-urgency term as "unavailable" —
+    while the parent commit escalated this same leg to HIGH. The
+    generalized rule pinned here: a PLACEHOLDER urgency is not a rating,
+    so the NER high-urgency trigger escalates regardless (README:111's
+    override is reachable on the default build)."""
+
+    def _model_off_output(self):
+        """The REAL default-build output: unavailable_structured_fallback
+        plus the fields structured_model_call adds on the success path."""
+        from healthadvocate.core.llm_client import unavailable_structured_fallback
+        output = unavailable_structured_fallback(reason="PrivacyBoundaryError")
+        output["deidentification_status"] = "success"
+        output["pii_mapping_size"] = 0
+        return output
+
+    def test_every_high_urgency_term_surfaces_high_with_model_off(self):
+        from healthadvocate.core.cross_validation import _HIGH_URGENCY_TERMS
+        self.assertEqual(len(_HIGH_URGENCY_TERMS), 13)  # the finding's count
+        for term in sorted(_HIGH_URGENCY_TERMS):
+            with self.subTest(term=term):
+                engine = make_engine([{"text": term, "confidence": 0.99}])
+                result = run_assessment(
+                    engine, self._model_off_output(),
+                    symptoms=f"patient reports {term}",
+                )
+                # NEVER "unavailable" when NER flags a severe input.
+                self.assertEqual(result["urgency"], "high")
+                self.assertNotEqual(result["urgency"], "unavailable")
+                # The payload self-explains the escalation (the glass
+                # renders the disagreement safety flag from this).
+                self.assertTrue(result["validation"]["urgency_disagreement"])
+                # The audit trail is unchanged: still below-threshold
+                # with the zero-measurement numbers attached.
+                self.assertEqual(decision(result)["reason_kind"],
+                                 "below-threshold")
+
+    def test_sub_trigger_confidence_severe_term_stays_unavailable(self):
+        # 0.79 < the 0.80 trigger bar: no NER signal, so the honest
+        # model-off value stands (same bar as the model-on rule).
+        engine = make_engine([{"text": "chest pain", "confidence": 0.79}])
+        result = run_assessment(engine, self._model_off_output())
+        self.assertEqual(result["urgency"], "unavailable")
+        self.assertFalse(result["validation"]["urgency_disagreement"])
+
+    def test_benign_entity_stays_unavailable_model_off(self):
+        engine = make_engine([{"text": "mild headache", "confidence": 0.95}])
+        result = run_assessment(engine, self._model_off_output())
+        self.assertEqual(result["urgency"], "unavailable")
+        self.assertFalse(result["validation"]["urgency_disagreement"])
+
+    def test_unparseable_with_severe_term_escalates_with_disagreement(self):
+        # The placeholder "urgency" in the _raw_text shape is not a
+        # rating either; the marker (not the value) drives the rule.
+        engine = make_engine([{"text": "chest pain", "confidence": 0.85}])
+        output = dict(BENIGN_OUTPUT, urgency="medium", _raw_text=True)
+        result = run_assessment(engine, output)
+        self.assertEqual(result["urgency"], "high")
+        self.assertTrue(result["validation"]["urgency_disagreement"])
+
+    def test_genuine_medium_answer_keeps_disagreement_off(self):
+        # A GENUINE "medium" rating is a real model judgment; the
+        # pre-existing rule's acceptance of it is unchanged.
+        engine = make_engine([{"text": "chest pain", "confidence": 0.85}])
+        result = run_assessment(engine, dict(BENIGN_OUTPUT, urgency="medium"))
+        self.assertFalse(result["validation"]["urgency_disagreement"])
+        self.assertEqual(result["urgency"], "medium")
+
+
 class ModelUnavailableHonestyTests(unittest.TestCase):
     """Audit D2 (2026-09-24): the documented default build (model OFF)
     must not label every symptom HIGH. A model-unavailable output is the

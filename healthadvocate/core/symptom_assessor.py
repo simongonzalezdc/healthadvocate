@@ -14,7 +14,10 @@ shape, `_model_blocked` marker). The documented default build runs
 with the optional local model off; labeling every symptom HIGH there
 fabricated assessments. That one leg externalizes as "unavailable"
 with a model-off explanation; a genuinely answered below-threshold
-pick and every disagreement keep the conservative escalation.
+pick and every disagreement keep the conservative escalation —
+including SEVERE model-off inputs: cross_validation treats a
+placeholder urgency as no rating, so the NER high-urgency trigger
+(>=0.80) fires as a disagreement and surfaces HIGH (audit D2 round 2).
 Deidentify-before-reasoning order is untouched: the gated model call
 still assembles and deidentifies the full context itself.
 """

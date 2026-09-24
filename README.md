@@ -119,8 +119,8 @@ HealthAdvocate uses a **dual-layer AI architecture** where two independent syste
 ### What you need
 
 - **Python 3.11+**
-- **[LM Studio](https://lmstudio.ai/)** — free app to run LLMs locally. Download a medical model like [Meditron3-8B](https://huggingface.co/epfl-llm/meditron-3).
 - **[OpenMed](https://github.com/maziyarpanahi/openmed)** — medical NLP toolkit (installed automatically)
+- **Optional: [LM Studio](https://lmstudio.ai/)** — only if you enable the generative layer (see [Enable the optional model runtime](#enable-the-optional-model-runtime)); a free app to run LLMs locally with a medical model like [Meditron3-8B](https://huggingface.co/epfl-llm/meditron-3)
 
 ### Install
 
@@ -133,18 +133,33 @@ pip install openmed[hf]
 
 ### Run
 
-1. Open LM Studio, load a medical model, start the local server (default port 1234)
-
-2. Start HealthAdvocate:
+1. Start HealthAdvocate:
 
 ```bash
-export LM_STUDIO_URL=http://localhost:1234/v1
 uvicorn healthadvocate.app:app --host 127.0.0.1 --port 8080
 ```
 
-3. Open **http://localhost:8080** in your browser
+2. Open **http://localhost:8080** in your browser
 
-That's it. No sign-up, no API keys, no cloud.
+That's it. No sign-up, no API keys, no cloud — and no model runtime required: the documented quick start runs fully deterministic. NER extraction, cross-validation, PII masking, coverage workflows, and the Commitment Gate all work with the model off; LLM-assisted fields stay in their model-unavailable fallback (symptom urgency reports `unavailable` instead of fabricating a level). To turn the generative layer on, see the next section.
+
+### Enable the optional model runtime
+
+The model runtime is opt-in: it stays off until you explicitly enable it.
+
+```bash
+# 1. Open LM Studio, load a medical model, start the local server (default port 1234)
+
+# 2. Enable the runtime and point it at your server:
+export HEALTHADVOCATE_MODEL_ENABLED=1
+export HEALTHADVOCATE_MODEL_URL=http://localhost:1234/v1
+export MEDICAL_LLM_MODEL=meditron3-8b   # the model you actually loaded
+
+# 3. Start HealthAdvocate:
+uvicorn healthadvocate.app:app --host 127.0.0.1 --port 8080
+```
+
+Without `HEALTHADVOCATE_MODEL_ENABLED=1` the runtime stays off — setting only the URL (or the deprecated `LM_STUDIO_URL` alias) changes nothing. The URL must be loopback; redirects are refused.
 
 ### CLI, MCP, and Agent Skill
 
@@ -179,8 +194,11 @@ Example MCP config:
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `LM_STUDIO_URL` | `http://localhost:1234/v1` | Your LM Studio server URL |
-| `MEDICAL_LLM_MODEL` | `meditron3-8b` | Model name loaded in LM Studio |
+| `HEALTHADVOCATE_MODEL_ENABLED` | `0` (off) | Opt-in switch for the optional local model runtime. `1` enables it; `0`, `false`, `no`, `off`, or unset keep it off. |
+| `HEALTHADVOCATE_MODEL_URL` | `http://127.0.0.1:11434/v1` | Base URL of the loopback OpenAI-compatible runtime (LM Studio, Ollama, llama.cpp server). Loopback-only; redirects are refused. |
+| `LM_STUDIO_URL` | — (deprecated) | Legacy alias for `HEALTHADVOCATE_MODEL_URL`; only read when the preferred variable is unset. |
+| `MEDICAL_LLM_MODEL` | `local-model` | Model name requested from the runtime. Set it to the model you actually loaded (e.g. `meditron3-8b`). |
+| `HEALTHADVOCATE_CASE_DIR` | platform user-data dir (macOS: `~/Library/Application Support/HealthAdvocate/cases`) | Overrides the encrypted Coverage Case store directory. |
 | `HEALTHADVOCATE_ALLOW_ORIGINS` | `http://127.0.0.1:8080,http://localhost:8080` | Comma-separated browser origins allowed by CORS |
 
 ---
@@ -286,6 +304,18 @@ by policy until the real-case era**: the release gate (real-case import
 disabled, independent-verifier pending) is enforced on the coverage store;
 free-text surfaces rely on that policy, not yet on enforcement.
 
+### What works with the model runtime off (the default build)
+
+| Capability | Model off (default) | Model on |
+|------------|--------------------|----------|
+| Medical NER extraction & confidence scores | Works | Works |
+| PII masking before any reasoning | Works | Works |
+| Symptom-triage urgency | `unavailable` — no level is fabricated; NER high-urgency findings (e.g. "chest pain" at ≥80% confidence) still escalate to HIGH | Full structured urgency |
+| Symptom explanations, action items, red flags | Deterministic fallback copy | Model-authored |
+| Other LLM-assisted decoders & prep tools | Deterministic fallback copy | Model-authored |
+| Coverage workflows, encrypted case store, Commitment Gate | Works (no model involved) | Works |
+| Optional open-data adapters (RxNorm, DailyMed, openFDA, …) | Works (no model involved) | Works |
+
 ## Privacy & Security
 
 HealthAdvocate is designed as a privacy-preserving local-first health tool:
@@ -363,7 +393,7 @@ healthadvocate/
 ## Known Limitations
 
 - **In-memory storage**: Family profiles and health tracks live in memory and are lost on server restart. This is intentional — no persistent data means no data to breach.
-- **Requires LM Studio**: You need LM Studio running with a loaded model. Without it, feature endpoints return errors.
+- **Optional model runtime**: LM Studio (or any loopback OpenAI-compatible runtime) is only needed for the generative layer, which is opt-in (`HEALTHADVOCATE_MODEL_ENABLED`). Without it, nothing errors — every feature still responds with LLM-assisted fields in their deterministic model-unavailable fallback (symptom triage reports urgency `unavailable` rather than fabricating a level), while NER cross-validation still escalates high-urgency findings to HIGH.
 - **LLM output quality**: Results depend on the model you choose. Meditron3-8B is a strong medical model, but no LLM is a substitute for a real doctor.
 
 ---

@@ -229,9 +229,11 @@ def external_urgency(
     build. The carve-out is scoped to exactly that leg: a genuinely
     answered below-threshold pick (`model_unavailable=False`) and every
     other NEEDS_HUMAN leg keep the conservative urgency, and an
-    urgency_disagreement dominates the carve-out (safety first — the
-    real fallback never says "low", so the two cannot co-occur end to
-    end, but the ordering is defended anyway).
+    urgency_disagreement dominates the carve-out — including the SEVERE
+    model-off input: cross_validation treats a placeholder urgency as
+    "no rating", so its NER high-urgency trigger fires as a
+    disagreement (audit D2 round 2), and severe inputs surface HIGH on
+    the default build exactly as they did before the carve-out existed.
     """
     if urgency_disagreement:
         return CONSERVATIVE_URGENCY

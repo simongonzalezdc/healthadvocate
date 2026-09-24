@@ -69,6 +69,34 @@ class PresentabilityTests(unittest.TestCase):
         self.assertNotRegex(app_js, re.compile(r'urgency-\\$\\{this\\.escapeHtml\\(data\\.urgency\\)\\}'))
         self.assertNotRegex(app_js, re.compile(r'class="track-status \\$\\{safeStatus\\}"'))
 
+    def test_symptom_glass_renders_needs_human_wrapper_and_unavailable_badge(self):
+        app_js = (ROOT / "healthadvocate" / "static" / "app.js").read_text()
+        styles = (ROOT / "healthadvocate" / "static" / "styles.css").read_text()
+
+        # Audit D2 round 2: the backend's external urgency "unavailable"
+        # (model off, no NER trigger) must render as itself — never
+        # laundered to a rubric level, never in high styling.
+        self.assertIn("'low', 'medium', 'high', 'unavailable'", app_js)
+        self.assertIn(".urgency-unavailable {", styles)
+        block = re.search(
+            r"\.urgency-unavailable\s*\{[^}]*\}", styles, re.S
+        )
+        self.assertIsNotNone(block, "urgency-unavailable badge style missing")
+        self.assertNotIn(
+            "--coral", block.group(0), "unavailable must not wear danger/high styling"
+        )
+
+        # The NEEDS_HUMAN wrapper (urgency_decision) must reach the
+        # patient: banner + the wrapper reason + the deterministic
+        # allowed_next_steps, all escaped.
+        self.assertIn("data.urgency_decision", app_js)
+        self.assertIn("needs-human-banner", app_js)
+        self.assertIn('role="alert"', app_js)
+        self.assertIn("this.escapeHtml(decision.reason", app_js)
+        self.assertIn("this.escapeHtml(step)", app_js)
+        self.assertIn("decision.allowed_next_steps", app_js)
+        self.assertIn(".needs-human-banner {", styles)
+
     def test_view_switches_move_focus_into_the_revealed_content(self):
         app_js = (ROOT / "healthadvocate" / "static" / "app.js").read_text()
 

@@ -235,11 +235,14 @@ primary tint.
 
 ## 3. Type scale (→ web-typography)
 
-Stance: operational UI for stressed readers — a deliberate system stack (privacy decision,
-§0 `type`), personality from scale/weight/tracking rather than the face. Sustained reading
-is ragged-right, 45–70ch measure, unitless line-heights.
+Stance (interview-derived): **display = the letter voice** (Charter/Georgia serif — the
+product's artifacts are appeal letters, denial letters, discharge summaries; titles read
+as a brief written on your behalf), **body = the system sans** (operational legibility),
+**mono = the receipt voice** (timestamps, money, reference numbers). Sustained reading is
+ragged-right; measure capped at 62ch for reading copy, 68ch absolute, transcripts ~54ch.
 
 ```
+--font-display: Charter, "Bitstream Charter", Georgia, "Times New Roman", serif
 --font-sans: ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", sans-serif
 --font-mono: ui-monospace, "SF Mono", "Cascadia Mono", Menlo, Consolas, monospace  (timestamps, IDs, timers)
 ```

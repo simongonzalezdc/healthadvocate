@@ -1,0 +1,12 @@
+judged-by: GLM-5.3-Flash (zai/glm-5.3-flash, flash-home zcode lane; full-res original: screenshots/r1/light-directory-live.png)
+
+I can see the image (HealthAdvocate, Directory screen, light theme) — auditing it directly, no files touched.
+
+1. **ABSENT** — No "This needs a human decision" banner anywhere; the only human-decision affordances are small gray "Confirm" links beside each INFERRED field (the amber INFERRED chips are actually more visual than those Confirm links, so had the banner existed it would need to out-rank them).
+2. **ABSENT** — No field is shown as unavailable on this screen, so there is no neutral state to evaluate and nothing present that could be misread as urgency or danger (not applicable, not violated).
+3. **ABSENT** — No LOW/MEDIUM/HIGH filled pills exist; the nearest thing is the orange "+1 due soon" reminder pill in the header, which is not an urgency badge and is trivially distinct from anything else on screen.
+4. **PRESENT, species distinguishable: YES; inferred could pass as confirmed: NO** — Three visibly distinct species: green "YOU CONFIRMED ✓" vs amber "INFERRED · PATTERN / INFERRED · VOICEMAIL / INFERRED · LETTER" vs blue extraction chips (BILL DECODE / VOICEMAIL / DOCUMENT / FROM A CALL), with the legend "confirmed information always wins over inference"; inferred values can't pass as confirmed because they lack the green hue and ✓ and carry the explicit "INFERRED" prefix (same pill shape, but word + color redundancy covers it). Minor nit: the Aetna phone chip renders as "A CALL", looking truncated from "FROM A CALL".
+5. **YES** — An amber "⚡ DEMO DATA" badge sits beside the directory description, a toast reads "Saved to the Library (demo — synthetic only)", and the data itself is synthetic (555 numbers, `.example` email).
+6. **ABSENT / N-A** — No danger or emergency styling appears on this screen at all, so the hierarchy can't be evaluated here; the only caution-level styling is the amber INFERRED chips and the orange due-soon pill — no violation, just no evidence either way.
+
+HONESTY-VERDICT: PASS — no product-law violation visible. Advisory (not a violation): this screen shows three INFERRED values whose only "needs a human" cue is a low-emphasis gray Confirm link with the Q1 banner absent; that's acceptable for a labeled-inference directory, but if inferred values are ever meant to demand human decision, this screen is where the missing banner would bite.

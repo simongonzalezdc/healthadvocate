@@ -62,11 +62,11 @@ jobs:
           fi
 
       # --- Gate 2: synthetic test suite ---
-      - name: Install dependencies
+      - name: Install dependencies (from the hash-exact lock)
         run: |
           python3 -m venv .venv
           .venv/bin/pip install --quiet --upgrade pip
-          .venv/bin/pip install --quiet -r healthadvocate/requirements.txt pytest httpx
+          .venv/bin/pip install --quiet -r requirements.lock.txt pytest httpx
       - name: Test (synthetic suite)
         run: .venv/bin/python -m pytest tests/ -q
 
@@ -80,4 +80,5 @@ jobs:
       - name: Dependency audit (pip-audit)
         run: |
           .venv/bin/pip install --quiet pip-audit
-          .venv/bin/pip-audit -r healthadvocate/requirements.txt
+          # Audit what is actually installed (the lock), plus the intent file.
+          .venv/bin/pip-audit -r requirements.lock.txt

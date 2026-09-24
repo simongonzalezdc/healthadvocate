@@ -16,11 +16,17 @@
  *   H0 Help view carries the two named US crisis lines + link-only resources
  *   H1 fallback-shaped symptoms response renders the NEEDS_HUMAN banner
  *      (allowed next steps + named humans)
+ *   H4 model-off MILD input never surfaces a HIGH urgency verdict,
+ *      end-to-end (API payload + rendered view) — the no-judgment case
+ *   H3 no "verified"/"confirmed" claims in rendered home/symptoms views;
+ *      old badge strings ("Validation", "Reliability") absent
  *   H2 urgency "unavailable" renders as an honest model-unavailable state
  *      with NO high-urgency styling (synthetic payload injected, so the
  *      check passes whichever order the backend value lands in)
- *   H3 rendered home/symptoms views claim no "verified"/"confirmed";
- *      old badge strings ("Validation", "Reliability") absent
+ *   H5 a NEEDS_HUMAN wrapper without a usable allowed_next_steps key
+ *      still renders the banner + named humans (no silent disappearance)
+ *   H6 missing/null/unknown urgency never renders a MEDIUM badge —
+ *      absence is not a verdict
  *
  * Results JSON + screenshots: /tmp/ha-honesty-matrix/
  */
@@ -223,6 +229,28 @@ async function main() {
       + `steps_rendered=${stepsRendered}/${(decision.allowed_next_steps || []).length} humans_named=${humansNamed}`);
     await page.screenshot({ path: `${OUT}/symptoms-fallback.png` });
 
+    /* H4 — model-off MILD input must NEVER surface a HIGH verdict,
+     * end-to-end: real server, real round-trip, no interception.
+     * (Verified finding: payload urgency "high" + red HIGH badge next
+     * to the banner was the exact dishonesty.) */
+    const mildRespPromise = page.waitForResponse(r => r.url().includes('/api/symptoms/assess'));
+    await page.fill('#symptom-input', 'Synthetic probe input: I have had a mild headache and slight tiredness for a day. No fever, no other symptoms.');
+    await page.click('[data-action="assess-symptoms"]');
+    const mildResp = await mildRespPromise;
+    const mildPayload = await mildResp.json();
+    await page.waitForSelector('#symptom-results [data-testid="needs-human-banner"]', { timeout: 20_000 });
+    const mildBadges = await page.locator('#symptom-results .urgency-badge').count();
+    const mildHighs = await page.locator('#symptom-results .urgency-high').count();
+    const mildUnavailable = await page.locator('#symptom-results [data-testid="urgency-unavailable"]').count();
+    const h4 = mildPayload.urgency !== 'high' && mildBadges === 0 && mildHighs === 0
+      && mildUnavailable >= 1 && mildPayload.structured_output?._model_blocked === true;
+    row('H4-model-off-mild-never-high',
+      'model-off mild input surfaces no HIGH verdict at API or glass level (no-judgment honesty)',
+      h4,
+      `payloadUrgency=${JSON.stringify(mildPayload.urgency)} badges=${mildBadges} highs=${mildHighs} `
+      + `unavailableNotices=${mildUnavailable} _model_blocked=${mildPayload.structured_output?._model_blocked}`);
+    await page.screenshot({ path: `${OUT}/symptoms-mild-model-off.png` });
+
     /* H3 — no "verified"/"confirmed" claims in rendered home/symptoms.
      * Run on the live-rendered symptoms view (post H1) + home view. */
     await page.click('#btn-home');
@@ -276,6 +304,64 @@ async function main() {
       `badges=${badges} highs=${highs} banners=${banners} class="${unavailClass}" color=${color} text="${unavailText.trim().slice(0, 60)}"`);
     await page2.screenshot({ path: `${OUT}/symptoms-unavailable.png` });
     await page2.close();
+
+    /* H5 + H6 — drift-hole defenses on synthetic payloads (network-layer
+     * injection; the live backend always attaches array steps, these pin
+     * the glass against drift). */
+    const renderSynthetic = async (label, mutate) => {
+      const payload = JSON.parse(JSON.stringify(UNAVAILABLE_PAYLOAD));
+      payload.urgency = 'medium';
+      mutate(payload);
+      const ctx = await browser.newContext();
+      const p = await ctx.newPage();
+      await p.route('**/api/symptoms/assess', route => route.fulfill({
+        status: 200, contentType: 'application/json', body: JSON.stringify(payload),
+      }));
+      await p.goto(base + '/', { waitUntil: 'domcontentloaded', timeout: 30_000 });
+      await p.click('.nav-btn[data-view="symptoms"]');
+      await p.fill('#symptom-input', 'Synthetic probe input: anything at all.');
+      await p.click('[data-action="assess-symptoms"]');
+      await p.waitForSelector('#symptom-results', { timeout: 20_000 });
+      await p.waitForTimeout(150);
+      const out = {
+        banners: await p.locator('#symptom-results [data-testid="needs-human-banner"]').count(),
+        humans988: await p.locator('#symptom-results .needs-human-banner').textContent().then(t => /988/.test(t || '')).catch(() => false),
+        badges: await p.locator('#symptom-results .urgency-badge').count(),
+        mediums: await p.locator('#symptom-results .urgency-medium').count(),
+        noVerdict: await p.locator('#symptom-results [data-testid="urgency-unavailable"]').count(),
+        text: (await p.textContent('#symptom-results')) || '',
+      };
+      await ctx.close();
+      return out;
+    };
+
+    // H5a: steps key absent entirely.
+    const h5a = await renderSynthetic('no-steps-key', p => { delete p.urgency_decision.allowed_next_steps; });
+    row('H5a-banner-without-steps-key',
+      'NEEDS_HUMAN wrapper with NO allowed_next_steps key still renders banner + named humans',
+      h5a.banners === 1 && h5a.humans988,
+      `banners=${h5a.banners} humans_named=${h5a.humans988} stepsCopy=${/no allowed next steps were attached/.test(h5a.text)}`);
+
+    // H5b: steps as a plain string.
+    const h5b = await renderSynthetic('string-steps', p => { p.urgency_decision.allowed_next_steps = 'Decide as a human'; });
+    row('H5b-banner-with-string-steps',
+      'NEEDS_HUMAN wrapper with string allowed_next_steps renders banner + the step',
+      h5b.banners === 1 && h5b.humans988 && /Decide as a human/.test(h5b.text),
+      `banners=${h5b.banners} humans_named=${h5b.humans988} stepRendered=${/Decide as a human/.test(h5b.text)}`);
+
+    // H6: urgency absent / null / unknown string next to a NEEDS_HUMAN
+    // wrapper — never a confident MEDIUM badge.
+    for (const [label, mutate] of [
+      ['missing-urgency', p => { delete p.urgency; }],
+      ['null-urgency', p => { p.urgency = null; }],
+      ['unknown-string-urgency', p => { p.urgency = 'whenever'; }],
+    ]) {
+      const out = await renderSynthetic(label, mutate);
+      row(`H6-${label}-never-medium`,
+        `absent/unknown urgency (${label}) renders no verdict, never a MEDIUM badge`,
+        out.badges === 0 && out.mediums === 0 && out.noVerdict >= 1 && out.banners === 1,
+        `badges=${out.badges} mediums=${out.mediums} noVerdictNotices=${out.noVerdict} banners=${out.banners}`);
+    }
   } finally {
     try { await browser?.close(); } catch { /* already closed */ }
     shutdown();

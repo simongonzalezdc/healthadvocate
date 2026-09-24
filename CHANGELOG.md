@@ -22,17 +22,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   (HealthCare.gov navigator finder, NAIC state-insurance lookup) and the
   plain-language line "Ask the hospital for the Patient Advocate /
   Patient Relations office" — nothing scraped, nothing invented.
-  Urgency value `unavailable` (pairs with the backend honesty lane)
-  renders as a neutral "Model unavailable — no urgency assessment was
-  made" state with no urgency badge and no high/red styling, defensively
-  for either landing order. Browser-level checks in
+  Urgency value `unavailable` — which the backend now emits whenever the
+  gated call made no real judgment — renders as a neutral "Model
+  unavailable — no urgency assessment was made" state with no urgency
+  badge and no high/red styling, defensively for either landing order.
+  Browser-level checks in
   `tools/browserframe/honesty_matrix.mjs` (playwright, chromium): the
   fallback-shaped symptoms response renders the banner; `unavailable`
   renders without high-urgency styling; no rendered home/symptoms string
   claims "verified"/"confirmed" (old `Validation`/`Reliability` badge
   strings absent).
-
-### Changed
 - `healthadvocate/decisions/` — the HA-JEV typed, calibrated decision layer
   (J1; design `docs/HA-JEV-TYPED-DECISIONS-DESIGN-2026-09-22.md`):
   Choice/Score/Noul question and answer schemas with strict real-float
@@ -113,6 +112,42 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   table, and the encrypted-case + Commitment-Gate privacy bullets).
 
 ### Fixed
+- **No-judgment outputs never surface a fabricated urgency verdict**
+  (verified findings, 2026-09-24): with the model runtime disabled (the
+  default), a mild symptom input no longer returns `urgency: "high"`
+  with a red HIGH badge next to the NEEDS_HUMAN banner — the API and
+  the screen now agree that no urgency assessment was made. The
+  no-judgment placeholder markers (`_model_blocked`/`_raw_text`, which
+  also cover deidentification failure and transport failure) make the
+  symptom surface and all eight other llm-backed surfaces
+  (documents, bills, insurance, discharge, second opinion, community,
+  appointments, drugs) emit the honest `urgency: "unavailable"` via the
+  new `healthadvocate.core.llm_client.urgency_from_output`; real-signal
+  escalations (NER/LLM urgency disagreement, fail-closed legs on actual
+  model responses) still surface the conservative `high`.
+- **A NEEDS_HUMAN refusal can no longer silently disappear**
+  (drift hole): banner detection keys on `outcome: NEEDS_HUMAN` alone;
+  a missing, empty, non-array, or string `allowed_next_steps` still
+  renders the banner (defensively formatted) with the named-human
+  resources — never a normal-looking answer.
+- **Absence is never a MEDIUM verdict**: the UI renders an urgency
+  badge only for a real low/medium/high pick; missing, null, or
+  unrecognized urgency values render the neutral "No urgency assessment
+  was made" notice instead of coercing to a confident MEDIUM badge.
+- **The model's silence is no longer fully trusted**
+  (`build_urgency_candidate`): a missing or null `urgency` key types to
+  no candidate and fails closed (invalid-answer → NEEDS_HUMAN →
+  conservative external urgency) instead of defaulting to a
+  confidence-1.0 "medium" answer; the compliant `null` and plain key
+  omission now behave identically.
+- **README configuration honesty**: the Configuration table now lists
+  `HEALTHADVOCATE_MODEL_ENABLED` (default `0`, opt-in master switch)
+  and `HEALTHADVOCATE_MODEL_URL` (preferred; `LM_STUDIO_URL` marked
+  deprecated alias), with truthful defaults
+  (`http://127.0.0.1:11434/v1`, `local-model`); the Quick Start sets
+  the enable switch explicitly; the Known Limitations bullet no longer
+  claims endpoints error without LM Studio — they return HTTP 200
+  deterministic fallback payloads with the model-unavailable state.
 - Incomplete `.gitignore` entry that left local artifacts unignored.
 
 ### Dependencies

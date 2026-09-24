@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from .engine import HealthEngine, format_entities_with_confidence
 from .cross_validation import cross_validate
+from .llm_client import urgency_from_output
 from healthadvocate.privacy.gated_model import structured_model_call
 
 
@@ -51,7 +52,7 @@ def check_drug(engine: HealthEngine, drug_name: str, profile_id: str | None = No
         "ner_verified": ner_name_match,
         "ner_name_match": ner_name_match,
         "explanation": llm_output.get("summary", ""),
-        "urgency": llm_output.get("urgency", "medium"),
+        "urgency": urgency_from_output(llm_output),
         "action_items": llm_output.get("action_items", []),
         "red_flags": llm_output.get("red_flags", []),
         "drug_class": llm_output.get("drug_class", ""),

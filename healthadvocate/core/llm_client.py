@@ -204,6 +204,39 @@ def unavailable_structured_fallback(reason: str = "model_unavailable") -> dict:
     }
 
 
+# Glass honesty (2026-09-24 fixes): the gated call's own "no judgment was
+# made" signal. `unavailable_structured_fallback` sets `_model_blocked`
+# (model disabled, transport failure, or deidentification failure); the
+# unparseable-response path sets `_raw_text`. Kept in lockstep with
+# decisions/symptom_triage._PLACEHOLDER_MARKERS.
+PLACEHOLDER_MARKERS = ("_model_blocked", "_raw_text")
+
+#: The honest external urgency when no model judgment exists (D5).
+URGENCY_UNAVAILABLE = "unavailable"
+
+
+def output_is_placeholder(llm_output: object) -> bool:
+    """True when the structured output is the pipeline's own no-judgment
+    placeholder rather than a real model pick."""
+    return isinstance(llm_output, dict) and any(
+        llm_output.get(marker) for marker in PLACEHOLDER_MARKERS
+    )
+
+
+def urgency_from_output(llm_output: dict) -> str:
+    """External urgency with honest no-judgment semantics.
+
+    When the gated call made no real judgment there is no urgency to
+    surface — repeating the fallback's canned "medium" (or any level)
+    would assert a verdict nobody made. Surface "unavailable" instead;
+    the UI renders it as a neutral model-unavailable notice, never as
+    an urgency level and never with high-urgency styling.
+    """
+    if output_is_placeholder(llm_output):
+        return URGENCY_UNAVAILABLE
+    return llm_output.get("urgency", "medium")
+
+
 def chat_structured(
     user_message: str,
     module_type: str = "general",

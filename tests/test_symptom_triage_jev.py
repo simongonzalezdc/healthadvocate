@@ -8,10 +8,17 @@ safety rule — every NEEDS_HUMAN leg and every urgency_disagreement
 surfaces externally as the conservative highest urgency ("high"), never
 "low", with the audit numbers attached.
 
+2026-09-24 glass-honesty fixes, pinned here: when the gated call made
+NO real judgment (placeholder markers `_model_blocked`/`_raw_text`),
+the external urgency is the honest "unavailable" — a fabricated "high"
+verdict next to the NEEDS_HUMAN banner was the dishonesty the audit
+killed — and a MISSING/null urgency key types to no candidate (the
+model's silence never becomes a fully-trusted "medium" answer).
+
 Pinned pre-conversion behaviors (the surface had no direct tests): the
-normal low/medium/high picks surface as-is; the missing-urgency default
-is "medium"; NER/LLM urgency disagreement escalates to "high"; empty
-input returns the early "low" dict unchanged. Synthetic fixtures only.
+normal low/medium/high picks surface as-is; NER/LLM urgency
+disagreement escalates to "high"; empty input returns the early "low"
+dict unchanged. Synthetic fixtures only.
 """
 
 from __future__ import annotations
@@ -181,12 +188,25 @@ class NormalLegsPreservedTests(unittest.TestCase):
                                  {"low": 0, "medium": 1, "high": 2}[urgency])
                 self.assertEqual(decision(result)["threshold_applied"], 0.5)
 
-    def test_missing_urgency_defaults_to_medium(self):
+    def test_missing_urgency_fails_closed(self):
+        # 2026-09-24 honesty fix: the model's silence is not a "medium"
+        # verdict. A real response with the key absent fails closed —
+        # no candidate, invalid-answer, conservative external urgency —
+        # exactly like an explicit null (the value the prompt instructs
+        # for undeterminable answers).
         output = dict(BENIGN_OUTPUT)
         del output["urgency"]
         result = run_assessment(make_engine(), output)
-        self.assertEqual(result["urgency"], "medium")
-        self.assertEqual(decision(result)["answer"]["level"], 1)
+        self.assertEqual(result["urgency"], "high")
+        wrapper = decision(result)
+        self.assertEqual(wrapper["reason_kind"], "invalid-answer")
+        self.assertIsNone(wrapper["answer"])
+
+    def test_null_urgency_fails_closed_like_missing(self):
+        output = dict(BENIGN_OUTPUT, urgency=None)
+        result = run_assessment(make_engine(), output)
+        self.assertEqual(result["urgency"], "high")
+        self.assertEqual(decision(result)["reason_kind"], "invalid-answer")
 
     def test_answered_carries_audit_numbers(self):
         result = run_assessment(make_engine(), dict(BENIGN_OUTPUT))
@@ -226,34 +246,39 @@ class DisagreementEscalationTests(unittest.TestCase):
 
 
 class FailClosedLegsEscalateTests(unittest.TestCase):
-    """Load-bearing: every NEEDS_HUMAN leg surfaces as the conservative
-    highest urgency with audit numbers — never "low", never silent."""
+    """Load-bearing: a fail-closed leg on a REAL model response surfaces
+    as the conservative highest urgency with audit numbers — never
+    "low", never silent. The 2026-09-24 honesty exception: placeholder
+    outputs (no judgment was made at all) surface the honest
+    "unavailable" instead — the NEEDS_HUMAN wrapper carries the safety
+    routing, so the screen never asserts a verdict nobody made."""
 
-    def test_deidentification_failed_escalates(self):
+    def test_deidentification_failed_surfaces_unavailable(self):
         output = dict(BENIGN_OUTPUT, urgency="medium",
                       deidentification_status="failed", _model_blocked=True)
         result = run_assessment(make_engine(), output)
-        self.assertEqual(result["urgency"], "high")
+        self.assertEqual(result["urgency"], "unavailable")
         self.assertEqual(decision(result)["reason_kind"],
                          "deidentification-failed")
         self.assertIsNone(decision(result)["answer"])
 
-    def test_model_blocked_placeholder_escalates(self):
+    def test_model_blocked_placeholder_surfaces_unavailable(self):
         output = dict(BENIGN_OUTPUT, urgency="medium", _model_blocked=True)
         result = run_assessment(make_engine(), output)
         # A placeholder pick is backed by zero measurement: below the
-        # policy bar, numbers attached, conservative external answer.
-        self.assertEqual(result["urgency"], "high")
+        # policy bar, numbers attached — and externally the honest
+        # no-judgment state, never a fabricated "high" verdict.
+        self.assertEqual(result["urgency"], "unavailable")
         wrapper = decision(result)
         self.assertEqual(wrapper["reason_kind"], "below-threshold")
         self.assertEqual(wrapper["answer"]["confidence"], 0.0)
         self.assertEqual(wrapper["answer"]["level"], 1)
         self.assertEqual(wrapper["threshold_applied"], 0.5)
 
-    def test_unparseable_raw_text_placeholder_escalates(self):
+    def test_unparseable_raw_text_placeholder_surfaces_unavailable(self):
         output = dict(BENIGN_OUTPUT, urgency="low", _raw_text=True)
         result = run_assessment(make_engine(), output)
-        self.assertEqual(result["urgency"], "high")
+        self.assertEqual(result["urgency"], "unavailable")
         self.assertEqual(decision(result)["reason_kind"], "below-threshold")
 
     def test_out_of_rubric_urgency_string_escalates(self):

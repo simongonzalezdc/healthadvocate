@@ -15,6 +15,7 @@ from __future__ import annotations
 
 from .engine import HealthEngine, format_entities_with_confidence
 from .cross_validation import cross_validate
+from .llm_client import URGENCY_UNAVAILABLE, output_is_placeholder
 from healthadvocate.privacy.gated_model import structured_model_call
 from healthadvocate.decisions.assess import invalid_receipt_outcome
 from healthadvocate.decisions.receipt import receipt_from_analysis
@@ -82,7 +83,20 @@ def assess_symptoms(engine: HealthEngine, symptoms: str, profile_id: str | None 
         decision = assess_urgency(
             receipt=built.receipt, llm_output=llm_output
         )
-    urgency = external_urgency(decision, validation.urgency_disagreement)
+    # D5 honesty (2026-09-24 fixes): when the gated call made no real
+    # judgment (placeholder markers: model blocked/unavailable,
+    # deidentification failed, or an unparseable response), there is no
+    # urgency to surface — mapping the NEEDS_HUMAN wrapper onto the
+    # conservative "high" would assert a verdict nobody made, right next
+    # to a banner saying a human must decide. Surface the honest
+    # "unavailable" state; the wrapper (banner + named humans) carries
+    # the safety routing. A REAL signal (urgency disagreement, or a
+    # fail-closed leg on an actual model response) still escalates
+    # conservatively through external_urgency.
+    if output_is_placeholder(llm_output) and not validation.urgency_disagreement:
+        urgency = URGENCY_UNAVAILABLE
+    else:
+        urgency = external_urgency(decision, validation.urgency_disagreement)
 
     status = llm_output.get("deidentification_status", "unknown")
     # B3 glass honesty: the flag must describe the PERSON's text, so it

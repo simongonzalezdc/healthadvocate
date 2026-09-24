@@ -118,17 +118,18 @@ _PLACEHOLDER_MARKERS = ("_model_blocked", "_raw_text")
 def build_urgency_candidate(llm_output: Mapping[str, object]) -> ScoreAnswer | None:
     """Type the current urgency pick as a ScoreAnswer candidate.
 
-    The pick semantics are the pre-conversion ones: the structured
-    output's ``urgency`` when the key is present, else "medium". A pick
-    outside the rubric (any value a model may emit that is not exactly
-    low/medium/high) types to NO candidate — the gate then fails closed
-    on invalid-answer, which the surface maps to the conservative
-    urgency (the pre-conversion surface would have surfaced such a
-    string verbatim; this is the conservative hardening of that hole).
+    The pick is the structured output's ``urgency`` key. A missing or
+    null key is the model's SILENCE, never a "medium" verdict (2026-09-24
+    honesty fix): absence types to NO candidate, exactly like a value a
+    model may emit that is not exactly low/medium/high — the gate then
+    fails closed on invalid-answer, which the surface maps to the
+    conservative urgency. This also removes the old asymmetry where the
+    compliant ``null`` (what the prompt instructs for undeterminable
+    values) failed closed while plain key omission was fully trusted.
     """
     if not isinstance(llm_output, Mapping):
         return None
-    pick = llm_output.get("urgency", "medium")
+    pick = llm_output.get("urgency")
     if pick not in URGENCY_RUBRIC:
         return None
     level = URGENCY_RUBRIC.index(pick)

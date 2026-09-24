@@ -39,11 +39,6 @@ const HA = {
     return this._VALID_ENTITY_CLASSES.has(c) ? c : 'entity';
   },
 
-  safeUrgency(value) {
-    const u = (value || '').toLowerCase();
-    return ['low', 'medium', 'high'].includes(u) ? u : 'medium';
-  },
-
   /* ── Honesty rendering (audit E1/E2/D5/D3/B3, 2026-09-24) ── */
 
   /* E2: the only human contacts HealthAdvocate will ever name — two
@@ -67,14 +62,15 @@ const HA = {
 
   /* E1/D3: find a typed decision wrapper (HA-JEV DecisionOutcome shape)
      that refused to decide for the person. Generic on purpose — any
-     payload key whose value carries `outcome` + `allowed_next_steps`
-     qualifies, so surfaces beyond symptoms can adopt without new
-     plumbing. */
+     payload key whose value carries `outcome: NEEDS_HUMAN` qualifies
+     (allowed_next_steps is rendered defensively, never required for
+     detection), so surfaces beyond symptoms can adopt without new
+     plumbing. A refusal must never silently disappear because its steps
+     key was missing or malformed. */
   needsHumanDecision(payload) {
     for (const value of Object.values(payload || {})) {
       if (value && typeof value === 'object' && !Array.isArray(value)
-        && String(value.outcome || '').toUpperCase() === 'NEEDS_HUMAN'
-        && Array.isArray(value.allowed_next_steps)) {
+        && String(value.outcome || '').toUpperCase() === 'NEEDS_HUMAN') {
         return value;
       }
     }
@@ -84,27 +80,40 @@ const HA = {
   needsHumanHtml(payload) {
     const decision = this.needsHumanDecision(payload);
     if (!decision) return '';
-    const steps = decision.allowed_next_steps
-      .map(s => `<li>${this.escapeHtml(s)}</li>`).join('');
+    let stepsHtml;
+    const raw = decision.allowed_next_steps;
+    if (Array.isArray(raw) && raw.length) {
+      const steps = raw.map(s => `<li>${this.escapeHtml(String(s))}</li>`).join('');
+      stepsHtml = `<p>HealthAdvocate would not answer this on its own. Allowed next steps:</p>
+      <ul>${steps}</ul>`;
+    } else if (typeof raw === 'string' && raw.trim()) {
+      stepsHtml = `<p>HealthAdvocate would not answer this on its own. Allowed next steps:</p>
+      <ul><li>${this.escapeHtml(raw)}</li></ul>`;
+    } else {
+      stepsHtml = `<p>HealthAdvocate would not answer this on its own, and no allowed next steps were attached — treat this as a decision for a person.</p>`;
+    }
     return `<div class="flag-item flag-danger needs-human-banner" data-testid="needs-human-banner">
       <p><strong>This needs a human decision.</strong></p>
-      <p>HealthAdvocate would not answer this on its own. Allowed next steps:</p>
-      <ul>${steps}</ul>
+      ${stepsHtml}
       ${this.HUMAN_RESOURCES_HTML}
     </div>`;
   },
 
-  /* D5: "unavailable" is an honest absence — no model judgment was
-     made — not an urgency level. Render a neutral notice instead of a
-     badge; never high-urgency styling, never a silent default level.
-     Defensive both ways: renders the same whether the backend value
-     has landed yet or not. */
+  /* D5: an urgency verdict is rendered ONLY for a real low/medium/high
+     pick. "unavailable" is the honest model-off state; any other
+     missing, null, or unrecognized value is an honest absence too —
+     never coerced into a confident MEDIUM badge (an absent verdict is
+     not a medium verdict). Neutral notice, no urgency badge class, no
+     high/red styling, in every landing order. */
   urgencyBadgeHtml(value) {
-    if (String(value || '').toLowerCase() === 'unavailable') {
+    const u = String(value ?? '').trim().toLowerCase();
+    if (u === 'unavailable') {
       return `<span class="flag-item flag-info urgency-unavailable" data-testid="urgency-unavailable">Model unavailable — no urgency assessment was made.</span>`;
     }
-    const level = this.safeUrgency(value);
-    return `<span class="urgency-badge urgency-${level}">${level.toUpperCase()}</span>`;
+    if (!['low', 'medium', 'high'].includes(u)) {
+      return `<span class="flag-item flag-info urgency-unavailable" data-testid="urgency-unavailable">No urgency assessment was made.</span>`;
+    }
+    return `<span class="urgency-badge urgency-${u}">${u.toUpperCase()}</span>`;
   },
 
   safeTrackStatus(value) {

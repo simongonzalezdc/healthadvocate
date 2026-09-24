@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from .engine import HealthEngine, format_entities_with_confidence
 from .cross_validation import cross_validate
+from .llm_client import urgency_from_output
 from healthadvocate.privacy.gated_model import structured_model_call
 
 
@@ -41,7 +42,7 @@ def scan_bulletin(engine: HealthEngine, text: str) -> dict:
         "conditions_detected": [{"name": e.text, "label": e.label, "confidence": round(e.confidence, 2)} for e in diseases.entities],
         "treatments_detected": [{"name": e.text, "label": e.label, "confidence": round(e.confidence, 2)} for e in drugs.entities],
         "explanation": llm_output.get("summary", ""),
-        "urgency": llm_output.get("urgency", "medium"),
+        "urgency": urgency_from_output(llm_output),
         "action_items": llm_output.get("action_items", []),
         "red_flags": llm_output.get("red_flags", []),
         "credibility": llm_output.get("credibility", "medium"),

@@ -249,7 +249,7 @@ body {
   text-rendering: optimizeLegibility;
 }
 a { color: var(--color-primary); text-decoration: none; }
-a:focus-visible { outline: 2px solid var(--color-focus-ring); outline-offset: 2px; border-radius: 4px; }
+a:focus-visible { outline: 2px solid var(--color-focus-ring); outline-offset: 2px; border-radius: var(--radius-sm); }
 button { font-family: var(--font-sans); cursor: pointer; }
 /* author display rules (grids, flex) must never defeat the hidden
    attribute — the dash strip hid itself at zero and stayed visible */
@@ -956,7 +956,7 @@ textarea { resize: vertical; min-height: 100px; line-height: 1.55; }
   color: var(--color-on-primary);
   background: var(--color-primary);
   border: 1px solid var(--btn-edge);
-  border-radius: 2px;
+  border-radius: var(--radius-btn);
   min-height: 44px;
   box-shadow: 0 4px 0 var(--btn-edge);
   transition: background-color var(--dur-2) var(--ease), box-shadow var(--dur-1) var(--ease),
@@ -993,7 +993,7 @@ textarea { resize: vertical; min-height: 100px; line-height: 1.55; }
   background: var(--status-danger);
   border: none;
   border: 1px solid var(--btn-edge-danger);
-  border-radius: 2px;
+  border-radius: var(--radius-btn);
   min-height: 44px;
   box-shadow: 0 4px 0 var(--btn-edge-danger);
   transition: background-color var(--dur-2) var(--ease), box-shadow var(--dur-1) var(--ease),
@@ -1227,7 +1227,7 @@ span.flag-item.flag-info.urgency-unavailable {
   color: var(--status-danger-ink);
   white-space: nowrap;
 }
-.crisis-number:focus-visible { outline: 2px solid var(--color-focus-ring); outline-offset: 2px; border-radius: 4px; }
+.crisis-number:focus-visible { outline: 2px solid var(--color-focus-ring); outline-offset: 2px; border-radius: var(--radius-sm); }
 
 /* Provenance species (analysis honesty) — extracted / inferred / unverified */
 .prov-chip {
@@ -1240,7 +1240,7 @@ span.flag-item.flag-info.urgency-unavailable {
   border-radius: var(--radius-tag);
   white-space: nowrap;
 }
-.prov-chip::before { content: ''; width: 6px; height: 6px; border-radius: 2px; background: currentColor; }
+.prov-chip::before { content: ''; width: 6px; height: 6px; border-radius: var(--radius-btn); background: currentColor; }
 .prov-extracted { background: var(--status-info-tint); color: var(--status-info-ink); }
 .prov-extracted::before { border-radius: 50%; }
 .prov-inferred { background: var(--status-caution-tint); color: var(--status-caution-ink); border: 1px dashed var(--status-caution); }
@@ -1987,7 +1987,7 @@ footer strong { color: var(--color-text-muted); }
 .risk-chip {
   display: inline-block;
   padding: 0.15rem 0.5rem;
-  border-radius: 4px;
+  border-radius: var(--radius-sm);
   font-size: var(--step--1);
   font-weight: 600;
 }
@@ -2182,7 +2182,7 @@ h1[tabindex="-1"], h2[tabindex="-1"], h3[tabindex="-1"] { outline: none; }
 h1[tabindex="-1"]:focus-visible, h2[tabindex="-1"]:focus-visible, h3[tabindex="-1"]:focus-visible {
   outline: 2px solid rgba(184, 120, 72, 0.45);
   outline-offset: 6px;
-  border-radius: 4px;
+  border-radius: var(--radius-sm);
 }
 
 /* the intake sheet: rules you write ON, like the case file */
@@ -2246,7 +2246,7 @@ h1[tabindex="-1"]:focus-visible, h2[tabindex="-1"]:focus-visible, h3[tabindex="-
   background: var(--color-surface);
   border: 1px solid var(--color-border);
   border-left: 3px solid rgba(184, 120, 72, 0.4);
-  border-radius: 4px;
+  border-radius: var(--radius-sm);
   padding: var(--space-5) var(--space-6);
   box-shadow: 2px 3px 0 rgba(30, 42, 32, 0.05);
   transform: rotate(-0.35deg);
@@ -2347,7 +2347,7 @@ h1[tabindex="-1"]:focus-visible, h2[tabindex="-1"]:focus-visible, h3[tabindex="-
   padding: 12px 28px; font-family: var(--font-display);
   font-size: var(--step-0); font-weight: 700; letter-spacing: 0.04em;
   color: var(--bg-body); background: var(--text-1);
-  border: 1px solid rgba(20, 22, 18, 0.55); border-radius: 2px; min-height: 44px;
+  border: 1px solid rgba(20, 22, 18, 0.55); border-radius: var(--radius-btn); min-height: 44px;
   box-shadow: 0 4px 0 rgba(20, 22, 18, 0.4);
   transition: transform var(--dur-1) var(--ease), box-shadow var(--dur-1) var(--ease), background-color var(--dur-2) var(--ease);
 }
@@ -2373,7 +2373,7 @@ h1[tabindex="-1"]:focus-visible, h2[tabindex="-1"]:focus-visible, h3[tabindex="-
 .rec-summary-section .analysis-item {
   background: var(--color-surface-2);
   border: 1px solid var(--color-border);
-  border-radius: 4px;
+  border-radius: var(--radius-sm);
   padding: 10px 14px;
   margin-bottom: 8px;
 }
@@ -2487,7 +2487,7 @@ h1[tabindex="-1"]:focus-visible, h2[tabindex="-1"]:focus-visible, h3[tabindex="-
   background: var(--status-danger-tint);
   border: 1px solid rgba(216, 64, 47, 0.30);
   border-left: 3px solid var(--status-danger);
-  border-radius: 4px;
+  border-radius: var(--radius-sm);
   padding: var(--space-3) var(--space-4);
   margin-bottom: var(--space-4);
 }
@@ -2641,15 +2641,19 @@ h1[tabindex="-1"]:focus-visible, h2[tabindex="-1"]:focus-visible, h3[tabindex="-
 /* plush: everything softens — radii grow, undersides become shadows,
    matte always (plush is not gel: no glow, no shine) */
 :root {
-  --radius: 10px;
-  --radius-lg: 14px;
-  --radius-xl: 18px;
-  --radius-sm: 10px;
-  --radius-btn: 12px;
-  --radius-tag: 8px;
+  /* the four radius ROLES (S+ census, PRD v2.2 alias map):
+     plate 3px (committed actions — the recorded law) · tile 8px ·
+     card 16px · chip full. --radius-lg/xl alias card; --radius-tag
+     aliases the EXISTING --radius-full (reused, not created). */
+  --radius: 16px;
+  --radius-lg: var(--radius);
+  --radius-xl: var(--radius);
+  --radius-sm: 8px;
+  --radius-btn: 3px;
+  --radius-tag: var(--radius-full);
 }
 .btn-primary, .btn-ink {
-  border-radius: 12px;
+  border-radius: var(--radius-btn);
   box-shadow: 0 3px 10px rgba(58, 53, 44, 0.18);
 }
 .btn-primary:hover, .btn-ink:hover { box-shadow: 0 5px 14px rgba(58, 53, 44, 0.2); }
@@ -2658,8 +2662,8 @@ h1[tabindex="-1"]:focus-visible, h2[tabindex="-1"]:focus-visible, h3[tabindex="-
 
 .panel { border-radius: var(--radius-xl); }
 .panel-inner { border-radius: calc(var(--radius-xl) - 3px); }
-.entry-card, .cat-card, .reminder-card, .sample-slip, .analysis-item { border-radius: 12px; }
-.icon-btn, .nav-btn, .example-chip, .due-badge { border-radius: 9px; }
+.entry-card, .cat-card, .reminder-card, .sample-slip, .analysis-item { border-radius: var(--radius); }
+.icon-btn, .nav-btn, .example-chip, .due-badge { border-radius: var(--radius-sm); }
 
 /* ═══ THE FELT LAW — depth = layer softness, never translucency.
    Layers are OPAQUE warm materials that stack like blankets on a desk:
@@ -2686,6 +2690,13 @@ h1[tabindex="-1"]:focus-visible, h2[tabindex="-1"]:focus-visible, h3[tabindex="-
 }
 .panel { box-shadow: var(--shadow-raised); }
 .entry-card, .cat-card, .reminder-card, .sample-slip, .lib-panel { box-shadow: var(--shadow-card); }
+
+/* paper edge: every card carries a woven 1px grain edge — texture as
+   material, not haze */
+.entry-card, .cat-card, .sample-slip, .contact-card {
+  background-image:
+    repeating-linear-gradient(90deg, rgba(120, 96, 60, 0.035) 0 1px, transparent 1px 3px);
+}
 
 /* L1 mats: panels rest on the desk */
 .panel { box-shadow: var(--fiber-light), var(--shadow-l1); }
@@ -3184,7 +3195,6 @@ a:focus-visible, button:focus-visible, [tabindex]:focus-visible,
 input:focus-visible, textarea:focus-visible, select:focus-visible {
   outline: 2px solid var(--color-focus-ring);
   outline-offset: 2px;
-  border-radius: 4px;
 }
 
 /* skip-link: first tab stop, visible, on the measure */
@@ -3197,3 +3207,20 @@ input:focus-visible, textarea:focus-visible, select:focus-visible {
   border-color: var(--border);
   font-weight: 500;
 }
+
+/* ── G004: the eyebrow is a rubber stamp thumped on the page ── */
+.eyebrow-stamp {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--status-caution-ink);
+  border: 1.5px solid currentColor;
+  outline: 1px solid currentColor;
+  outline-offset: 2px;
+  border-radius: 3px;
+  padding: 4px 10px;
+  transform: rotate(-1.2deg);
+  background: transparent;
+}
+[data-theme="dark"] .eyebrow-stamp { color: var(--ochre-ink-700); }

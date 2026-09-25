@@ -2541,3 +2541,24 @@ h1[tabindex="-1"]:focus-visible, h2[tabindex="-1"]:focus-visible, h3[tabindex="-
 
 /* the lamp hangs its shade a touch higher — light lands ON the work */
 .lamp-vignette { transform: translateY(-60%); }
+
+/* ── r6 wave 8 — final MiMo residuals ── */
+
+/* the featured card's naked green bar read as a glitch with the tape
+   gone: the featured card now carries a full warm border instead */
+.entry-card-primary {
+  border-top: 1px solid var(--border);
+  border-left: 3px solid var(--warm-medium);
+  box-shadow: var(--shadow-card), inset 0 1px 0 rgba(255, 255, 255, 0.55);
+}
+
+/* example chips must be findable at a glance on any card */
+.example-chip {
+  background: var(--warm-light);
+  border-color: rgba(201, 107, 26, 0.35);
+  color: var(--color-text);
+}
+[data-theme="dark"] .example-chip { border-color: rgba(240, 162, 79, 0.4); }
+
+/* the micro-label breathes in dark: spring-emerald, one step lighter */
+[data-theme="dark"] .eyebrow { color: #86dcb0; }

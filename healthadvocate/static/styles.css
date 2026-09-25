@@ -15,41 +15,41 @@
 :root {
   /* ── 1. Primitives + legacy-pinned tokens (literal values — the suite
         parses these as raw colors; they are the AA-proven base) ────── */
-  --bg-body: #faf8f5;
-  --bg-surface: #ffffff;
-  --bg-elevated: #f2f0eb;
-  --bg-muted: #eae7e1;
-  --bg-input: #f6f4f0;
+  --bg-body: #faf6ec;
+  --bg-surface: #fffdf7;
+  --bg-elevated: #f5efdf;
+  --bg-muted: #ece5d2;
+  --bg-input: #faf7ee;
 
-  --accent: #296a4e;
-  --accent-hover: #215841;
-  --accent-light: rgba(41, 106, 78, 0.08);
-  --accent-medium: rgba(41, 106, 78, 0.16);
+  --accent: #106b3f;
+  --accent-hover: #0c5732;
+  --accent-light: rgba(16, 107, 63, 0.09);
+  --accent-medium: rgba(16, 107, 63, 0.17);
 
-  --warm: #b87848;
-  --warm-light: rgba(184, 120, 72, 0.09);
-  --warm-medium: rgba(184, 120, 72, 0.16);
+  --warm: #d97a26;
+  --warm-light: rgba(217, 122, 38, 0.10);
+  --warm-medium: rgba(217, 122, 38, 0.18);
 
-  --coral: #b85548;
-  --coral-light: rgba(184, 85, 72, 0.09);
-  --coral-medium: rgba(184, 85, 72, 0.16);
+  --coral: #d8402f;
+  --coral-light: rgba(216, 64, 47, 0.09);
+  --coral-medium: rgba(216, 64, 47, 0.16);
 
-  --slate: #55749a;
-  --slate-light: rgba(85, 116, 154, 0.09);
-  --slate-medium: rgba(85, 116, 154, 0.16);
+  --slate: #3d6b9e;
+  --slate-light: rgba(61, 107, 158, 0.09);
+  --slate-medium: rgba(61, 107, 158, 0.16);
 
-  --text-1: #2a2a28;
-  --text-2: #6d6862;
+  --text-1: #1f2620;
+  --text-2: #5c6055;
   /* tertiary text must clear WCAG AA 4.5:1 on every light surface it sits on
      (body #faf8f5, surface #fff, elevated #f2f0eb, input #f6f4f0) */
-  --text-3: #6f6963;
-  --border: #e5e1da;
-  --border-light: #edebe6;
+  --text-3: #61645a;
+  --border: #e3dcc8;
+  --border-light: #ece7d6;
 
   /* status inks — text on tints, measured ≥4.5:1 on tint-over-every-surface */
-  --ochre-ink-700: #8f5a32;
-  --coral-ink-700: #96382c;
-  --slate-ink-700: #46618a;
+  --ochre-ink-700: #a35414;
+  --coral-ink-700: #b02f1f;
+  --slate-ink-700: #35567e;
 
   /* ── 2. Semantic tokens ───────────────────────────────────────────
      The legacy-pinned tokens above carry the literal values (suite parses
@@ -130,7 +130,7 @@
      moves; utility toggles are mono tags. No pill buttons anywhere. */
   --radius-btn: 3px;   /* the plate — near-square, like a form's action line */
   --radius-tag: 3px;   /* the mono tag — receipt voice */
-  --btn-edge: #1e4f3a;         /* plate underside (the pressed-paper edge) */
+  --btn-edge: #0a4a2b;         /* plate underside (the pressed-paper edge) */
   --btn-edge-danger: #7d2d23;
   --plate-shine: rgba(255, 255, 255, 0.22); /* top light catch on a pressed plate */
 
@@ -146,38 +146,38 @@
 
 /* ── Dark theme: tuned, not inverted ────────────────────────────── */
 [data-theme="dark"] {
-  --bg-body: #191714;
-  --bg-surface: #242119;
-  --bg-elevated: #1e1b16;
-  --bg-muted: #2d2a24;
-  --bg-input: #1e1b16;
+  --bg-body: #0f1712;
+  --bg-surface: #18231c;
+  --bg-elevated: #131d16;
+  --bg-muted: #1f2c22;
+  --bg-input: #131d16;
 
-  --accent: #6fb98d;
-  --accent-hover: #82ca9d;
-  --accent-light: rgba(111, 185, 141, 0.11);
-  --accent-medium: rgba(111, 185, 141, 0.20);
+  --accent: #4ecf8d;
+  --accent-hover: #63dba0;
+  --accent-light: rgba(78, 207, 141, 0.12);
+  --accent-medium: rgba(78, 207, 141, 0.22);
 
-  --warm: #dcae6b;
-  --warm-light: rgba(220, 174, 107, 0.11);
-  --warm-medium: rgba(220, 174, 107, 0.19);
+  --warm: #f0a24f;
+  --warm-light: rgba(240, 162, 79, 0.12);
+  --warm-medium: rgba(240, 162, 79, 0.20);
 
-  --coral: #d47a72;
-  --coral-light: rgba(212, 122, 114, 0.1);
-  --coral-medium: rgba(212, 122, 114, 0.17);
+  --coral: #f27059;
+  --coral-light: rgba(242, 112, 89, 0.12);
+  --coral-medium: rgba(242, 112, 89, 0.19);
 
-  --slate: #7a9dbe;
-  --slate-light: rgba(122, 157, 190, 0.1);
-  --slate-medium: rgba(122, 157, 190, 0.17);
+  --slate: #6fa8dc;
+  --slate-light: rgba(111, 168, 220, 0.11);
+  --slate-medium: rgba(111, 168, 220, 0.18);
 
-  --text-1: #e9e5de;
-  --text-2: #a8a399;
-  --text-3: #999581;
-  --border: #3a352c;
-  --border-light: #2d2a24;
+  --text-1: #f1ecdd;
+  --text-2: #b0ac9e;
+  --text-3: #94917f;
+  --border: #2c3a2f;
+  --border-light: #1f2c23;
 
-  --ochre-ink-700: #e7bd7f;
-  --coral-ink-700: #eba29a;
-  --slate-ink-700: #9cb9d8;
+  --ochre-ink-700: #f4b866;
+  --coral-ink-700: #f79b8b;
+  --slate-ink-700: #a5c8ea;
 
   --status-danger: var(--coral);
   --status-danger-ink: var(--coral-ink-700);
@@ -196,8 +196,8 @@
 
   /* the dark plate carries a dark underside, like a key in a lockplate —
      OPAQUE: a translucent edge reads as a soft pill at small sizes */
-  --btn-edge: #1b3d2b;
-  --btn-edge-danger: #6e2820;
+  --btn-edge: #073f24;
+  --btn-edge-danger: #8a2c1f;
   --plate-shine: rgba(255, 255, 255, 0.28);
 }
 
@@ -262,8 +262,8 @@ body::before {
   z-index: -1;
   pointer-events: none;
   background:
-    radial-gradient(1100px 720px at 20% -12%, rgba(196, 168, 122, 0.10), transparent 62%),
-    radial-gradient(820px 560px at 104% 112%, rgba(41, 106, 78, 0.05), transparent 58%);
+    radial-gradient(1100px 720px at 20% -12%, rgba(217, 122, 38, 0.08), transparent 62%),
+    radial-gradient(820px 560px at 104% 112%, rgba(16, 107, 63, 0.06), transparent 58%);
 }
 body::after {
   content: '';
@@ -276,8 +276,8 @@ body::after {
 }
 [data-theme="dark"] body::before {
   background:
-    radial-gradient(1200px 780px at 18% -14%, rgba(216, 190, 142, 0.13), transparent 64%),
-    radial-gradient(900px 620px at 104% 112%, rgba(111, 185, 141, 0.06), transparent 58%);
+    radial-gradient(1200px 780px at 18% -14%, rgba(240, 162, 79, 0.11), transparent 64%),
+    radial-gradient(900px 620px at 104% 112%, rgba(78, 207, 141, 0.05), transparent 58%);
 }
 [data-theme="dark"] body::after { opacity: 0.05; }
 
@@ -2332,7 +2332,7 @@ h1[tabindex="-1"]:focus-visible, h2[tabindex="-1"]:focus-visible, h3[tabindex="-
 .btn-ink:hover { transform: translateY(-1px); box-shadow: 0 5px 0 rgba(20, 22, 18, 0.4); }
 .btn-ink:active { transform: translateY(3px); box-shadow: 0 1px 0 rgba(20, 22, 18, 0.4); }
 .btn-ink:focus-visible { outline: 2px solid var(--color-focus-ring); outline-offset: 3px; }
-[data-theme="dark"] .btn-ink { background: #e8e2d4; color: #23231f; border-color: rgba(0,0,0,0.4); box-shadow: 0 4px 0 rgba(0,0,0,0.5); }
+[data-theme="dark"] .btn-ink { background: #f1ecdd; color: #14201a; border-color: rgba(0,0,0,0.4); box-shadow: 0 4px 0 rgba(0,0,0,0.55); }
 
 /* nav tiers: patient actions up top, reference shelf below */
 .nav-secondary {

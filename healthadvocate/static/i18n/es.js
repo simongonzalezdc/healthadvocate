@@ -103,4 +103,32 @@ HA.i18n.register('es', {
 
   /* footer */
   'footer.note_tail': 'está aquí para apoyar, no para reemplazar, la guía médica profesional. Siempre consulta a un profesional de la salud calificado para diagnóstico y tratamiento. Tu información se queda en tu dispositivo.',
+
+  /* F1a: estudio de carta de apelación */
+  'appeal.studio_head': 'Estudio de carta de apelación',
+  'appeal.studio_desc': 'Arma el expediente con tu carta de negación y un registro relacionado (factura, notas de terapia, referencia), agrega tus propias palabras y genera una carta de apelación completa con el modelo local. Cada dato de la carta se rastrea hasta tus propios documentos. La carta nunca sale de este dispositivo; descargarla es tu acción.',
+  'appeal.record_label': 'Registro relacionado (opcional — factura, notas, referencia)',
+  'appeal.record_ph': 'Pega la factura relacionada, las notas de terapia física o la referencia...',
+  'appeal.words_label': 'Tus propias palabras (opcional)',
+  'appeal.words_ph': 'Por qué crees que esta negación es injusta, con tus palabras...',
+  'appeal.generate': 'Generar carta de apelación',
+  'appeal.needs_denial': 'Primero pega la carta de negación arriba — el expediente se arma a partir de ella.',
+  'appeal.letter_head': 'Tu carta de apelación',
+  'appeal.inferred_label': 'INFERIDO — redactado por el modelo',
+  'appeal.assembled_label': 'armado en este dispositivo',
+  'appeal.model_note': 'Redactado por el modelo local a partir de tu expediente. INFERIDO — revísalo y edítalo antes de enviarlo.',
+  'appeal.assembled_note': 'El modelo local opcional está apagado, así que esta carta se armó en este dispositivo con los datos que nos diste — cada línea se rastrea hasta tus propios documentos. Revísala y edítala antes de enviarla.',
+  'appeal.needs_human_head': 'No se pudo clasificar el motivo de la negación.',
+  'appeal.needs_human_body': 'No se pudo identificar un único motivo con certeza a partir de tus documentos. La carta funciona sin él, pero nombrar tú mismo el motivo que declaró el plan la hará más sólida.',
+  'appeal.edit_label': 'Edita la carta (los cambios se quedan en este dispositivo)',
+  'appeal.download': 'Descargar .txt',
+  'appeal.print': 'Vista de impresión',
+  'appeal.downloaded': 'Carta descargada — nunca salió de tu dispositivo.',
+  'appeal.print_blocked': 'Permite las ventanas emergentes para usar la vista de impresión.',
+  'appeal.citations_head': 'De dónde sale cada dato de la carta',
+  'appeal.citations_note': 'Cada afirmación de la carta se rastrea hasta uno de estos elementos de tus propios documentos.',
+  'appeal.from_bill': 'Llevar esta factura al Estudio de carta de apelación',
+  'appeal.bill_attached': 'Factura adjuntada como registro relacionado en el Estudio de carta de apelación.',
+  'appeal.from_library': 'Carta de apelación',
+  'appeal.denial_attached': 'Elemento cargado — completa el texto de la negación y genera.',
 });

@@ -102,4 +102,32 @@ HA.i18n.register('en', {
 
   /* footer */
   'footer.note_tail': 'is here to support, not replace, professional medical guidance. Always consult a qualified healthcare provider for diagnosis and treatment. Your information stays on your device.',
+
+  /* F1a: appeal letter studio */
+  'appeal.studio_head': 'Appeal Letter Studio',
+  'appeal.studio_desc': 'Build the case file from your denial letter and a related record (bill, therapy notes, referral), add your own words, then generate a complete appeal letter with the local model. Every fact in the letter traces to your own documents. The letter never leaves this device; downloading it is your action.',
+  'appeal.record_label': 'Related record (optional — bill, notes, referral)',
+  'appeal.record_ph': 'Paste the related bill, physical therapy notes, or referral...',
+  'appeal.words_label': 'Your own words (optional)',
+  'appeal.words_ph': 'Why you believe this denial is wrong, in your words...',
+  'appeal.generate': 'Generate Appeal Letter',
+  'appeal.needs_denial': 'Paste the denial letter above first — the case file is built from it.',
+  'appeal.letter_head': 'Your appeal letter',
+  'appeal.inferred_label': 'INFERRED — model-drafted',
+  'appeal.assembled_label': 'assembled on this device',
+  'appeal.model_note': 'Drafted by the local model from your case file. INFERRED — review and edit before sending.',
+  'appeal.assembled_note': 'The optional local model is off, so this letter was assembled on this device from the facts you provided — every line traces to your own documents. Review and edit it before sending.',
+  'appeal.needs_human_head': 'The denial reason could not be classified.',
+  'appeal.needs_human_body': 'No single reason could be matched with certainty from your documents. The letter works without it, but naming the plan’s stated reason yourself will make it stronger.',
+  'appeal.edit_label': 'Edit the letter (changes stay on this device)',
+  'appeal.download': 'Download .txt',
+  'appeal.print': 'Print view',
+  'appeal.downloaded': 'Letter downloaded — it never left your device.',
+  'appeal.print_blocked': 'Allow pop-ups to use the print view.',
+  'appeal.citations_head': 'What the letter draws from',
+  'appeal.citations_note': 'Every claim in the letter traces to one of these items from your own documents.',
+  'appeal.from_bill': 'Take this bill to the Appeal Letter Studio',
+  'appeal.bill_attached': 'Bill attached as the related record in the Appeal Letter Studio.',
+  'appeal.from_library': 'Appeal letter',
+  'appeal.denial_attached': 'Item loaded — finish the denial text and generate.',
 });

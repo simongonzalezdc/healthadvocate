@@ -425,6 +425,18 @@
         <textarea id="denial-patient-info" rows="3" placeholder="Relevant medical history, prior treatments, why this service was needed..."></textarea>
         <button type="button" class="btn-primary" data-action="fight-denial">Fight Denial</button>
         <div id="denial-results" class="results" aria-live="polite" role="status"></div>
+
+        <!-- F1a: Appeal Letter Studio — case file + editable, downloadable letter -->
+        <div class="appeal-studio">
+          <h3 data-i18n="appeal.studio_head">Appeal Letter Studio</h3>
+          <p class="panel-desc" data-i18n="appeal.studio_desc">Build the case file from your denial letter and a related record (bill, therapy notes, referral), add your own words, then generate a complete appeal letter with the local model. Every fact in the letter traces to your own documents. The letter never leaves this device; downloading it is your action.</p>
+          <label for="appeal-record-input" class="field-label" data-i18n="appeal.record_label">Related record (optional — bill, notes, referral)</label>
+          <textarea id="appeal-record-input" rows="4" data-i18n-placeholder="appeal.record_ph" placeholder="Paste the related bill, physical therapy notes, or referral..."></textarea>
+          <label for="appeal-words-input" class="field-label" data-i18n="appeal.words_label">Your own words (optional)</label>
+          <textarea id="appeal-words-input" rows="3" data-i18n-placeholder="appeal.words_ph" placeholder="Why you believe this denial is wrong, in your words..."></textarea>
+          <button type="button" class="btn-primary" data-action="generate-appeal-letter" data-i18n="appeal.generate">Generate Appeal Letter</button>
+          <div id="appeal-letter-results" class="results" aria-live="polite" role="status"></div>
+        </div>
       </div></div>
     </section>
 

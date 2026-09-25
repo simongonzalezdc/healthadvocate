@@ -92,9 +92,19 @@ const HA = {
     } else {
       stepsHtml = `<p>HealthAdvocate would not answer this on its own, and no allowed next steps were attached — treat this as a decision for a person.</p>`;
     }
+    /* why it refused + gate state ride along when the typed wrapper
+       carries them (restored 2026-09-24 — the banner had dropped both) */
+    const reason = typeof decision.reason === 'string' && decision.reason.trim()
+      ? `<p class="needs-human-reason">${this.escapeHtml(decision.reason)}</p>`
+      : '';
+    const gate = typeof decision.gate_state === 'string' && decision.gate_state.trim()
+      ? `<p class="muted">gate: ${this.escapeHtml(decision.gate_state)}</p>`
+      : '';
     return `<div class="flag-item flag-danger needs-human-banner" role="alert" data-testid="needs-human-banner">
       <p><strong>This needs a human decision.</strong></p>
+      ${reason}
       ${stepsHtml}
+      ${gate}
       ${this.HUMAN_RESOURCES_HTML}
     </div>`;
   },
@@ -124,6 +134,12 @@ const HA = {
   escapeHtml(str) {
     if (typeof str !== 'string') return '';
     return str.replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
+  },
+
+  /* i18n shorthand for JS-built markup (the i18n frame registers HA.i18n;
+     before it loads, or in bare-sandbox tests, fall back to the key) */
+  t(key, vars) {
+    return this.i18n ? this.i18n.t(key, vars) : key;
   },
 
   /* ── View Routing ── */
@@ -587,6 +603,10 @@ const HA = {
       html += `</ul></div>`;
     }
     if (!data.explanation && !data.suspicious_charges?.length && !data.red_flags?.length) html = '<p class="result-text">No bill issues detected. Try pasting a more detailed bill.</p>';
+    /* F1a: the bill is evidence — offer to carry it into the appeal studio */
+    html += `<div class="cat-links" style="margin-top:12px">
+      <button type="button" class="btn-secondary" data-action="appeal-from-bill">${this.escapeHtml(this.t('appeal.from_bill'))}</button>
+    </div>`;
     el.innerHTML = html;
   },
 
@@ -641,6 +661,110 @@ const HA = {
       html += `</div>`;
     }
     el.innerHTML = html;
+  },
+
+  /* ── F1a: Appeal Letter Studio (case file → editable letter) ── */
+
+  async generateAppealLetter(event) {
+    const btn = event?.currentTarget;
+    const denial = document.getElementById('denial-input')?.value || '';
+    const el = document.getElementById('appeal-letter-results');
+    if (!el) return;
+    if (!denial.trim()) { this.showEmpty(el, this.t('appeal.needs_denial')); return; }
+    const record_text = document.getElementById('appeal-record-input')?.value || '';
+    const user_words = document.getElementById('appeal-words-input')?.value || '';
+    this.setLoading(el);
+    this._setBtnBusy(btn, true);
+    try {
+      const data = await this.api('insurance/appeal-letter', { denial_text: denial, record_text, user_words });
+      this._appealLetterData = data;
+      this.renderAppealLetter(data, el);
+    } catch (err) { this.showError(el, err.message); } finally { this._setBtnBusy(btn, false); }
+  },
+
+  renderAppealLetter(data, el) {
+    if (!data.letter) {
+      el.innerHTML = `<div class="flag-item flag-warning">${this.escapeHtml(data.note || this.t('appeal.needs_denial'))}</div>`;
+      return;
+    }
+    const chip = data.model_generated
+      ? this.provChip('inferred', this.t('appeal.inferred_label'))
+      : this.provChip('extracted', this.t('appeal.assembled_label'));
+    const originNote = data.model_generated
+      ? `<p class="condition-confidence">${this.escapeHtml(this.t('appeal.model_note'))}</p>`
+      : `<p class="condition-confidence">${this.escapeHtml(data.note || this.t('appeal.assembled_note'))}</p>`;
+    const needsHuman = data.needs_human
+      ? `<div class="flag-item flag-danger" role="alert" data-testid="appeal-needs-human">
+           <p><strong>${this.escapeHtml(this.t('appeal.needs_human_head'))}</strong></p>
+           <p>${this.escapeHtml(this.t('appeal.needs_human_body'))}</p>
+         </div>`
+      : '';
+    const citations = (data.citations || []).map(c =>
+      `<li>${this.escapeHtml(c.fact)} — <em>${this.escapeHtml(c.source)}</em></li>`).join('');
+    el.innerHTML = `
+      <div class="result-section">
+        <h3>${this.escapeHtml(this.t('appeal.letter_head'))} ${chip}</h3>
+        ${originNote}
+        ${needsHuman}
+        <label class="field-label" for="appeal-letter-text">${this.escapeHtml(this.t('appeal.edit_label'))}</label>
+        <textarea id="appeal-letter-text" class="intake-sheet" rows="14">${this.escapeHtml(data.letter)}</textarea>
+        <div class="cat-links" style="margin-top:10px">
+          <button type="button" class="btn-primary btn-sm" data-action="appeal-letter-download">${this.escapeHtml(this.t('appeal.download'))}</button>
+          <button type="button" class="btn-secondary" data-action="appeal-letter-print">${this.escapeHtml(this.t('appeal.print'))}</button>
+        </div>
+      </div>
+      <div class="result-section">
+        <h3>${this.escapeHtml(this.t('appeal.citations_head'))}</h3>
+        <p class="condition-confidence">${this.escapeHtml(this.t('appeal.citations_note'))}</p>
+        <ol>${citations}</ol>
+      </div>`;
+  },
+
+  downloadAppealLetter() {
+    const text = document.getElementById('appeal-letter-text')?.value
+      || this._appealLetterData?.letter || '';
+    if (!text) return;
+    const blob = new Blob([text], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'healthadvocate-appeal-letter.txt';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+    this.toast(this.t('appeal.downloaded'));
+  },
+
+  printAppealLetter() {
+    const text = document.getElementById('appeal-letter-text')?.value
+      || this._appealLetterData?.letter || '';
+    if (!text) return;
+    const w = window.open('', '_blank');
+    if (!w) { this.toast(this.t('appeal.print_blocked')); return; }
+    w.document.write(`<pre style="font-family:Georgia,serif;font-size:12pt;white-space:pre-wrap;margin:2cm">${this.escapeHtml(text)}</pre>`);
+    w.document.close();
+    w.focus();
+    w.print();
+  },
+
+  appealFromBill() {
+    const billText = document.getElementById('bill-input')?.value || '';
+    const record = document.getElementById('appeal-record-input');
+    if (record && billText.trim() && !record.value.trim()) record.value = billText;
+    this.showView('insurance');
+    this.toast(this.t('appeal.bill_attached'));
+    const studio = document.getElementById('appeal-letter-results');
+    if (studio) this.focusInto(studio.closest('.appeal-studio') || studio);
+  },
+
+  appealFromLibrary(item) {
+    const denial = document.getElementById('denial-input');
+    if (denial && !denial.value.trim()) {
+      denial.value = `${item.title} — ${item.desc}`;
+    }
+    this.showView('insurance');
+    this.toast(this.t('appeal.denial_attached'));
   },
 
   /* ── Drug Checker ── */
@@ -853,7 +977,7 @@ const HA = {
     if (data.explanation) html += `<div class="result-section"><h3>Summary</h3><p class="result-text">${this.escapeHtml(data.explanation)}</p></div>`;
     if (data.credibility) {
       const credClass = data.credibility === 'low' ? 'flag-danger' : data.credibility === 'high' ? 'flag-info' : 'flag-warning';
-      html += `<div class="result-section"><h3>Credibility</h3><div class="flag-item ${credClass}">Credibility: ${data.credibility.toUpperCase()}</div></div>`;
+      html += `<div class="result-section"><h3>Credibility</h3><div class="flag-item ${credClass}">Credibility: ${this.escapeHtml(String(data.credibility).toUpperCase())}</div></div>`;
     }
     if (data.scientific_context) html += `<div class="result-section"><h3>Scientific Context</h3><p class="result-text">${this.escapeHtml(data.scientific_context)}</p></div>`;
     if (data.recommended_action) html += `<div class="result-section"><h3>Recommended Action</h3><p class="result-text">${this.escapeHtml(data.recommended_action)}</p></div>`;
@@ -972,9 +1096,9 @@ const HA = {
 
   renderTrackDashboard(data, el) {
     let html = `<div class="dashboard-stats">
-      <div class="stat-card"><div class="stat-number">${data.active}</div><div class="stat-label">Active</div></div>
-      <div class="stat-card"><div class="stat-number">${data.monitoring}</div><div class="stat-label">Monitoring</div></div>
-      <div class="stat-card"><div class="stat-number">${data.resolved}</div><div class="stat-label">Resolved</div></div>
+      <div class="stat-card"><div class="stat-number">${this.escapeHtml(String(data.active))}</div><div class="stat-label">Active</div></div>
+      <div class="stat-card"><div class="stat-number">${this.escapeHtml(String(data.monitoring))}</div><div class="stat-label">Monitoring</div></div>
+      <div class="stat-card"><div class="stat-number">${this.escapeHtml(String(data.resolved))}</div><div class="stat-label">Resolved</div></div>
     </div>`;
 
     if (data.tracks?.length) {
@@ -1131,6 +1255,7 @@ const HA = {
       desc: '12 min · full transcript on device. Rep confirmed the appeal address and said a callback is expected with the reference number.',
       entities: [['denial — not medically necessary', 'disease'], ['$1,200.00', 'pii'], ['Dr. M. Patel', 'pii'], ['appeal window', 'pii']],
       links: [['Insurance', 'insurance'], ['Bills', 'bills']],
+      tags: ['denial'],
     },
     {
       id: 'c2', kind: 'appointment', when: 'Sep 30 · 9:40', matter: 'Knee treatment',
@@ -1153,6 +1278,7 @@ const HA = {
       entities: [['30-day appeal window', 'pii'], ['Aetna', 'pii']],
       links: [['Insurance', 'insurance']],
       prov: ['inferred', 'computed from the letter'],
+      tags: ['denial'],
     },
   ],
 
@@ -1204,6 +1330,7 @@ const HA = {
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="7" y1="17" x2="17" y2="7"/><polyline points="7 7 17 7 17 17"/></svg>
           ${this.escapeHtml(l[0])}
         </button>`).join('')}
+        ${(it.tags || []).includes('denial') ? `<button type="button" class="xref-chip" data-action="appeal-from-library" data-cat-id="${this.escapeHtml(it.id)}">${this.escapeHtml(this.t('appeal.from_library'))}</button>` : ''}
         ${it.kind === 'call' ? `<button type="button" class="xref-chip xref-danger" data-action="recorder-delete" data-cat-id="${this.escapeHtml(it.id)}" aria-label="Delete ${this.escapeHtml(it.title)}">Delete</button>` : ''}
       </div>
     </article>`).join('');
@@ -1696,6 +1823,17 @@ document.addEventListener('DOMContentLoaded', () => {
       HA.decodeBill(buttonEvent);
     } else if (action === 'fight-denial') {
       HA.fightDenial(buttonEvent);
+    } else if (action === 'generate-appeal-letter') {
+      HA.generateAppealLetter(buttonEvent);
+    } else if (action === 'appeal-letter-download') {
+      HA.downloadAppealLetter();
+    } else if (action === 'appeal-letter-print') {
+      HA.printAppealLetter();
+    } else if (action === 'appeal-from-bill') {
+      HA.appealFromBill();
+    } else if (action === 'appeal-from-library') {
+      const item = HA.CATALOG.find(it => it.id === btn.dataset.catId);
+      if (item) HA.appealFromLibrary(item);
     } else if (action === 'check-drug') {
       HA.checkDrug(buttonEvent);
     } else if (action === 'prepare-appointment') {

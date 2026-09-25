@@ -633,6 +633,9 @@ ASSESSOR_ALLOWLIST = frozenset({
     "translate_discharge",   # core/discharge_translator.py:10
     "check_drug",            # core/drug_checker.py:10
     "create_brief",          # core/second_opinion.py:10
+    # D119 F1a (2026-09-24): a new engine-first surface, registered
+    # consciously — the pin exists to force exactly this decision.
+    "generate_appeal_letter",  # core/appeal_letter.py
 })
 
 
@@ -695,7 +698,10 @@ class AssessorAllowlistTests(unittest.TestCase):
             self.assertEqual(async_defs, [], py.name)
 
     def test_allowlist_is_the_nine_pinned_entries(self):
-        self.assertEqual(len(ASSESSOR_ALLOWLIST), 9)
+        # Nine at J2 freeze +1 for D119 F1a (generate_appeal_letter,
+        # 2026-09-24). Kept as an explicit count so every future change
+        # to the surface set updates this line on purpose.
+        self.assertEqual(len(ASSESSOR_ALLOWLIST), 10)
 
 
 # ---------------------------------------------------------------------------

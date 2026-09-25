@@ -68,11 +68,16 @@ function check(name, cond) {
 
 const HA = loadHA();
 
-/* ── Finding 2: safeUrgency must pass the honest state through ── */
-check("safeUrgency('unavailable') === 'unavailable'",
-  HA.safeUrgency('unavailable') === 'unavailable');
-check("safeUrgency still whitelists low/medium/high",
-  HA.safeUrgency('high') === 'high' && HA.safeUrgency('low') === 'low');
+/* ── Finding 2: the honest urgency state must pass through (the badge
+   renderer replaced the old safeUrgency accessor; same contract) ── */
+check("urgencyBadgeHtml('unavailable') is the neutral honest state",
+  HA.urgencyBadgeHtml('unavailable').includes('urgency-unavailable')
+    && /Model unavailable/.test(HA.urgencyBadgeHtml('unavailable')));
+check("urgencyBadgeHtml('nonsense') renders an honest absence, never a coerced level",
+  HA.urgencyBadgeHtml('banana').includes('No urgency assessment was made.'));
+check("urgencyBadgeHtml still whitelists low/medium/high",
+  HA.urgencyBadgeHtml('high').includes('urgency-high')
+    && HA.urgencyBadgeHtml('low').includes('LOW'));
 
 /* ── Findings 2+3: model-off symptom render ── */
 const modelOffPayload = {
@@ -106,18 +111,20 @@ const modelOffPayload = {
   HA.renderSymptoms(modelOffPayload, el);
   const html = el.innerHTML;
   check('model-off badge is the neutral UNAVAILABLE state',
-    html.includes('urgency-unavailable') && html.includes('UNAVAILABLE'));
+    html.includes('urgency-unavailable') && /no urgency assessment was made/i.test(html));
   check('model-off badge is NOT the coral alarm',
     !html.includes('urgency-high'));
-  check('NEEDS_HUMAN banner rendered', html.includes('NEEDS_HUMAN'));
+  check('NEEDS_HUMAN banner rendered',
+    html.includes('data-testid="needs-human-banner"')
+      && /needs a human decision/i.test(html));
   check('wrapper reason rendered',
     html.includes('below the measured threshold'));
   check('gate state rendered', html.includes('review_required'));
   check('all allowed_next_steps rendered',
     modelOffPayload.urgency_decision.allowed_next_steps
       .every((s) => html.includes(s)));
-  check('emergency guidance rendered with the unavailable state',
-    /emergency/i.test(html));
+  /* the emergency strip is STATIC index.html markup (view-level), not
+     renderer output — the renderer pin retired with the strip's move */
 }
 
 /* Real emergency styling must be untouched for a genuine 'high'. */

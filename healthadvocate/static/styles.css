@@ -2562,3 +2562,131 @@ h1[tabindex="-1"]:focus-visible, h2[tabindex="-1"]:focus-visible, h3[tabindex="-
 
 /* the micro-label breathes in dark: spring-emerald, one step lighter */
 [data-theme="dark"] .eyebrow { color: #86dcb0; }
+
+/* ═══════════════════════════════════════════════════════════════════
+   THE READING NOOK — art-direction pivot (CEO: plush blankets, tea,
+   a soft plant; everything in the directory aligned to one narrative)
+   The app is a warm armchair where you sort frightening paperwork with
+   a friend: oat paper, sage plant-green ink, honey-tea light, cocoa
+   text, plush edges, nothing clinical.
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* dark nook: cocoa night, sage and tea instead of emerald murk */
+[data-theme="dark"] {
+  --bg-body: #191612;
+  --bg-surface: #241f18;
+  --bg-elevated: #1e1913;
+  --bg-muted: #2e2820;
+  --bg-input: #1e1913;
+
+  --accent: #a8bf8f;
+  --accent-hover: #b9cca4;
+  --accent-light: rgba(168, 191, 143, 0.13);
+  --accent-medium: rgba(168, 191, 143, 0.22);
+
+  --warm: #e0a961;
+  --warm-light: rgba(224, 169, 97, 0.13);
+  --warm-medium: rgba(224, 169, 97, 0.21);
+
+  --coral: #dd8a70;
+  --coral-light: rgba(221, 138, 112, 0.13);
+  --coral-medium: rgba(221, 138, 112, 0.20);
+
+  --slate: #93aec6;
+  --slate-light: rgba(147, 174, 198, 0.12);
+  --slate-medium: rgba(147, 174, 198, 0.19);
+
+  --text-1: #f0e9da;
+  --text-2: #c6beac;
+  --text-3: #a39b89;
+  --border: #3a332a;
+  --border-light: #2b251d;
+
+  --ochre-ink-700: #e6bc7f;
+  --coral-ink-700: #e8a48e;
+  --slate-ink-700: #abc2d6;
+
+  --btn-edge: #3a332a;
+  --btn-edge-danger: #7e4433;
+}
+
+/* light nook: one place, so theme layering stays honest */
+:root:not([data-theme="dark"]) {
+  --btn-edge: #57714f;
+  --btn-edge-danger: #8a4a38;
+}
+
+/* plush: everything softens — radii grow, undersides become shadows,
+   matte always (plush is not gel: no glow, no shine) */
+:root {
+  --radius: 10px;
+  --radius-lg: 14px;
+  --radius-xl: 18px;
+  --radius-sm: 10px;
+  --radius-btn: 12px;
+  --radius-tag: 8px;
+}
+.btn-primary, .btn-ink {
+  border-radius: 12px;
+  box-shadow: 0 3px 10px rgba(58, 53, 44, 0.18);
+}
+.btn-primary:hover, .btn-ink:hover { box-shadow: 0 5px 14px rgba(58, 53, 44, 0.2); }
+.btn-primary:active, .btn-ink:active { box-shadow: 0 1px 5px rgba(58, 53, 44, 0.16); transform: translateY(1px); }
+[data-theme="dark"] .btn-primary, [data-theme="dark"] .btn-ink { box-shadow: 0 3px 10px rgba(8, 6, 4, 0.4); }
+
+.panel { border-radius: var(--radius-xl); }
+.panel-inner { border-radius: calc(var(--radius-xl) - 3px); }
+.entry-card, .cat-card, .reminder-card, .sample-slip, .analysis-item { border-radius: 12px; }
+.icon-btn, .nav-btn, .example-chip, .due-badge { border-radius: 9px; }
+
+/* soft warm shadows site-wide */
+:root { --shadow-card: 0 1px 2px rgba(58, 53, 44, 0.06), 0 6px 22px rgba(58, 53, 44, 0.08); }
+[data-theme="dark"] { --shadow-card: 0 1px 2px rgba(8, 6, 4, 0.3), 0 8px 26px rgba(8, 6, 4, 0.28); }
+
+/* the desk lamp re-inks to the nook: cocoa lines by day, tea-light by night */
+.lamp-vignette .lk-line { stroke: rgba(58, 53, 44, 0.72); }
+.lamp-vignette .lk-desk { stroke: rgba(58, 53, 44, 0.5); }
+.lamp-vignette .lk-fill { fill: rgba(201, 138, 61, 0.24); }
+.lamp-vignette .lk-cone { fill: rgba(201, 138, 61, 0.10); }
+.lamp-vignette .lk-cone-inner { fill: rgba(201, 138, 61, 0.08); }
+.lamp-vignette .lk-pool { fill: rgba(201, 138, 61, 0.30); }
+.lamp-vignette .lk-bulb { fill: rgba(201, 138, 61, 0.85); }
+[data-theme="dark"] .lamp-vignette .lk-line { stroke: rgba(224, 169, 97, 0.8); }
+[data-theme="dark"] .lamp-vignette .lk-desk { stroke: rgba(224, 169, 97, 0.55); }
+[data-theme="dark"] .lamp-vignette .lk-fill { fill: rgba(224, 169, 97, 0.28); }
+[data-theme="dark"] .lamp-vignette .lk-cone { fill: rgba(224, 169, 97, 0.10); }
+[data-theme="dark"] .lamp-vignette .lk-pool { fill: rgba(224, 169, 97, 0.22); }
+[data-theme="dark"] .lamp-vignette .lk-bulb { fill: rgba(224, 169, 97, 0.9); }
+
+/* the focus pen writes sage now */
+h1[tabindex="-1"]:focus-visible, h2[tabindex="-1"]:focus-visible, h3[tabindex="-1"]:focus-visible {
+  text-decoration-color: var(--warm);
+}
+
+/* the sill: potted pothos + steaming tea, drawn in the theme's ink */
+.nook-still-life {
+  position: absolute;
+  bottom: 6%;
+  right: 3.5%;
+  width: 210px;
+  height: auto;
+  pointer-events: none;
+  opacity: 0.95;
+}
+.nk-line { stroke: rgba(58, 53, 44, 0.7); stroke-width: 2.5; }
+.nk-wood { stroke: rgba(58, 53, 44, 0.45); stroke-width: 3; }
+.nk-leaf { stroke: #6b8767; stroke-width: 2.5; }
+.nk-leaf2 { stroke: #7d9a72; stroke-width: 2.5; }
+.nk-steam { stroke: rgba(201, 138, 61, 0.6); stroke-width: 2.5; animation: steam-rise 5.5s ease-in-out infinite; }
+.nk-steam2 { animation-delay: 1.6s; }
+@keyframes steam-rise {
+  0%, 100% { opacity: 0.35; transform: translateY(0); }
+  50% { opacity: 0.8; transform: translateY(-3px); }
+}
+[data-theme="dark"] .nk-line { stroke: rgba(224, 169, 97, 0.75); }
+[data-theme="dark"] .nk-wood { stroke: rgba(224, 169, 97, 0.4); }
+[data-theme="dark"] .nk-leaf { stroke: #a8bf8f; }
+[data-theme="dark"] .nk-leaf2 { stroke: #b9cca4; }
+[data-theme="dark"] .nk-steam { stroke: rgba(224, 169, 97, 0.55); }
+@media (max-width: 900px) { .nook-still-life { display: none; } }
+@media (prefers-reduced-motion: reduce) { .nk-steam { animation: none; } }

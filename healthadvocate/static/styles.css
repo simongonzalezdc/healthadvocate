@@ -2096,13 +2096,9 @@ body::after {
   transform: rotate(-1.2deg);
 }
 
-/* the nearest date gets a hand-drawn underline (curved, warm) */
-.reminder-card:first-child .reminder-when strong {
-  border-bottom: 2px solid var(--warm);
-  border-radius: 0 0 45% 45% / 0 0 14px 8px;
-  display: inline-block;
-  padding: 0 3px;
-}
+/* the swoosh under the date is RETIRED: isolated at zoom it read as a
+   stray logo arc (CEO: "what in the amazon prime is this") — the stamp
+   already carries the state; the date carries itself */
 
 /* ledger rows arrive like pages turning: staggered settle */
 .reminder-card { animation: row-settle 0.5s var(--ease-out) backwards; }
@@ -2922,3 +2918,7 @@ html[data-palette="blue"][data-theme="dark"] {
 .pal-rose { background: #b56a80; }
 .pal-moss { background: #7a9a5a; }
 .pal-blue { background: #6f95b8; }
+
+/* reminder tray chrome goes quiet: paper rules and neutral edges only —
+   color belongs to the stamps and the states, not to the furniture */
+.night-tray .reminder-card { border-left-color: var(--border) !important; }

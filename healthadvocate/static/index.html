@@ -118,19 +118,19 @@
     <section id="view-home" class="view active">
       <div class="hero reveal">
         <svg class="lamp-vignette" viewBox="0 0 240 250" fill="none" aria-hidden="true" focusable="false">
-          <!-- the desk lamp: dome shade, arm on its base, light falling on the work -->
-          <path class="cone" d="M94 96 L58 208 L182 208 L146 96 Z" fill="rgba(240,201,138,0.08)"/>
-          <path class="cone" d="M102 96 L82 208 L158 208 L138 96 Z" fill="rgba(240,201,138,0.07)"/>
-          <ellipse class="pool" cx="120" cy="208" rx="60" ry="8" fill="rgba(240,201,138,0.20)"/>
-          <path d="M84 74 Q120 44 156 74 L146 97 Q120 82 94 97 Z" fill="rgba(240,201,138,0.30)" stroke="rgba(240,201,138,0.85)" stroke-width="2.5" stroke-linejoin="round"/>
-          <circle cx="120" cy="101" r="5.5" fill="rgba(240,201,138,0.9)"/>
-          <path d="M120 202 V97" stroke="rgba(240,201,138,0.8)" stroke-width="2.5" stroke-linecap="round"/>
-          <path d="M104 214 v-7 q0-5 5-5 h22 q5 0 5 5 v7 Z" stroke="rgba(240,201,138,0.8)" stroke-width="2.5" stroke-linejoin="round"/>
-          <path d="M36 214 H204" stroke="rgba(240,201,138,0.65)" stroke-width="2.5" stroke-linecap="round"/>
-          <path d="M92 204 h36" stroke="rgba(240,201,138,0.55)" stroke-width="3" stroke-linecap="round"/>
-          <path d="M98 197 h26" stroke="rgba(240,201,138,0.4)" stroke-width="2.5" stroke-linecap="round"/>
-          <path d="M152 214 v-13 q0-3 3-3 h11 q3 0 3 3 v13" stroke="rgba(240,201,138,0.7)" stroke-width="2.5" stroke-linejoin="round"/>
-          <path d="M169 204 q9 1 0 8" stroke="rgba(240,201,138,0.7)" stroke-width="2.5" stroke-linecap="round"/>
+          <!-- the desk lamp: theme-inked lines, one pool of lamplight on the work -->
+          <path class="lk-cone" d="M94 96 L58 208 L182 208 L146 96 Z"/>
+          <path class="lk-cone lk-cone-inner" d="M102 96 L82 208 L158 208 L138 96 Z"/>
+          <ellipse class="lk-pool" cx="120" cy="208" rx="60" ry="8"/>
+          <path class="lk-line lk-fill" d="M84 74 Q120 44 156 74 L146 97 Q120 82 94 97 Z" stroke-linejoin="round"/>
+          <circle class="lk-bulb" cx="120" cy="101" r="5.5"/>
+          <path class="lk-line" d="M120 202 V97" stroke-linecap="round"/>
+          <path class="lk-line" d="M104 214 v-7 q0-5 5-5 h22 q5 0 5 5 v7 Z" stroke-linejoin="round"/>
+          <path class="lk-line lk-desk" d="M36 214 H204" stroke-linecap="round"/>
+          <path class="lk-desk" d="M92 204 h36" stroke-linecap="round" stroke-width="3"/>
+          <path class="lk-desk" d="M98 197 h26" stroke-linecap="round"/>
+          <path class="lk-line" d="M152 214 v-13 q0-3 3-3 h11 q3 0 3 3 v13" stroke-linejoin="round"/>
+          <path class="lk-line" d="M169 204 q9 1 0 8" stroke-linecap="round"/>
         </svg>
         <span class="eyebrow" data-i18n="home.eyebrow">Free · Open source · Private by design</span>
         <h1 data-i18n="home.title">You deserve to understand your care.</h1>

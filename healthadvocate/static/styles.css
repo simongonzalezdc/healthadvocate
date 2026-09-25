@@ -2506,3 +2506,27 @@ h1[tabindex="-1"]:focus-visible, h2[tabindex="-1"]:focus-visible, h3[tabindex="-
 /* breathing room: the form panel claims its width calmly */
 .view > .panel { max-width: 1000px; margin-inline: auto; }
 .hero { padding: var(--space-7) 0 var(--space-7); }
+
+/* ── r6 wave 6 — MiMo findings: lamp inked per theme; tape retired ── */
+
+/* the lamp draws in the theme's ink: green-black linework on paper by
+   day, lamplight gold by night — visible in BOTH, washed in neither */
+.lamp-vignette .lk-line { stroke: rgba(31, 38, 32, 0.78); stroke-width: 2.5; }
+.lamp-vignette .lk-desk { stroke: rgba(31, 38, 32, 0.55); stroke-width: 2.5; }
+.lamp-vignette .lk-fill { fill: rgba(201, 107, 26, 0.22); }
+.lamp-vignette .lk-cone { fill: rgba(201, 107, 26, 0.10); }
+.lamp-vignette .lk-cone-inner { fill: rgba(201, 107, 26, 0.08); }
+.lamp-vignette .lk-pool { fill: rgba(201, 107, 26, 0.28); animation: lamp-breathe 9.5s ease-in-out infinite; }
+.lamp-vignette .lk-bulb { fill: rgba(201, 107, 26, 0.85); }
+[data-theme="dark"] .lamp-vignette .lk-line { stroke: rgba(240, 201, 138, 0.85); }
+[data-theme="dark"] .lamp-vignette .lk-desk { stroke: rgba(240, 201, 138, 0.6); }
+[data-theme="dark"] .lamp-vignette .lk-fill { fill: rgba(240, 201, 138, 0.30); }
+[data-theme="dark"] .lamp-vignette .lk-cone { fill: rgba(240, 201, 138, 0.09); }
+[data-theme="dark"] .lamp-vignette .lk-cone-inner { fill: rgba(240, 201, 138, 0.07); }
+[data-theme="dark"] .lamp-vignette .lk-pool { fill: rgba(240, 201, 138, 0.20); }
+[data-theme="dark"] .lamp-vignette .lk-bulb { fill: rgba(240, 201, 138, 0.9); }
+
+/* the tape motif is retired: three judges independently read it as an
+   unstyled artifact — the stamps, handwriting, and lamp carry the
+   humanity instead */
+.sample-slip::before, .entry-card-primary::before, .entry-card-primary::after { display: none; }

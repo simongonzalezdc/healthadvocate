@@ -2530,3 +2530,14 @@ h1[tabindex="-1"]:focus-visible, h2[tabindex="-1"]:focus-visible, h3[tabindex="-
    unstyled artifact — the stamps, handwriting, and lamp carry the
    humanity instead */
 .sample-slip::before, .entry-card-primary::before, .entry-card-primary::after { display: none; }
+
+/* ── r6 wave 7 — MiMo residuals ── */
+
+/* the hand writes darker: hairline stroke thickens the glyph edges so
+   the margin notes read at a glance (MiMo + GPT both flagged thinness) */
+.margin-note, .hand-note, .chips-note, .entry-sample, .sample-slip-head, .lib-note {
+  -webkit-text-stroke: 0.35px currentColor;
+}
+
+/* the lamp hangs its shade a touch higher — light lands ON the work */
+.lamp-vignette { transform: translateY(-60%); }

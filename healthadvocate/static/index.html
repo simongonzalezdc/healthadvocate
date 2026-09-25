@@ -115,12 +115,12 @@
       <div class="hero reveal">
         <svg class="lamp-vignette" viewBox="0 0 190 230" fill="none" aria-hidden="true" focusable="false">
           <!-- the lamp: line-drawn arm + shade, and its pool of light -->
-          <circle class="pool" cx="95" cy="168" r="54" fill="rgba(216,190,142,0.10)"/>
-          <circle class="pool" cx="95" cy="168" r="34" fill="rgba(216,190,142,0.12)"/>
-          <path d="M95 168 L95 60" stroke="rgba(216,190,142,0.5)" stroke-width="2" stroke-linecap="round"/>
-          <path d="M95 60 Q60 52 52 24" stroke="rgba(216,190,142,0.5)" stroke-width="2" stroke-linecap="round"/>
-          <path d="M36 26 Q44 8 68 14 L62 38 Q46 42 36 26 Z" fill="rgba(216,190,142,0.16)" stroke="rgba(216,190,142,0.55)" stroke-width="2" stroke-linejoin="round"/>
-          <path d="M62 38 L74 64" stroke="rgba(216,190,142,0.55)" stroke-width="2" stroke-linecap="round"/>
+          <circle class="pool" cx="95" cy="168" r="54" fill="rgba(216,190,142,0.15)"/>
+          <circle class="pool" cx="95" cy="168" r="34" fill="rgba(216,190,142,0.19)"/>
+          <path d="M95 168 L95 60" stroke="rgba(216,190,142,0.72)" stroke-width="2.5" stroke-linecap="round"/>
+          <path d="M95 60 Q60 52 52 24" stroke="rgba(216,190,142,0.72)" stroke-width="2.5" stroke-linecap="round"/>
+          <path d="M36 26 Q44 8 68 14 L62 38 Q46 42 36 26 Z" fill="rgba(216,190,142,0.26)" stroke="rgba(216,190,142,0.8)" stroke-width="2.5" stroke-linejoin="round"/>
+          <path d="M62 38 L74 64" stroke="rgba(216,190,142,0.75)" stroke-width="2.5" stroke-linecap="round"/>
         </svg>
         <span class="eyebrow">Free · Open source · Private by design</span>
         <h1>You deserve to understand your care.</h1>
@@ -144,6 +144,14 @@
             </ol>
             <p class="hand-note">nothing you write leaves this device.</p>
             <button type="button" class="btn-primary" data-goto="symptoms">Start a symptom check</button>
+            <aside class="sample-slip sample-slip-compact" aria-label="Sample of an urgent read">
+              <div class="sample-slip-head"><span class="slip-stamp slip-stamp-danger">SAMPLE</span>what an urgent read looks like</div>
+              <p class="slip-input">“chest pain and shortness of breath for the past hour”</p>
+              <div class="slip-line slip-urgency"><span class="slip-key">urgency</span>
+                <p><span class="stamp-mini stamp-mini-danger">emergency</span> Don't wait on this app — call your local emergency number now.</p></div>
+              <div class="slip-line"><span class="slip-key">why</span>
+                <p>These symptoms together can mean something serious. A straight answer beats a comforting one.</p></div>
+            </aside>
             <div class="entry-card-meta">
               <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>Private by design</span>
               <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6L9 17l-5-5"/></svg>No account needed</span>
@@ -227,10 +235,29 @@
           </div>
         </div>
         <label for="symptom-input" class="field-label">What are you experiencing?</label>
-        <textarea id="symptom-input" rows="4" placeholder="e.g., I've been having chest pain and shortness of breath for the past hour..."></textarea>
-        <button type="button" class="btn-primary" data-action="assess-symptoms">Assess Symptoms</button>
+        <div class="example-chips">
+          <span class="chips-note">say it however it comes out —</span>
+          <button type="button" class="example-chip" data-example="I've had a sore throat and low fever for two days, and it hurts to swallow.">sore throat, two days</button>
+          <button type="button" class="example-chip" data-example="Dizzy and can't focus since yesterday. I started a new blood pressure medication last week.">dizzy since a new medication</button>
+          <button type="button" class="example-chip" data-example="Chest pain and shortness of breath for the past hour.">chest pain, one hour</button>
+        </div>
+        <textarea id="symptom-input" rows="5" class="intake-sheet" placeholder="e.g., I've been having chest pain and shortness of breath for the past hour..."></textarea>
+        <div class="assess-row">
+          <button type="button" class="btn-primary" data-action="assess-symptoms">Assess Symptoms</button>
+          <p class="emergency-note">If this feels like an emergency, skip the form — <strong>call your local emergency number now.</strong></p>
+        </div>
         <div id="symptom-results" class="results" aria-live="polite" role="status"></div>
       </div></div>
+      <aside class="sample-slip" aria-label="Sample of a plain-language read">
+        <div class="sample-slip-head"><span class="slip-stamp">SAMPLE</span>what a read looks like</div>
+        <p class="slip-input">“sore throat and low fever for two days, worse when swallowing”</p>
+        <div class="slip-line"><span class="slip-key">what this sounds like</span>
+          <p>Viral throat infection is the most common cause; strep is possible and worth a quick test.</p></div>
+        <div class="slip-line slip-urgency"><span class="slip-key">urgency</span>
+          <p><span class="stamp-mini">routine</span> See a clinician within a few days if it worsens. Immediate care for trouble breathing or swallowing.</p></div>
+        <div class="slip-line"><span class="slip-key">next steps</span>
+          <p>Book a same-week visit · Warm fluids and rest · Come back with any new symptom.</p></div>
+      </aside>
     </section>
 
     <!-- Document Decoder -->

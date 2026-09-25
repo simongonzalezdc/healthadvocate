@@ -1590,6 +1590,14 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('btn-home').addEventListener('click', () => HA.showView('home'));
   document.getElementById('btn-theme').addEventListener('click', () => HA.toggleTheme());
 
+  /* Example chips: tap one to start the intake sheet with that sentence */
+  document.addEventListener('click', (e) => {
+    const chip = e.target.closest('.example-chip');
+    if (!chip) return;
+    const ta = document.getElementById('symptom-input');
+    if (ta) { ta.value = chip.dataset.example; ta.focus(); }
+  });
+
   /* Entry card clicks (cards that are themselves controls; the featured
      first card delegates to its CTA button instead) */
   document.querySelectorAll('.entry-card[data-goto]').forEach(card => {

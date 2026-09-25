@@ -2137,3 +2137,159 @@ body::after {
   body::before, .lamp-vignette .pool { animation: none; }
   .reminder-state, .reminder-card { animation: none; }
 }
+
+/* ═══════════════════════════════════════════════════════════════════
+   r6 — the desk reaches the inner views (visual-ralph round 6)
+   findings that drove this layer: the symptom form was a bare stub in
+   a desert; view headings carried the browser's harsh blue focus box;
+   the hero card had a dead void below its button; light theme floated
+   white cards on near-white paper.
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* light theme: give the paper real depth so white cards sit ON it */
+:root { --bg-body: #f6f2ea; }
+
+/* programmatic heading focus (WCAG 2.4.3 focusInto) wears ink, not
+   the browser's default box — warm, quiet, clearly ours */
+h1[tabindex="-1"], h2[tabindex="-1"], h3[tabindex="-1"] { outline: none; }
+h1[tabindex="-1"]:focus-visible, h2[tabindex="-1"]:focus-visible, h3[tabindex="-1"]:focus-visible,
+h1[tabindex="-1"]:focus, h2[tabindex="-1"]:focus, h3[tabindex="-1"]:focus {
+  outline: 2px solid rgba(184, 120, 72, 0.45);
+  outline-offset: 6px;
+  border-radius: 4px;
+}
+
+/* the intake sheet: rules you write ON, like the case file */
+.intake-sheet {
+  background-color: var(--color-input);
+  background-image: repeating-linear-gradient(180deg, transparent 0 27px, var(--color-border-soft) 27px 28px);
+  background-attachment: local;
+  line-height: 28px;
+  padding: 4px 16px 8px;
+  min-height: 148px;
+}
+
+/* example chips: quoted starting points, not buttons-for-navigation */
+.example-chips {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 8px;
+  margin-bottom: var(--space-3);
+}
+.chips-note {
+  font-family: var(--font-hand);
+  font-size: 15px;
+  color: var(--color-text-muted);
+}
+.example-chip {
+  font-family: var(--font-ui, inherit);
+  font-size: 13.5px;
+  color: var(--color-text);
+  background: var(--color-surface-2);
+  border: 1px solid var(--color-border);
+  border-radius: 3px;
+  padding: 6px 12px;
+  min-height: 32px;
+  cursor: pointer;
+  transition: border-color var(--dur-2) var(--ease), background-color var(--dur-2) var(--ease), transform var(--dur-1) var(--ease);
+}
+.example-chip:hover { border-color: var(--warm); background: var(--warm-light); transform: translateY(-1px); }
+.example-chip:focus-visible { outline: 2px solid var(--color-focus-ring); outline-offset: 2px; }
+
+/* the assess row: action and honesty sit together */
+.assess-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-4);
+}
+.assess-row .btn-primary { margin-bottom: 0; }
+.emergency-note {
+  font-size: var(--step--1);
+  color: var(--color-text-muted);
+  margin: 0;
+  max-width: 44ch;
+}
+.emergency-note strong { color: var(--coral-ink-700); }
+
+/* the sample slip: a filed case note that teaches what the product
+   gives back — taped to the desk like everything else */
+.sample-slip {
+  margin-top: var(--space-5);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-left: 3px solid rgba(184, 120, 72, 0.4);
+  border-radius: 4px;
+  padding: var(--space-5) var(--space-6);
+  box-shadow: 2px 3px 0 rgba(30, 42, 32, 0.05);
+  transform: rotate(-0.35deg);
+  position: relative;
+  max-width: 100%;
+}
+.sample-slip::before {
+  content: "";
+  position: absolute;
+  top: -9px;
+  left: 30px;
+  width: 74px;
+  height: 18px;
+  background: rgba(216, 190, 142, 0.28);
+  border-left: 2px dashed rgba(233, 229, 222, 0.25);
+  border-right: 2px dashed rgba(233, 229, 222, 0.25);
+  transform: rotate(-2deg);
+}
+.sample-slip-head {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-family: var(--font-hand);
+  font-size: 16px;
+  color: var(--color-text-muted);
+  margin-bottom: var(--space-3);
+}
+.slip-stamp, .stamp-mini {
+  display: inline-block;
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ochre-ink-700);
+  background: transparent;
+  border: 1.5px solid currentColor;
+  outline: 1px solid currentColor;
+  outline-offset: 2px;
+  border-radius: 3px;
+  padding: 2px 8px;
+  transform: rotate(-2deg);
+}
+.stamp-mini { font-size: 10px; padding: 1px 6px; margin-right: 4px; }
+.slip-stamp-danger, .stamp-mini-danger { color: var(--coral-ink-700); }
+.slip-input {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-size: var(--step-0);
+  color: var(--color-text);
+  margin: 0 0 var(--space-4);
+}
+.slip-line { margin-bottom: var(--space-3); }
+.slip-line:last-child { margin-bottom: 0; }
+.slip-line p { margin: 2px 0 0; font-size: var(--step-0); color: var(--color-text); line-height: 1.6; }
+.slip-key {
+  display: inline-block;
+  font-size: 11.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--ochre-ink-700);
+}
+.slip-urgency p { color: var(--color-text); }
+.sample-slip-compact { padding: var(--space-4) var(--space-5); margin-top: var(--space-5); margin-bottom: var(--space-2); }
+.sample-slip-compact .slip-input { margin-bottom: var(--space-3); }
+.sample-slip-compact .slip-line p { font-size: var(--step--1); }
+
+@media (max-width: 640px) {
+  .sample-slip { transform: none; }
+  .assess-row { flex-direction: column; align-items: stretch; }
+}

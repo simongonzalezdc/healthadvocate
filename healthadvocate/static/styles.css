@@ -2332,13 +2332,13 @@ h1[tabindex="-1"]:focus-visible, h2[tabindex="-1"]:focus-visible, h3[tabindex="-
 [data-theme="dark"] .btn-ink { background: #e8e2d4; color: #23231f; border-color: rgba(0,0,0,0.4); box-shadow: 0 4px 0 rgba(0,0,0,0.5); }
 
 /* nav tiers: patient actions up top, reference shelf below */
-.nav-btn-sub {
+.nav-secondary {
   font-size: 12.5px;
   color: var(--text-2);
   padding: 5px 10px;
 }
-.nav-btn-sub:hover { color: var(--text-1); }
-.nav-btn-sub.active { color: var(--accent); }
+.nav-secondary:hover { color: var(--text-1); }
+.nav-secondary.active { color: var(--accent); }
 
 /* disabled primary: reads as resting, not as a pale suggestion */
 .btn-primary:disabled { opacity: 0.5; filter: saturate(0.55); }
@@ -2360,3 +2360,6 @@ h1[tabindex="-1"]:focus-visible, h2[tabindex="-1"]:focus-visible, h3[tabindex="-
 .cat-card:has(.cat-kind-appointment) { border-left-color: rgba(41, 106, 78, 0.45); }
 .cat-card:has(.cat-kind-document), .cat-card:has(.cat-kind-bill) { border-left-color: rgba(85, 116, 154, 0.45); }
 .cat-card:has(.cat-kind-reminder), .cat-card:has(.cat-kind-computed) { border-left-color: rgba(184, 85, 72, 0.45); }
+
+/* language switcher: same focus contract as its sibling icon buttons */
+.icon-lang-toggle:focus-visible { outline: 2px solid var(--color-focus-ring); outline-offset: 2px; }

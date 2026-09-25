@@ -907,7 +907,7 @@ textarea, input[type="text"], input[type="search"], select {
   min-height: 48px; /* touch floor */
   transition: border-color var(--dur-2) var(--ease), box-shadow var(--dur-2) var(--ease);
 }
-textarea::placeholder, input::placeholder { color: var(--color-text-subtle); }
+textarea::placeholder, input::placeholder { color: var(--text-2); }
 textarea:focus, input:focus, select:focus {
   outline: none;
   border-color: var(--color-primary);
@@ -2451,7 +2451,7 @@ h1[tabindex="-1"]:focus-visible, h2[tabindex="-1"]:focus-visible, h3[tabindex="-
 /* nav tiers read as tiers: patient actions, then a quiet reference shelf */
 #main-nav { row-gap: 2px; }
 .nav-btn { font-weight: 600; min-height: 44px; display: inline-flex; align-items: center; }
-.nav-secondary { font-weight: 400; font-size: 12px; color: var(--text-3); padding: 4px 9px; }
+.nav-secondary { font-weight: 500; font-size: 13px; color: var(--text-2); padding: 6px 10px; }
 .nav-secondary:hover { color: var(--text-1); }
 .nav-secondary.active { color: var(--accent); }
 
@@ -2475,7 +2475,7 @@ h1[tabindex="-1"]:focus-visible, h2[tabindex="-1"]:focus-visible, h3[tabindex="-
   align-items: center;
   gap: 2px 4px;
 }
-.nav-more-row .nav-btn { font-size: 12px; color: var(--text-3); padding: 4px 9px; font-weight: 400; }
+.nav-more-row .nav-btn { font-size: 13px; color: var(--text-2); padding: 6px 10px; font-weight: 500; }
 .nav-more-row .nav-btn:hover { color: var(--text-1); }
 .nav-more-row .nav-btn.active { color: var(--accent); }
 
@@ -3334,3 +3334,12 @@ h2[tabindex="-1"]:focus-visible { outline: none; }
    work, in the hand voice at its lawful size (>=16px via the art layer) */
 .panel-inner .hand-note { display: inline-block; margin: -4px 0 var(--space-4); }
 #view-coverage .hand-note { display: inline-block; margin: var(--space-1) 0 var(--space-4); }
+
+/* ── S+ round-3: restore the theme dots — the round-2 regex over-match
+   deleted their color rules and every swatch but gold rendered as a gray
+   placeholder ('loading/broken' in the judges' words). PM regression,
+   owned and pinned. ── */
+.pal-gold { background: var(--pal-dot-gold); }
+.pal-rose { background: var(--pal-dot-rose); }
+.pal-moss { background: var(--pal-dot-moss); }
+.pal-blue { background: var(--pal-dot-blue); }

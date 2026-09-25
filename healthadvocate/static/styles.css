@@ -26,9 +26,9 @@
   --accent-light: rgba(16, 107, 63, 0.09);
   --accent-medium: rgba(16, 107, 63, 0.17);
 
-  --warm: #d97a26;
-  --warm-light: rgba(217, 122, 38, 0.10);
-  --warm-medium: rgba(217, 122, 38, 0.18);
+  --warm: #c96b1a;
+  --warm-light: rgba(201, 107, 26, 0.10);
+  --warm-medium: rgba(201, 107, 26, 0.18);
 
   --coral: #d8402f;
   --coral-light: rgba(216, 64, 47, 0.09);
@@ -262,7 +262,7 @@ body::before {
   z-index: -1;
   pointer-events: none;
   background:
-    radial-gradient(1100px 720px at 20% -12%, rgba(217, 122, 38, 0.08), transparent 62%),
+    radial-gradient(1100px 720px at 20% -12%, rgba(201, 107, 26, 0.08), transparent 62%),
     radial-gradient(820px 560px at 104% 112%, rgba(16, 107, 63, 0.06), transparent 58%);
 }
 body::after {

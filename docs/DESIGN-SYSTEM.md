@@ -469,3 +469,27 @@ reminders → PWA (manifest/SW/icons/meta) → visual audit loop (screenshots of
 both themes, judged against this spec + the honesty laws, minimum 3 rounds; final shots in
 `docs/design/screenshots/`) → suite green → specs
 (`docs/CALL-RECORDER-SPEC.md`, `docs/PROACTIVE-CATALOG-SPEC.md`).
+
+## §0b Interview addendum — golden-hour revision (2026-09-24 evening)
+
+The CEO's round verdicts ("empty and cheap" → "5 years old" → "broken and
+ugly" → **"the colors ARE NASTY"**) are direct evidence against the original
+`color_mode` answer: the beige/ochre family read as dust — muted, low-chroma,
+institutional. Per the interview method (answers carry consequences; a failed
+consequence re-opens the dimension), `color_mode` is RE-ANSWERED; the other
+eight dimensions hold.
+
+| Dimension | Evidence | Decision | Status |
+| --- | --- | --- | --- |
+| color_mode (re-opened) | CEO verdicts ×4; every external judge flagged mud/wash; old pair `#b87848 on #faf8f5` measured 2.9:1 and read as dust | **Dominant hue: emerald ink (light #106b3f / dark #4ecf8d). Accent job: marigold lamp-light carries warmth, caution, and the hand (light #c96b1a / dark #f0a24f); coral reserved for danger; slate for information. Light/dark commitment: BOTH first-class — light "clinic at golden hour" (warm cream #faf6ec), dark "the desk at night, lamp lit" (green-black #0f1712, chroma restored).** | committed |
+| aesthetic (touched) | the golden-hour wash + lamp cone strengthen the phrase | "a caseworker's night desk, lamp lit at golden hour" | committed |
+
+Measured pairs (WCAG 2.x, rendered values): 24/24 PASS — light text-1 14.35:1,
+text-2 5.97:1, text-3 5.59:1, white-on-accent 6.57:1, ochre-ink 4.94:1,
+accent-on-body 6.09:1, warm-on-body 3.47:1; dark text-1 15.44:1, text-2 9.89:1,
+text-3 6.61:1, ink-on-accent 9.23:1, accent-on-body 9.23:1, warm 8.67:1.
+Full table + script receipt: docs/design/color-system-golden-hour.md.
+
+Independent external review (CEO order): GLM-5.3-Flash (zcode lane) +
+gpt-5.6-sol (codex lane) + claude-opus-latest (kilo lane) judge the same
+shots blind; convergent findings feed waves. Chromium AND WebKit capture both.

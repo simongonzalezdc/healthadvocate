@@ -46,3 +46,14 @@ margin notes), drawn, not photographed. Fallback: the existing icon system
 - [x] Every asset: source=self-drawn, rights=ours, alt decisions recorded
 - [x] Narrow composition reviewed (annotations gate at 640px)
 - [x] No placeholder/imagined assets — all layers are code in this diff
+
+## Addendum — golden hour (2026-09-24 evening)
+
+The desk now sits at golden hour: cream paper lit by a marigold lamp whose
+cone actually falls on the work; emerald ink for everything the product says;
+the night shift (dark theme) is a green-black room with a lit lamp — spring
+emerald accents, no murk. The lamp grew a visible cone and pool and moved to
+inhabit the hero's right half (the trio's dead-zone finding). Handwritten
+notes are pen ink (warm ochre), not pencil gray. Tape stays on the featured
+card only. Focus is the caseworker's pen: a warm underline beneath the words,
+never a box.

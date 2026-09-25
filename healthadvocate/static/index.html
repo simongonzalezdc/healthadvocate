@@ -113,9 +113,19 @@
     <!-- Home View -->
     <section id="view-home" class="view active">
       <div class="hero reveal">
+        <svg class="lamp-vignette" viewBox="0 0 190 230" fill="none" aria-hidden="true" focusable="false">
+          <!-- the lamp: line-drawn arm + shade, and its pool of light -->
+          <circle class="pool" cx="95" cy="168" r="54" fill="rgba(216,190,142,0.10)"/>
+          <circle class="pool" cx="95" cy="168" r="34" fill="rgba(216,190,142,0.12)"/>
+          <path d="M95 168 L95 60" stroke="rgba(216,190,142,0.5)" stroke-width="2" stroke-linecap="round"/>
+          <path d="M95 60 Q60 52 52 24" stroke="rgba(216,190,142,0.5)" stroke-width="2" stroke-linecap="round"/>
+          <path d="M36 26 Q44 8 68 14 L62 38 Q46 42 36 26 Z" fill="rgba(216,190,142,0.16)" stroke="rgba(216,190,142,0.55)" stroke-width="2" stroke-linejoin="round"/>
+          <path d="M62 38 L74 64" stroke="rgba(216,190,142,0.55)" stroke-width="2" stroke-linecap="round"/>
+        </svg>
         <span class="eyebrow">Free · Open source · Private by design</span>
         <h1>You deserve to understand your care.</h1>
         <p>Navigate symptoms, decode bills, fight insurance denials, and advocate for your family. Everything stays private on your device.</p>
+        <p class="margin-note">you're not alone in this.</p>
         <div class="hero-actions">
           <button type="button" class="btn-primary btn-lg" data-goto="symptoms">Describe your symptoms</button>
           <button type="button" class="btn-ghost" data-goto="insurance">Fight a denial</button>
@@ -132,6 +142,7 @@
               <li><span class="entry-step-n">2</span>Get a plain-language read, with urgency called out honestly</li>
               <li><span class="entry-step-n">3</span>Leave with next steps you can actually act on</li>
             </ol>
+            <p class="hand-note">nothing you write leaves this device.</p>
             <button type="button" class="btn-primary" data-goto="symptoms">Start a symptom check</button>
             <div class="entry-card-meta">
               <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>Private by design</span>

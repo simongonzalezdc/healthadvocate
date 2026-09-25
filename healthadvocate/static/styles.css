@@ -1986,3 +1986,154 @@ footer strong { color: var(--color-text-muted); }
   .flag-item, .needs-human-banner { border-left-width: 3px; }
   .btn-primary, .btn-danger { border: 1px solid ButtonText; }
 }
+
+/* ═════════════════════════════════════════════════════════════════
+   ART DIRECTION LAYER (r5, 2026-09-24 — board: ART-DIRECTION-BOARD)
+   The caseworker's night desk: lamplight, paper, stamps, margin notes.
+   Every layer is code (self-authored); no external assets, ever.
+   ═════════════════════════════════════════════════════════════════ */
+
+:root { --font-hand: "Bradley Hand", "Chalkboard SE", "Marker Felt", "Segoe Print", cursive; }
+
+/* ── 1. LAMPLIGHT — the page is a lit place, and the light lives ── */
+body::before { animation: lamp-breathe 9.5s ease-in-out infinite; }
+@keyframes lamp-breathe { 0%, 100% { opacity: 1; } 50% { opacity: 0.8; } }
+
+/* paper gets real tooth: grain up + a fiber-fleck pass */
+body::after {
+  opacity: 0.075;
+  background-image:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='f'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23f)'/%3E%3C/svg%3E"),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='340' height='340'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.16' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+/* the display is lit by the lamp: warm ink gradient, top-left lit */
+@supports (-webkit-background-clip: text) {
+  [data-theme="dark"] .hero h1 {
+    background: linear-gradient(168deg, #f6ecd9 0%, #ead9ba 42%, #cdbd9d 82%, #b3a483 100%);
+    -webkit-background-clip: text; background-clip: text;
+    -webkit-text-fill-color: transparent;
+    filter: drop-shadow(0 1px 0 rgba(0, 0, 0, 0.4));
+  }
+}
+
+/* ── 2. PAPER — the lit task is held down with masking tape; the
+      reminder list is ledger paper with a margin rule ── */
+.entry-card-primary::after {
+  content: '';
+  position: absolute; top: -11px; left: 36px;
+  width: 96px; height: 22px;
+  background: rgba(216, 190, 142, 0.30);
+  border-left: 2px dashed rgba(233, 229, 222, 0.25);
+  border-right: 2px dashed rgba(233, 229, 222, 0.25);
+  transform: rotate(-2.4deg);
+  pointer-events: none;
+}
+[data-theme="light"] .entry-card-primary::after { background: rgba(196, 168, 122, 0.38); }
+
+.coming-up {
+  position: relative;
+  border-left: 2px solid rgba(212, 122, 114, 0.32);
+  padding-left: var(--space-5);
+}
+.coming-up::before {
+  content: '';
+  position: absolute; inset: 0;
+  background-image: repeating-linear-gradient(180deg, transparent 0 27px, var(--color-border-soft) 27px 28px);
+  opacity: 0.45;
+  pointer-events: none;
+  border-radius: inherit;
+}
+
+/* ── 3. STAMPS — statuses are acts, not chips: double-ring rubber
+      stamps, ink-colored per state, thumped onto the page ── */
+.reminder-state {
+  background: transparent !important;
+  border: 1.5px solid currentColor;
+  outline: 1px solid currentColor;
+  outline-offset: 2px;
+  border-radius: 3px;
+  transform: rotate(-2deg);
+  opacity: 0.94;
+  padding: 5px 10px;
+  animation: stamp-in 0.42s cubic-bezier(0.2, 1.4, 0.4, 1) backwards;
+}
+.reminder-state[data-state-class] { /* no-op hook for future per-state ink */ }
+.reminder-card[data-state="due-soon"] .reminder-state,
+.reminder-card[data-state="overdue"] .reminder-state { color: var(--status-danger-ink); }
+.reminder-card[data-state="done"] .reminder-state { color: var(--accent); }
+.reminder-card[data-state="denied"] .reminder-state { color: var(--status-danger-ink); }
+@keyframes stamp-in {
+  0% { transform: rotate(-6deg) scale(1.16); opacity: 0; }
+  60% { opacity: 0.96; }
+  100% { transform: rotate(-2deg) scale(1); opacity: 0.94; }
+}
+
+.due-badge {
+  border: 1.5px solid currentColor;
+  outline: 1px solid currentColor;
+  outline-offset: 2px;
+  background: transparent;
+  transform: rotate(-1.6deg);
+}
+
+/* ── 4. HUMANITY — one handwritten margin note per view; a human
+      underlined the date that matters ── */
+.margin-note {
+  font-family: var(--font-hand);
+  font-size: 1.1rem;
+  line-height: 1.5;
+  color: var(--color-text-muted);
+  transform: rotate(-1.4deg);
+  margin: var(--space-3) 0 0;
+}
+.hero .margin-note { max-width: 34ch; margin-left: var(--space-2); }
+.entry-steps + .btn-primary { margin-top: var(--space-2); }
+.hand-note {
+  font-family: var(--font-hand);
+  font-size: 1rem;
+  color: var(--color-text-subtle);
+  transform: rotate(-1.2deg);
+}
+
+/* the nearest date gets a hand-drawn underline (curved, warm) */
+.reminder-card:first-child .reminder-when strong {
+  border-bottom: 2px solid var(--warm);
+  border-radius: 0 0 45% 45% / 0 0 14px 8px;
+  display: inline-block;
+  padding: 0 3px;
+}
+
+/* ledger rows arrive like pages turning: staggered settle */
+.reminder-card { animation: row-settle 0.5s var(--ease-out) backwards; }
+.reminder-card:nth-child(2) { animation-delay: 0.08s; }
+.reminder-card:nth-child(3) { animation-delay: 0.16s; }
+.reminder-card:nth-child(4) { animation-delay: 0.24s; }
+@keyframes row-settle {
+  0% { opacity: 0; transform: translateY(10px); }
+  100% { opacity: 1; transform: none; }
+}
+
+/* ── the lamp itself: a line-drawn pool of light beside the hero ── */
+.lamp-vignette {
+  position: absolute;
+  top: -20px; right: 4%;
+  width: 190px; height: 230px;
+  pointer-events: none;
+  opacity: 0.85;
+}
+.lamp-vignette .pool { animation: lamp-breathe 9.5s ease-in-out infinite; }
+
+@media (max-width: 900px) { .lamp-vignette { display: none; } }
+
+/* annotations are margin metaphors: they need margin */
+@media (max-width: 640px) {
+  .hero .margin-note { transform: none; }
+}
+
+/* art direction honors the motion law: with reduced motion the desk
+   is still, and everything is simply THERE */
+@media (prefers-reduced-motion: reduce) {
+  body::before, .lamp-vignette .pool { animation: none; }
+  .reminder-state, .reminder-card { animation: none; }
+}

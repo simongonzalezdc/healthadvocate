@@ -146,7 +146,8 @@
   --ease: cubic-bezier(0.32, 0.72, 0, 1);
   --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
 
-  --max-w: 920px;
+  --grid-max: 920px;      /* THE measure — every container aligns to it */
+  --col-label: 200px;     /* shared label column: library + directory rows */
 }
 
 /* ── Dark theme: tuned, not inverted ────────────────────────────── */
@@ -317,7 +318,7 @@ header.inner {
 }
 
 .header-inner {
-  max-width: var(--max-w);
+  max-width: var(--grid-max);
   margin: 0 auto;
   padding: var(--space-4) 28px;
   display: flex;
@@ -393,7 +394,7 @@ header.inner {
 
 /* ── Navigation (mobile-first scroll rail) ─── */
 nav {
-  max-width: var(--max-w);
+  max-width: var(--grid-max);
   margin: 0 auto;
   padding: 0 28px var(--space-3);
   display: flex; gap: 2px;
@@ -442,7 +443,7 @@ nav::-webkit-scrollbar { display: none; }
 
 /* ── Main ─── */
 main {
-  max-width: var(--max-w);
+  max-width: var(--grid-max);
   margin: 0 auto;
   padding: 40px 28px;
 }
@@ -512,11 +513,13 @@ main {
 /* ── Entry Cards (Asymmetric Bento) ─── */
 .entry-grid {
   display: grid;
-  grid-template-columns: 1.3fr 1fr;
+  grid-template-columns: 1fr 1fr;
   grid-template-rows: auto auto;
-  gap: var(--space-4);
+  gap: var(--space-5);
   margin-top: var(--space-7);
 }
+/* the featured card spans the full measure; its siblings split it equally */
+.entry-card-primary { grid-column: 1 / -1; }
 
 .entry-card {
   background: var(--color-surface);
@@ -1836,6 +1839,9 @@ body.is-recording { padding-bottom: 88px; }
   color: var(--color-text-subtle);
 }
 .contact-fields { display: grid; gap: 6px; margin-bottom: var(--space-3); }
+/* G001: one label column across every row-list surface; actions right-rail */
+.contact-field { grid-template-columns: var(--col-label) 1fr auto; align-items: baseline; }
+.row-actions { display: inline-flex; gap: var(--space-2); justify-self: end; }
 .contact-field {
   display: flex; align-items: baseline; gap: var(--space-2); flex-wrap: wrap;
   font-size: var(--step--1);
@@ -1891,7 +1897,7 @@ footer {
   padding: 56px 28px;
   color: var(--color-text-muted);
   font-size: var(--step--1);
-  max-width: var(--max-w);
+  max-width: var(--grid-max);
   margin: 0 auto;
   border-top: 1px solid var(--color-border);
   line-height: 1.6;
@@ -2514,7 +2520,7 @@ h1[tabindex="-1"]:focus-visible, h2[tabindex="-1"]:focus-visible, h3[tabindex="-
 }
 
 /* breathing room: the form panel claims its width calmly */
-.view > .panel { max-width: 1000px; margin-inline: auto; }
+.view > .panel { max-width: var(--grid-max); margin-inline: auto; }
 .hero { padding: var(--space-7) 0 var(--space-7); }
 
 /* ── r6 wave 6 — MiMo findings: lamp inked per theme; tape retired ── */

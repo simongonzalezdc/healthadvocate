@@ -1457,11 +1457,11 @@ const HA = {
       <div class="contact-fields">
         ${c.fields.map(f => `<div class="contact-field">
           <span class="k">${this.escapeHtml(f.k)}</span>
-          <span class="v">${f.href ? `<a href="${this.escapeHtml(f.href)}">${this.escapeHtml(f.v)}</a>` : this.escapeHtml(f.v)}</span>
+          <span class="v">${f.href ? `<a href="${this.escapeHtml(f.href)}">${this.escapeHtml(f.v)}</a>` : this.escapeHtml(f.v)}
           ${f.prov === 'confirmed' ? this.provChip('confirmed', PROV_LABEL.confirmed)
             : f.prov === 'extracted' ? this.provChip('extracted', f.from || PROV_LABEL.extracted)
-            : this.provChip('inferred', (f.from ? 'inferred · ' + f.from : PROV_LABEL.inferred))}
-          ${f.prov !== 'confirmed' ? `<button type="button" class="xref-chip" data-action="dir-confirm-field" data-contact="${this.escapeHtml(c.id)}" data-field="${this.escapeHtml(f.k)}">Confirm</button>` : ''}
+            : this.provChip('inferred', (f.from ? 'inferred · ' + f.from : PROV_LABEL.inferred))}</span>
+          <span class="row-actions">${f.prov !== 'confirmed' ? `<button type="button" class="xref-chip" data-action="dir-confirm-field" data-contact="${this.escapeHtml(c.id)}" data-field="${this.escapeHtml(f.k)}">Confirm</button>` : ''}</span>
         </div>`).join('')}
       </div>
       <div class="contact-actions">

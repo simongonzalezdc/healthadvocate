@@ -3139,3 +3139,55 @@ main > .view::after {
 /* F1b: the share-safe box */
 .share-safe-box textarea { margin-top: var(--space-2); font-size: var(--step-0); }
 .share-safe-detail { font-size: 13px; color: var(--text-2); font-family: var(--font-mono); margin: 2px 0 6px; }
+
+/* ── G002: the header cluster reads as ONE instrument ── */
+
+/* the swatch group: equal 28px radios in one quiet pill */
+.pal-row {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 8px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-full);
+}
+.pal-swatch {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 250, 236, 0.85);
+  box-shadow: 0 0 0 1px var(--border);
+  cursor: pointer;
+  padding: 0;
+  min-width: 28px;
+}
+.pal-swatch[aria-checked="true"] { box-shadow: 0 0 0 2px var(--bg-body), 0 0 0 4px var(--accent); }
+.pal-swatch:focus-visible { outline: 2px solid var(--color-focus-ring); outline-offset: 2px; }
+
+/* one baseline row: everything in the header rides the same centerline */
+.header-cluster { display: flex; align-items: center; gap: var(--space-2); }
+
+/* 44px effective targets on every header control */
+.icon-btn, #btn-home, .icon-lang-toggle { min-width: 44px; min-height: 44px; }
+.due-badge { min-height: 44px; }
+
+/* the shared focus law: warm ink ring on every interactive surface,
+   never the browser's default box */
+a:focus-visible, button:focus-visible, [tabindex]:focus-visible,
+input:focus-visible, textarea:focus-visible, select:focus-visible {
+  outline: 2px solid var(--color-focus-ring);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* skip-link: first tab stop, visible, on the measure */
+.skip-link { min-height: 44px; display: inline-flex; align-items: center; }
+
+/* the reminder chip is a notice, not a second hero: desaturated, AA text */
+.due-badge {
+  background: color-mix(in srgb, var(--bg-surface) 88%, var(--bg-muted));
+  color: var(--text-1);
+  border-color: var(--border);
+  font-weight: 500;
+}

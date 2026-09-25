@@ -5,6 +5,11 @@ HA.i18n.register('en', {
   'skip.link': 'Skip to main content',
   'aria.home': 'Home',
   'aria.theme': 'Toggle theme',
+  'chrome.theme_group': 'Color theme',
+  'chrome.theme_gold': 'Color theme: Gold',
+  'chrome.theme_rose': 'Color theme: Rose',
+  'chrome.theme_moss': 'Color theme: Moss',
+  'chrome.theme_blue': 'Color theme: Blue',
   'aria.lang': 'Switch language to Spanish',
 
   /* nav */

@@ -75,18 +75,18 @@
         </div>
         <span class="logo-text">HealthAdvocate</span>
       </div>
-      <div class="header-actions">
+      <div class="header-actions header-cluster">
         <button type="button" class="due-badge" id="due-badge" data-goto="home" hidden aria-label="Reminders due soon — open What's coming up">
           <span class="dot" aria-hidden="true"></span><span id="due-badge-count">1</span><span class="due-badge-words"> reminder due soon</span>
         </button>
         <button type="button" class="icon-btn" id="btn-home" aria-label="Home" title="Home" data-i18n-aria="aria.home">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
         </button>
-        <div class="pal-row" role="group" aria-label="Color theme">
-          <button type="button" class="pal-swatch pal-gold on" data-palette="" aria-label="Color theme: Gold" title="Gold"></button>
-          <button type="button" class="pal-swatch pal-rose" data-palette="plush" aria-label="Color theme: Rose" title="Rose"></button>
-          <button type="button" class="pal-swatch pal-moss" data-palette="moss" aria-label="Color theme: Moss" title="Moss"></button>
-          <button type="button" class="pal-swatch pal-blue" data-palette="blue" aria-label="Color theme: Blue" title="Blue"></button>
+        <div class="pal-row" role="radiogroup" aria-label="Color theme" data-i18n-aria="chrome.theme_group">
+          <button type="button" role="radio" aria-checked="true" class="pal-swatch pal-gold on" data-palette="" aria-label="Color theme: Gold" title="Gold" data-i18n-aria="chrome.theme_gold"></button>
+          <button type="button" role="radio" aria-checked="false" class="pal-swatch pal-rose" data-palette="plush" aria-label="Color theme: Rose" title="Rose" data-i18n-aria="chrome.theme_rose"></button>
+          <button type="button" role="radio" aria-checked="false" class="pal-swatch pal-moss" data-palette="moss" aria-label="Color theme: Moss" title="Moss" data-i18n-aria="chrome.theme_moss"></button>
+          <button type="button" role="radio" aria-checked="false" class="pal-swatch pal-blue" data-palette="blue" aria-label="Color theme: Blue" title="Blue" data-i18n-aria="chrome.theme_blue"></button>
         </div>
         <button type="button" class="icon-btn icon-lang-toggle" id="btn-lang" aria-label="Switch language to Spanish">EN</button>
         <button type="button" class="icon-btn" id="btn-theme" aria-label="Toggle theme" title="Toggle theme">

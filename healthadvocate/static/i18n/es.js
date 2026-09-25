@@ -6,6 +6,11 @@ HA.i18n.register('es', {
   'skip.link': 'Saltar al contenido principal',
   'aria.home': 'Inicio',
   'aria.theme': 'Cambiar tema',
+  'chrome.theme_group': 'Tema de color',
+  'chrome.theme_gold': 'Tema de color: Dorado',
+  'chrome.theme_rose': 'Tema de color: Rosa',
+  'chrome.theme_moss': 'Tema de color: Musgo',
+  'chrome.theme_blue': 'Tema de color: Azul',
   'aria.lang': 'Cambiar idioma a inglés',
 
   /* nav */

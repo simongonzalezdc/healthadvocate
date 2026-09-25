@@ -1791,16 +1791,31 @@ document.addEventListener('DOMContentLoaded', () => {
   /* Color themes: four plush palettes, per-person, both light and dark */
   const palRow = document.querySelector('.pal-row');
   if (palRow) {
-    const applyPal = (v) => {
+    const applyPal = (v, focus) => {
       if (v) document.documentElement.setAttribute('data-palette', v);
       else document.documentElement.removeAttribute('data-palette');
       localStorage.setItem('ha-palette', v);
-      palRow.querySelectorAll('.pal-swatch').forEach(b => b.classList.toggle('on', b.dataset.palette === v));
+      palRow.querySelectorAll('.pal-swatch').forEach(b => {
+        const on = b.dataset.palette === v;
+        b.classList.toggle('on', on);
+        b.setAttribute('aria-checked', String(on));
+        if (focus && on) b.focus();
+      });
     };
     applyPal(localStorage.getItem('ha-palette') || '');
     palRow.addEventListener('click', (e) => {
       const b = e.target.closest('.pal-swatch');
       if (b) applyPal(b.dataset.palette);
+    });
+    /* radios navigate by arrow keys (WAI-ARIA radiogroup pattern) */
+    palRow.addEventListener('keydown', (e) => {
+      const swatches = [...palRow.querySelectorAll('.pal-swatch')];
+      const i = swatches.indexOf(document.activeElement);
+      if (i < 0) return;
+      let next = null;
+      if (e.key === 'ArrowRight' || e.key === 'ArrowDown') next = swatches[(i + 1) % swatches.length];
+      else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') next = swatches[(i - 1 + swatches.length) % swatches.length];
+      if (next) { e.preventDefault(); applyPal(next.dataset.palette, true); }
     });
   }
 

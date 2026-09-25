@@ -362,7 +362,10 @@ async function tabWalk(page, journey, step, maxSteps = 70) {
     journeys[J].steps.push({ step: 'focusables-in-ax', ...xcheck });
 
     // entry-card activation: where does focus go after the view switch?
-    await p2.focus('.entry-card[data-goto="symptoms"]');
+    // (design 2026-09-24: the featured card is a static container and the
+    // real button inside carries the navigation — focus that button;
+    // secondary cards keep the card-as-button pattern)
+    await p2.focus('.entry-card-primary .btn-primary, .entry-card[data-goto="symptoms"]');
     await p2.keyboard.press('Enter'); await settle(p2);
     const afterEnter = await p2.evaluate(() => ({
       view: document.querySelector('.view.active')?.id,
@@ -377,7 +380,7 @@ async function tabWalk(page, journey, step, maxSteps = 70) {
     // same check via Space
     await p2.keyboard.press('Shift+Tab'); await settle(p2); // back to body -> last focusable
     await p2.evaluate(() => HA.showView('home')); await settle(p2);
-    await p2.focus('.entry-card[data-goto="symptoms"]');
+    await p2.focus('.entry-card-primary .btn-primary, .entry-card[data-goto="symptoms"]');
     await p2.keyboard.press(' '); await settle(p2);
     const afterSpace = await p2.evaluate(() => ({
       view: document.querySelector('.view.active')?.id,

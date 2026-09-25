@@ -159,6 +159,7 @@ const HA = {
     if (name === 'home') {
       this.loadDashStrip();
       this.renderReminders();
+      this.renderHomeLibrary();
       this.initScrollReveal();
     }
 
@@ -342,13 +343,21 @@ const HA = {
         this.apiGet('tracks/dashboard').catch(() => null),
         this.apiGet('family/profiles').catch(() => []),
       ]);
+      let active = 0, resolved = 0, family = 0;
       if (tracks) {
-        document.getElementById('dash-active').textContent = tracks.active || 0;
-        document.getElementById('dash-resolved').textContent = tracks.resolved || 0;
+        active = tracks.active || 0;
+        resolved = tracks.resolved || 0;
+        document.getElementById('dash-active').textContent = active;
+        document.getElementById('dash-resolved').textContent = resolved;
       }
       if (Array.isArray(profiles)) {
-        document.getElementById('dash-family').textContent = profiles.length;
+        family = profiles.length;
+        document.getElementById('dash-family').textContent = family;
       }
+      /* an untouched night-table shows no empty ledgers: all-zero counts
+         read as a broken demo, not as calm */
+      const strip = document.querySelector('.dash-strip');
+      if (strip && active + resolved + family === 0) strip.hidden = true;
     } catch (err) {
       console.warn('Dashboard strip load failed:', err.message);
     }
@@ -1091,6 +1100,22 @@ const HA = {
     }
   },
 
+  /* ── From your library (home panel — recent items, demo data) ── */
+
+  renderHomeLibrary() {
+    const el = document.getElementById('home-lib-list');
+    if (!el) return;
+    const recent = this.CATALOG.slice(0, 3);
+    el.innerHTML = recent.map(it => `
+      <button type="button" class="home-lib-item" data-goto="library" aria-label="Open ${this.escapeHtml(it.title)} in the library">
+        <span class="cat-kind ${this.escapeHtml(it.kind)}" aria-hidden="true">${this.KIND_ICON[it.kind] || ''}</span>
+        <span class="home-lib-body">
+          <span class="home-lib-title">${this.escapeHtml(it.title)}</span>
+          <span class="home-lib-meta">${this.escapeHtml(it.matter)} · ${this.escapeHtml(it.when)}</span>
+        </span>
+      </button>`).join('');
+  },
+
   /* ── Library / Catalog (demo data) ── */
 
   CATALOG: [
@@ -1535,6 +1560,7 @@ document.addEventListener('DOMContentLoaded', () => {
   HA.initTheme();
   HA.loadDashStrip();
   HA.renderReminders();
+  HA.renderHomeLibrary();
   HA.renderDirectory();
   HA.renderRecentRecordings();
 

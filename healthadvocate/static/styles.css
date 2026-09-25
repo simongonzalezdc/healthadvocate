@@ -2146,8 +2146,11 @@ body::after {
    white cards on near-white paper.
    ═══════════════════════════════════════════════════════════════════ */
 
-/* light theme: give the paper real depth so white cards sit ON it */
-:root { --bg-body: #f6f2ea; }
+/* light theme: give the paper real depth so white cards sit ON it.
+   Scoped to non-dark: a bare :root here would tie the light value and,
+   being later in the file, overwrite [data-theme="dark"]'s --bg-body
+   (equal specificity — file order wins). That WAS darkmode-broken. */
+:root:not([data-theme="dark"]) { --bg-body: #f6f2ea; }
 
 /* programmatic heading focus (WCAG 2.4.3 focusInto) wears ink, not
    the browser's default box — warm, quiet, clearly ours */

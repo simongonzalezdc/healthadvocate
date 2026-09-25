@@ -11,7 +11,7 @@
  *     an honest failure, never stale health data.
  */
 
-const CACHE = 'ha-shell-v2-i18n';
+const CACHE = 'ha-shell-v3-themes';
 const SHELL = [
   '/',
   '/static/styles.css',
@@ -55,17 +55,14 @@ self.addEventListener('fetch', (event) => {
 
   if (url.origin !== self.location.origin) return;
 
-  /* Static assets only: stale-while-revalidate. */
+  /* Static assets: NETWORK-FIRST while the product is in active build —
+     stale first-paint cost a CEO session. The cache is the OFFLINE
+     fallback, refreshed on every success. */
   event.respondWith(
-    caches.match(event.request).then((cached) => {
-      const refresh = fetch(event.request).then((response) => {
-        if (response.ok) {
-          const copy = response.clone();
-          caches.open(CACHE).then((cache) => cache.put(event.request, copy));
-        }
-        return response;
-      }).catch(() => cached);
-      return cached || refresh;
-    })
+    fetch(event.request).then((response) => {
+      const copy = response.clone();
+      caches.open(CACHE).then((cache) => cache.put(event.request, copy));
+      return response;
+    }).catch(() => caches.match(event.request).then((r) => r || Response.error()))
   );
 });

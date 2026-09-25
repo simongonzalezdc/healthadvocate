@@ -137,53 +137,94 @@
           <path class="lk-desk" d="M98 197 h26" stroke-linecap="round"/>
           <path class="lk-line" d="M152 214 v-13 q0-3 3-3 h11 q3 0 3 3 v13" stroke-linejoin="round"/>
           <path class="lk-line" d="M169 204 q9 1 0 8" stroke-linecap="round"/>
-      <svg class="nook-scene" viewBox="0 0 420 520" fill="none" aria-hidden="true" focusable="false">
+      <svg class="nook-scene" viewBox="0 0 460 560" fill="none" aria-hidden="true" focusable="false">
         <defs>
-          <radialGradient id="nook-glow" cx="0.5" cy="0.42" r="0.55">
-            <stop offset="0%" stop-color="rgba(224,169,97,0.30)"/>
-            <stop offset="55%" stop-color="rgba(224,169,97,0.12)"/>
-            <stop offset="100%" stop-color="rgba(224,169,97,0)"/>
-          </radialGradient>
-          <linearGradient id="nook-window" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stop-color="rgba(224,169,97,0.34)"/>
-            <stop offset="70%" stop-color="rgba(224,169,97,0.10)"/>
-            <stop offset="100%" stop-color="rgba(168,191,143,0.06)"/>
+          <linearGradient id="pn-window" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#f2c98a"/>
+            <stop offset="45%" stop-color="#e8b877"/>
+            <stop offset="100%" stop-color="#cfa06a"/>
           </linearGradient>
+          <radialGradient id="pn-spill" cx="0.5" cy="0.1" r="1">
+            <stop offset="0%" stop-color="rgba(242,201,138,0.55)"/>
+            <stop offset="60%" stop-color="rgba(242,201,138,0.18)"/>
+            <stop offset="100%" stop-color="rgba(242,201,138,0)"/>
+          </radialGradient>
+          <radialGradient id="pn-pool" cx="0.5" cy="0.5" r="0.5">
+            <stop offset="0%" stop-color="rgba(255,214,140,0.75)"/>
+            <stop offset="60%" stop-color="rgba(240,190,110,0.35)"/>
+            <stop offset="100%" stop-color="rgba(240,190,110,0)"/>
+          </radialGradient>
+          <linearGradient id="pn-wallshade" x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0%" stop-color="rgba(90,70,45,0.16)"/>
+            <stop offset="100%" stop-color="rgba(90,70,45,0)"/>
+          </linearGradient>
+          <linearGradient id="pn-desk" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#a97c4f"/>
+            <stop offset="100%" stop-color="#7c5a38"/>
+          </linearGradient>
+          <filter id="pn-soft" x="-40%" y="-40%" width="180%" height="180%"><feGaussianBlur stdDeviation="7"/></filter>
+          <filter id="pn-softer" x="-60%" y="-60%" width="220%" height="220%"><feGaussianBlur stdDeviation="14"/></filter>
+          <filter id="pn-mist" x="-40%" y="-40%" width="180%" height="180%"><feGaussianBlur stdDeviation="3.2"/></filter>
         </defs>
-        <rect class="nk-win" x="262" y="30" width="122" height="180" rx="10" fill="url(#nook-window)"/>
-        <path class="nk-frame" d="M262 120 H384 M323 30 V210" stroke-width="5"/>
-        <path class="nk-frame" d="M262 30 h122 v180 h-122 Z"/>
-        <path class="nk-wood" d="M30 148 H168"/>
-        <path class="nk-book" d="M52 148 V100 h13 v48" fill="rgba(149,111,80,0.35)"/>
-        <path class="nk-book" d="M71 148 V94 h11 v54" fill="rgba(122,143,109,0.4)"/>
-        <path class="nk-book" d="M88 148 V104 h15 v44" fill="rgba(180,120,90,0.3)"/>
-        <path class="nk-book" d="M110 148 L126 100 l10 3 -15 47" fill="rgba(150,90,90,0.3)"/>
-        <path class="nk-vine" d="M150 146 q6 40 -4 76 q-8 30 4 52"/>
-        <path class="nk-vine" d="M160 146 q16 34 10 70 q-4 28 8 46"/>
-        <path class="nk-leaf" d="M146 186 q-13-4 -13-17 q13 2 13 17Z"/>
-        <path class="nk-leaf" d="M142 220 q-15-2 -17-15 q15 0 17 15Z"/>
-        <path class="nk-leaf" d="M148 254 q-14-5 -11-18 q13 4 11 18Z"/>
-        <path class="nk-leaf" d="M170 196 q13-7 11-20 q-13 4 -11 20Z"/>
-        <path class="nk-leaf" d="M169 232 q14-3 14-16 q-14 2 -14 16Z"/>
-        <path class="nk-wood" d="M28 468 H392" stroke-width="4"/>
-        <path class="nk-wood" d="M52 468 v14 M368 468 v14"/>
-        <path class="nk-paper" d="M84 452 l52 -6 4 20 -52 6 Z"/>
-        <path class="nk-paper" d="M148 456 l40 -4 3 14 -40 4 Z"/>
-        <path class="lk-cone" d="M204 208 L96 462 L312 462 L256 208 Z"/>
-        <path class="lk-cone lk-cone-inner" d="M216 208 L136 462 L272 462 L244 208 Z"/>
-        <ellipse class="lk-pool" cx="204" cy="458" rx="112" ry="14"/>
-        <path class="lk-line lk-fill" d="M164 118 Q204 74 244 118 L230 154 Q204 132 178 154 Z" stroke-linejoin="round"/>
-        <circle class="lk-bulb" cx="204" cy="162" r="7"/>
-        <path class="lk-line" d="M204 456 V164" stroke-linecap="round"/>
-        <path class="lk-line" d="M180 468 v-10 q0-6 6-6 h36 q6 0 6 6 v10 Z" stroke-linejoin="round"/>
-        <path class="nk-line" d="M330 466 v-30 q0-5 5-5 h22 q5 0 5 5 v30" stroke-linejoin="round"/>
-        <path class="nk-line" d="M362 442 q12 2 0 12" stroke-linecap="round"/>
-        <path class="nk-steam" d="M340 428 q-6-10 0-19 q6-9 0-17" stroke-linecap="round"/>
-        <path class="nk-steam nk-steam2" d="M350 426 q6-10 0-19 q-6-9 0-16" stroke-linecap="round"/>
-        <path class="nk-line" d="M96 466 v-16 q0-5 5-5 h18 q5 0 5 5 v16" stroke-linejoin="round"/>
-        <path class="nk-leaf" d="M112 444 q-14-8 -12-24 q14 6 12 24Z"/>
-        <path class="nk-leaf" d="M114 444 q14-10 14-26 q-16 8 -14 26Z"/>
-        <path class="nk-leaf" d="M112 444 q-2-16 8-26 q6 14 -8 26Z"/>
+
+        <!-- far: the wall and its evening window -->
+        
+        
+        <g filter="url(#pn-soft)">
+          <rect x="258" y="26" width="168" height="210" rx="12" fill="url(#pn-window)"/>
+        </g>
+        <rect x="258" y="26" width="168" height="210" rx="12" fill="none" stroke="rgba(255,236,200,0.5)" stroke-width="6"/>
+        <path d="M342 26 V236 M258 132 H426" stroke="rgba(255,236,200,0.45)" stroke-width="5"/>
+        <!-- light spilling from the window into the room -->
+        <g filter="url(#pn-softer)">
+          <ellipse cx="300" cy="250" rx="190" ry="120" fill="url(#pn-spill)"/>
+        </g>
+        <!-- far: a shelf with books, softened -->
+        <g filter="url(#pn-mist)">
+          <rect x="38" y="150" width="188" height="9" rx="3" fill="#8a6a45"/>
+          <rect x="58" y="96" width="16" height="54" rx="2" fill="#9c6b4a"/>
+          <rect x="78" y="88" width="13" height="62" rx="2" fill="#7d8f68"/>
+          <rect x="96" y="100" width="18" height="50" rx="2" fill="#b5825a"/>
+          <path d="M122 148 L138 98 l12 4 -17 48 Z" fill="#a06a62"/>
+          <rect x="156" y="106" width="12" height="44" rx="2" fill="#8f7a99"/>
+        </g>
+        <!-- mid: the pothos, massed leaf shapes -->
+        <g filter="url(#pn-mist)">
+          <path d="M168 156 q10 52 -2 96 q-8 30 6 52" stroke="#5f7d55" stroke-width="4" fill="none"/>
+          <path d="M180 156 q20 44 12 92 q-4 28 8 46" stroke="#54714c" stroke-width="4" fill="none"/>
+          <ellipse cx="160" cy="212" rx="13" ry="8" fill="#6f9163" transform="rotate(-24 160 212)"/>
+          <ellipse cx="152" cy="252" rx="14" ry="9" fill="#7d9c6d" transform="rotate(-8 152 252)"/>
+          <ellipse cx="166" cy="292" rx="12" ry="8" fill="#648358" transform="rotate(18 166 292)"/>
+          <ellipse cx="196" cy="224" rx="12" ry="8" fill="#74956a" transform="rotate(22 196 224)"/>
+          <ellipse cx="193" cy="264" rx="13" ry="8" fill="#6f9163" transform="rotate(8 193 264)"/>
+        </g>
+        <!-- the desk -->
+        <rect x="24" y="470" width="412" height="16" rx="6" fill="url(#pn-desk)"/>
+        <rect x="24" y="484" width="412" height="5" rx="2" fill="rgba(60,44,26,0.35)"/>
+        <!-- scattered papers catching the light -->
+        <g filter="url(#pn-mist)">
+          <path d="M92 464 l56 -7 5 22 -56 7 Z" fill="#f4e9cf"/>
+          <path d="M158 468 l44 -5 3 16 -44 5 Z" fill="#efe2c4"/>
+        </g>
+        <!-- the lamp pool: light lands before the lamp does -->
+        <ellipse cx="230" cy="466" rx="130" ry="22" fill="url(#pn-pool)" filter="url(#pn-softer)"/>
+        <!-- near: the lamp, crisp -->
+        <path d="M204 220 L120 466 L340 466 L252 220 Z" fill="rgba(255,214,140,0.14)" filter="url(#pn-soft)"/>
+        <path d="M170 112 Q210 66 250 112 L234 148 Q210 124 186 148 Z" fill="#e0b06a" stroke="#8a5f2e" stroke-width="3" stroke-linejoin="round"/>
+        <circle cx="210" cy="157" r="8" fill="#ffdf9e"/>
+        <path d="M210 462 V158" stroke="#8a5f2e" stroke-width="4" stroke-linecap="round"/>
+        <path d="M182 470 v-12 q0-7 7-7 h42 q7 0 7 7 v12 Z" fill="#9c6b3f" stroke="#6e4a28" stroke-width="2.5"/>
+        <!-- the mug with tea -->
+        <path d="M356 464 v-34 q0-6 6-6 h26 q6 0 6 6 v34 Z" fill="#f0e4cc" stroke="#7a5c38" stroke-width="2.5" stroke-linejoin="round"/>
+        <path d="M394 438 q14 3 0 14" stroke="#7a5c38" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+        <ellipse cx="375" cy="428" rx="16" ry="3.5" fill="#b3703a"/>
+        <path class="nk-steam" d="M366 418 q-7-11 0-21 q7-10 0-19" stroke="#c98a3d" stroke-width="3" fill="none" stroke-linecap="round"/>
+        <path class="nk-steam nk-steam2" d="M382 416 q7-11 0-21 q-7-10 0-18" stroke="#c98a3d" stroke-width="3" fill="none" stroke-linecap="round"/>
+        <!-- small plant by the lamp base -->
+        <path d="M104 468 v-18 q0-6 6-6 h22 q6 0 6 6 v18 Z" fill="#b3703a" stroke="#7a5c38" stroke-width="2.5" stroke-linejoin="round"/>
+        <ellipse cx="118" cy="436" rx="14" ry="8" fill="#7d9c6d" transform="rotate(-28 118 436)"/>
+        <ellipse cx="126" cy="430" rx="13" ry="8" fill="#8fae77" transform="rotate(16 126 430)"/>
+        <ellipse cx="120" cy="424" rx="11" ry="7" fill="#6f9163" transform="rotate(-4 120 424)"/>
       </svg>
                 </svg>
         <span class="eyebrow" data-i18n="home.eyebrow">Free · Open source · Private by design</span>

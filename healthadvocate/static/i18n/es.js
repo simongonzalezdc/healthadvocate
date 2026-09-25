@@ -25,6 +25,7 @@ HA.i18n.register('es', {
   'nav.tracks': 'Seguimientos',
   'nav.coverage': 'Cobertura',
   'nav.help': 'Ayuda',
+  'nav.more': 'Más',
 
   /* home hero */
   'home.eyebrow': 'Gratis · Código abierto · Privado por diseño',

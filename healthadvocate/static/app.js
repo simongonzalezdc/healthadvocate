@@ -134,10 +134,16 @@ const HA = {
      content unannounced. Prefer the first heading; fall back to the container. */
   focusInto(container) {
     if (!container) return;
+    /* focus management follows modality: keyboard users get focus moved
+       (and the visible indicator); after a pointer click, moving focus to
+       the heading only paints a selection-style ring — skip it */
+    if (this._modality !== 'keyboard') return;
     const target = container.querySelector('h1, h2, h3') || container;
     target.tabIndex = -1;
     target.focus();
   },
+
+  _modality: 'pointer',
 
   showView(name) {
     document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
@@ -1557,6 +1563,29 @@ const HA = {
 /* ── Initialize ── */
 
 document.addEventListener('DOMContentLoaded', () => {
+  /* input modality tracking (drives focusInto) */
+  document.addEventListener('keydown', () => { HA._modality = 'keyboard'; }, true);
+  document.addEventListener('mousedown', () => { HA._modality = 'pointer'; }, true);
+  document.addEventListener('touchstart', () => { HA._modality = 'pointer'; }, true);
+
+  /* the More disclosure: the reference shelf stays out of the way until asked */
+  const navMore = document.getElementById('nav-more');
+  const navRow = document.getElementById('nav-more-row');
+  if (navMore && navRow) {
+    navMore.addEventListener('click', () => {
+      const open = navRow.hidden;
+      navRow.hidden = !open;
+      navMore.setAttribute('aria-expanded', String(open));
+    });
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && !navRow.hidden) {
+        navRow.hidden = true;
+        navMore.setAttribute('aria-expanded', 'false');
+        navMore.focus();
+      }
+    });
+  }
+
   HA.initTheme();
   HA.loadDashStrip();
   HA.renderReminders();

@@ -93,18 +93,21 @@
       <button type="button" data-view="documents" class="nav-btn" data-i18n="nav.documents">Documents</button>
       <button type="button" data-view="bills" class="nav-btn" data-i18n="nav.bills">Bills</button>
       <button type="button" data-view="insurance" class="nav-btn" data-i18n="nav.insurance">Insurance</button>
-      <button type="button" data-view="drugs" class="nav-btn nav-secondary" data-i18n="nav.drugs">Drugs</button>
       <button type="button" data-view="appointments" class="nav-btn nav-secondary" data-i18n="nav.appointments">Appointments</button>
-      <button type="button" data-view="discharge" class="nav-btn nav-secondary" data-i18n="nav.discharge">Discharge</button>
-      <button type="button" data-view="secondopinion" class="nav-btn nav-secondary" data-i18n="nav.secondopinion">2nd Opinion</button>
       <button type="button" data-view="recorder" class="nav-btn" data-i18n="nav.recorder">Recorder</button>
       <button type="button" data-view="library" class="nav-btn" data-i18n="nav.library">Library</button>
+      <button type="button" data-view="help" class="nav-btn nav-secondary" data-i18n="nav.help">Help</button>
+      <button type="button" id="nav-more" class="nav-btn nav-more" aria-expanded="false" aria-controls="nav-more-row" data-i18n="nav.more">More</button>
+      <span id="nav-more-row" class="nav-more-row" hidden>
+      <button type="button" data-view="drugs" class="nav-btn nav-secondary" data-i18n="nav.drugs">Drugs</button>
+      <button type="button" data-view="discharge" class="nav-btn nav-secondary" data-i18n="nav.discharge">Discharge</button>
+      <button type="button" data-view="secondopinion" class="nav-btn nav-secondary" data-i18n="nav.secondopinion">2nd Opinion</button>
       <button type="button" data-view="directory" class="nav-btn nav-secondary" data-i18n="nav.directory">Directory</button>
       <button type="button" data-view="community" class="nav-btn nav-secondary" data-i18n="nav.scanner">Scanner</button>
       <button type="button" data-view="family" class="nav-btn nav-secondary" data-i18n="nav.family">Family</button>
       <button type="button" data-view="tracks" class="nav-btn nav-secondary" data-i18n="nav.tracks">Tracks</button>
       <button type="button" data-view="coverage" class="nav-btn nav-secondary" data-i18n="nav.coverage">Coverage</button>
-      <button type="button" data-view="help" class="nav-btn nav-secondary" data-i18n="nav.help">Help</button>
+      </span>
     </nav>
   </header>
 
@@ -114,15 +117,20 @@
     <!-- Home View -->
     <section id="view-home" class="view active">
       <div class="hero reveal">
-        <svg class="lamp-vignette" viewBox="0 0 190 230" fill="none" aria-hidden="true" focusable="false">
-          <!-- the lamp: line-drawn arm + shade, and its pool of light -->
-          <path class="cone" d="M42 34 L148 34 L128 176 L62 176 Z" fill="rgba(240,201,138,0.09)"/>
-          <circle class="pool" cx="95" cy="168" r="54" fill="rgba(240,201,138,0.18)"/>
-          <circle class="pool" cx="95" cy="168" r="34" fill="rgba(240,201,138,0.20)"/>
-          <path d="M95 168 L95 60" stroke="rgba(240,201,138,0.78)" stroke-width="2.5" stroke-linecap="round"/>
-          <path d="M95 60 Q60 52 52 24" stroke="rgba(240,201,138,0.78)" stroke-width="2.5" stroke-linecap="round"/>
-          <path d="M36 26 Q44 8 68 14 L62 38 Q46 42 36 26 Z" fill="rgba(240,201,138,0.30)" stroke="rgba(240,201,138,0.85)" stroke-width="2.5" stroke-linejoin="round"/>
-          <path d="M62 38 L74 64" stroke="rgba(240,201,138,0.8)" stroke-width="2.5" stroke-linecap="round"/>
+        <svg class="lamp-vignette" viewBox="0 0 240 250" fill="none" aria-hidden="true" focusable="false">
+          <!-- the desk lamp: dome shade, arm on its base, light falling on the work -->
+          <path class="cone" d="M94 96 L58 208 L182 208 L146 96 Z" fill="rgba(240,201,138,0.08)"/>
+          <path class="cone" d="M102 96 L82 208 L158 208 L138 96 Z" fill="rgba(240,201,138,0.07)"/>
+          <ellipse class="pool" cx="120" cy="208" rx="60" ry="8" fill="rgba(240,201,138,0.20)"/>
+          <path d="M84 74 Q120 44 156 74 L146 97 Q120 82 94 97 Z" fill="rgba(240,201,138,0.30)" stroke="rgba(240,201,138,0.85)" stroke-width="2.5" stroke-linejoin="round"/>
+          <circle cx="120" cy="101" r="5.5" fill="rgba(240,201,138,0.9)"/>
+          <path d="M120 202 V97" stroke="rgba(240,201,138,0.8)" stroke-width="2.5" stroke-linecap="round"/>
+          <path d="M104 214 v-7 q0-5 5-5 h22 q5 0 5 5 v7 Z" stroke="rgba(240,201,138,0.8)" stroke-width="2.5" stroke-linejoin="round"/>
+          <path d="M36 214 H204" stroke="rgba(240,201,138,0.65)" stroke-width="2.5" stroke-linecap="round"/>
+          <path d="M92 204 h36" stroke="rgba(240,201,138,0.55)" stroke-width="3" stroke-linecap="round"/>
+          <path d="M98 197 h26" stroke="rgba(240,201,138,0.4)" stroke-width="2.5" stroke-linecap="round"/>
+          <path d="M152 214 v-13 q0-3 3-3 h11 q3 0 3 3 v13" stroke="rgba(240,201,138,0.7)" stroke-width="2.5" stroke-linejoin="round"/>
+          <path d="M169 204 q9 1 0 8" stroke="rgba(240,201,138,0.7)" stroke-width="2.5" stroke-linecap="round"/>
         </svg>
         <span class="eyebrow" data-i18n="home.eyebrow">Free · Open source · Private by design</span>
         <h1 data-i18n="home.title">You deserve to understand your care.</h1>
@@ -130,7 +138,7 @@
         <p class="margin-note" data-i18n="home.margin_note">you're not alone in this.</p>
         <div class="hero-actions">
           <button type="button" class="btn-primary btn-lg" data-goto="symptoms" data-i18n="home.cta_symptoms">Describe your symptoms</button>
-          <button type="button" class="btn-ghost" data-goto="insurance" data-i18n="home.cta_denial">Fight a denial</button>
+          <button type="button" class="btn-ghost" data-goto="insurance" data-i18n="home.cta_denial" class="btn-ghost">Fight a denial</button>
         </div>
         <div class="entry-grid">
           <div class="entry-card entry-card-primary">
@@ -242,16 +250,16 @@
         </div>
         <label for="symptom-input" class="field-label" data-i18n="symptoms.label">What are you experiencing?</label>
         <div class="example-chips">
-          <span class="chips-note" data-i18n="symptoms.chips_note">say it however it comes out —</span>
           <button type="button" class="example-chip" data-example="I've had a sore throat and low fever for two days, and it hurts to swallow." data-i18n="symptoms.chip1">sore throat, two days</button>
           <button type="button" class="example-chip" data-example="Dizzy and can't focus since yesterday. I started a new blood pressure medication last week." data-i18n="symptoms.chip2">dizzy since a new medication</button>
           <button type="button" class="example-chip" data-example="Chest pain and shortness of breath for the past hour." data-i18n="symptoms.chip3">chest pain, one hour</button>
         </div>
         <textarea id="symptom-input" rows="5" class="intake-sheet" placeholder="e.g., I've been having chest pain and shortness of breath for the past hour..." data-i18n-placeholder="symptoms.label_ph"></textarea>
-        <div class="assess-row">
-          <button type="button" class="btn-primary" data-action="assess-symptoms" data-i18n="symptoms.assess">Assess Symptoms</button>
-          <p class="emergency-note"><span data-i18n="symptoms.emergency_prefix">If this feels like an emergency, skip the form — </span><strong data-i18n="symptoms.emergency_strong">call your local emergency number now.</strong></p>
+        <div class="emergency-strip">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+          <p><span data-i18n="symptoms.emergency_prefix">If this feels like an emergency, skip the form — </span><strong data-i18n="symptoms.emergency_strong">call your local emergency number now.</strong></p>
         </div>
+        <button type="button" class="btn-primary" data-action="assess-symptoms" data-i18n="symptoms.assess">Assess Symptoms</button>
         <div id="symptom-results" class="results" aria-live="polite" role="status"></div>
       </div></div>
       <aside class="sample-slip" aria-label="Sample of a plain-language read">

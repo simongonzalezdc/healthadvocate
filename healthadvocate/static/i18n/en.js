@@ -24,6 +24,7 @@ HA.i18n.register('en', {
   'nav.tracks': 'Tracks',
   'nav.coverage': 'Coverage',
   'nav.help': 'Help',
+  'nav.more': 'More',
 
   /* home hero */
   'home.eyebrow': 'Free · Open source · Private by design',

@@ -2442,3 +2442,67 @@ h1[tabindex="-1"]:focus-visible, h2[tabindex="-1"]:focus-visible, h3[tabindex="-
 /* the header due-chip is chrome, not a second CTA */
 .due-badge { opacity: 0.92; }
 .due-badge .due-badge-words { font-size: 11px; }
+
+/* ── r6 wave 5 — GLM + GPT verdict fixes, full sweep ── */
+
+/* the More disclosure: one quiet door to the reference shelf */
+.nav-more { font-weight: 500; }
+.nav-more-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 2px 4px;
+}
+.nav-more-row .nav-btn { font-size: 12px; color: var(--text-3); padding: 4px 9px; font-weight: 400; }
+.nav-more-row .nav-btn:hover { color: var(--text-1); }
+.nav-more-row .nav-btn.active { color: var(--accent); }
+
+/* emergency guidance is SAFETY content: its own lit strip, above the action */
+.emergency-strip {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  background: var(--status-danger-tint);
+  border: 1px solid rgba(216, 64, 47, 0.30);
+  border-left: 3px solid var(--status-danger);
+  border-radius: 4px;
+  padding: var(--space-3) var(--space-4);
+  margin-bottom: var(--space-4);
+}
+.emergency-strip svg { width: 18px; height: 18px; flex-shrink: 0; margin-top: 2px; color: var(--status-danger); }
+.emergency-strip p { margin: 0; font-size: var(--step-0); color: var(--color-text); line-height: 1.5; }
+.emergency-strip strong { color: var(--coral-ink-700); }
+
+/* ruled paper appears while you write — not as faint banding before it */
+.intake-sheet:placeholder-shown { background-image: none; }
+
+/* the header badge is a notice, not a second hero */
+.due-badge {
+  border: 1px solid var(--border);
+  outline: none;
+  background: var(--color-surface);
+  color: var(--text-2);
+  transform: none;
+  font-family: inherit;
+  font-weight: 600;
+}
+.due-badge .dot { background: var(--status-caution); }
+
+/* handwritten notes: pen ink, one step larger */
+.margin-note { color: var(--status-caution-ink); font-size: 1.15rem; }
+.hand-note { color: var(--status-caution-ink); font-size: 1.05rem; }
+
+/* dark theme: one step warmer and lighter — reassurance, not ominousness */
+[data-theme="dark"] {
+  --bg-body: #121a14;
+  --bg-surface: #1a2620;
+  --bg-elevated: #15201a;
+  --bg-muted: #223026;
+  --bg-input: #15201a;
+  --border: #384839;
+  --border-light: #28352c;
+}
+
+/* breathing room: the form panel claims its width calmly */
+.view > .panel { max-width: 1000px; margin-inline: auto; }
+.hero { padding: var(--space-7) 0 var(--space-7); }

@@ -512,6 +512,38 @@ const HA = {
     } catch (err) { this.showError(el, err.message); } finally { this._setBtnBusy(btn, false); }
   },
 
+  async shareSafe(event) {
+    const btn = event?.currentTarget;
+    const src = document.getElementById(btn?.dataset.shareSource || 'doc-input');
+    const out = document.getElementById(btn?.dataset.shareOut || 'doc-results');
+    if (!src || !src.value.trim()) { this.showEmpty(out, 'Nothing to make share-safe yet.'); return; }
+    this.setLoading(out);
+    this._setBtnBusy(btn, true);
+    try {
+      const data = await this.api('privacy/share-safe', { text: src.value });
+      this.renderShareSafe(data, out);
+    } catch (err) { this.showError(out, err.message); } finally { this._setBtnBusy(btn, false); }
+  },
+
+  renderShareSafe(data, out) {
+    const countsLine = data.total === 0
+      ? HA.t('sharesafe.nothing', null, 'Nothing personal found — this text was already safe to share.')
+      : HA.t('sharesafe.removed', { n: data.total }, 'Removed {n} personal details.');
+    const detail = Object.entries(data.counts || {}).map(([k, v]) => `${v} × ${k}`).join(' · ');
+    out.innerHTML = `<div class="result-section share-safe-box">
+      <h3>${HA.t('sharesafe.title', null, 'Share-safe copy')}</h3>
+      <p class="condition-confidence">${countsLine}</p>
+      ${detail ? `<p class="share-safe-detail">${this.escapeHtml(detail)}</p>` : ''}
+      <textarea id="share-safe-out" rows="6" readonly>${this.escapeHtml(data.clean_text)}</textarea>
+      <div class="row-actions">
+        <button type="button" class="btn-ghost btn-sm" data-action="share-safe-copy">${HA.t('sharesafe.copy', null, 'Copy clean text')}</button>
+        <button type="button" class="btn-ghost btn-sm" data-action="share-safe-download">${HA.t('sharesafe.download', null, 'Download .txt')}</button>
+        <button type="button" class="btn-ghost btn-sm" data-action="share-safe-back">${HA.t("sharesafe.back", null, "Back to results")}</button>
+      </div>
+      <p class="hand-note">${HA.t('sharesafe.note', null, 'removed on this device — nothing was sent anywhere.')}</p>
+    </div>`;
+  },
+
   renderDocument(data, el) {
     let html = `<div class="result-section"><h3>Summary</h3><p class="result-text">${this.escapeHtml(data.explanation)}</p></div>`;
     if (data.urgency) {
@@ -1829,6 +1861,18 @@ document.addEventListener('DOMContentLoaded', () => {
       HA.downloadAppealLetter();
     } else if (action === 'appeal-letter-print') {
       HA.printAppealLetter();
+    } else if (action === 'share-safe-run') {
+      HA.shareSafe(buttonEvent);
+    } else if (action === 'share-safe-copy') {
+      const t = document.getElementById('share-safe-out');
+      if (t) { t.select(); document.execCommand('copy'); t.setSelectionRange(0, 0); }
+    } else if (action === 'share-safe-download') {
+      const t = document.getElementById('share-safe-out');
+      if (t) { const a = document.createElement('a');
+        a.href = URL.createObjectURL(new Blob([t.value], { type: 'text/plain' }));
+        a.download = 'share-safe.txt'; a.click(); URL.revokeObjectURL(a.href); }
+    } else if (action === 'share-safe-back') {
+      HA.decodeDocument(buttonEvent);
     } else if (action === 'appeal-from-bill') {
       HA.appealFromBill();
     } else if (action === 'appeal-from-library') {

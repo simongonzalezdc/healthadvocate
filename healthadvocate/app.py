@@ -132,6 +132,9 @@ class DenialRequest(BaseModel):
     patient_info: str = ""
     profile_id: Optional[str] = None
 
+class ShareSafeRequest(BaseModel):
+    text: str
+
 class AppealLetterRequest(BaseModel):
     denial_text: str = Field(max_length=_MAX_INPUT_LENGTH)
     record_text: str = Field(default="", max_length=_MAX_INPUT_LENGTH)
@@ -286,6 +289,13 @@ async def generate_appeal_letter(request: AppealLetterRequest):
         request.profile_id,
     )
     return result
+
+@app.post("/api/privacy/share-safe")
+async def share_safe_copy(request: ShareSafeRequest):
+    """F1b: strip names/dates/IDs on-device; report exactly what was removed."""
+    _validate_length(request.text, "Text")
+    from healthadvocate.core import share_safe
+    return await run_in_threadpool(share_safe.make_share_safe, request.text)
 
 @app.post("/api/drugs/check")
 async def check_drug(request: DrugRequest):

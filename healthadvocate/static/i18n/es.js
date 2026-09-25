@@ -131,4 +131,12 @@ HA.i18n.register('es', {
   'appeal.bill_attached': 'Factura adjuntada como registro relacionado en el Estudio de carta de apelación.',
   'appeal.from_library': 'Carta de apelación',
   'appeal.denial_attached': 'Elemento cargado — completa el texto de la negación y genera.',
+  'sharesafe.button': 'Copia segura para compartir',
+  'sharesafe.title': 'Copia segura para compartir',
+  'sharesafe.nothing': 'No se encontró nada personal — este texto ya era seguro para compartir.',
+  'sharesafe.removed': 'Se quitaron {n} datos personales.',
+  'sharesafe.copy': 'Copiar texto limpio',
+  'sharesafe.download': 'Descargar .txt',
+  'sharesafe.back': 'Volver a los resultados',
+  'sharesafe.note': 'quitado en este dispositivo — no se envió nada a ninguna parte.',
 });

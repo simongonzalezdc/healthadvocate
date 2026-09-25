@@ -130,4 +130,12 @@ HA.i18n.register('en', {
   'appeal.bill_attached': 'Bill attached as the related record in the Appeal Letter Studio.',
   'appeal.from_library': 'Appeal letter',
   'appeal.denial_attached': 'Item loaded — finish the denial text and generate.',
+  'sharesafe.button': 'Share-safe copy',
+  'sharesafe.title': 'Share-safe copy',
+  'sharesafe.nothing': 'Nothing personal found — this text was already safe to share.',
+  'sharesafe.removed': 'Removed {n} personal details.',
+  'sharesafe.copy': 'Copy clean text',
+  'sharesafe.download': 'Download .txt',
+  'sharesafe.back': 'Back to results',
+  'sharesafe.note': 'removed on this device — nothing was sent anywhere.',
 });

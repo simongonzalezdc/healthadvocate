@@ -11,11 +11,14 @@
  *     an honest failure, never stale health data.
  */
 
-const CACHE = 'ha-shell-v1';
+const CACHE = 'ha-shell-v2-i18n';
 const SHELL = [
   '/',
   '/static/styles.css',
   '/static/app.js',
+  '/static/i18n.js',
+  '/static/i18n/en.js',
+  '/static/i18n/es.js',
   '/static/manifest.webmanifest',
   '/static/icons/favicon.svg',
   '/static/icons/icon-192.png',

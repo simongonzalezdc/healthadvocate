@@ -64,7 +64,7 @@
   </script>
 </head>
 <body>
-  <a href="#app-content" class="skip-link">Skip to main content</a>
+  <a href="#app-content" class="skip-link" data-i18n="skip.link">Skip to main content</a>
 
   <!-- Header -->
   <header>
@@ -79,31 +79,35 @@
         <button type="button" class="due-badge" id="due-badge" data-goto="home" hidden aria-label="Reminders due soon — open What's coming up">
           <span class="dot" aria-hidden="true"></span><span id="due-badge-count">1</span><span class="due-badge-words"> reminder due soon</span>
         </button>
-        <button type="button" class="icon-btn" id="btn-home" aria-label="Home" title="Home">
+        <button type="button" class="icon-btn" id="btn-home" aria-label="Home" title="Home" data-i18n-aria="aria.home">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
         </button>
+        <button type="button" class="icon-btn icon-lang-toggle" id="btn-lang" aria-label="Switch language to Spanish">EN</button>
         <button type="button" class="icon-btn" id="btn-theme" aria-label="Toggle theme" title="Toggle theme">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" id="theme-icon"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
         </button>
       </div>
     </div>
     <nav id="main-nav" aria-label="Feature navigation">
-      <button type="button" data-view="symptoms" class="nav-btn">Symptoms</button>
-      <button type="button" data-view="documents" class="nav-btn">Documents</button>
-      <button type="button" data-view="bills" class="nav-btn">Bills</button>
-      <button type="button" data-view="insurance" class="nav-btn">Insurance</button>
-      <button type="button" data-view="drugs" class="nav-btn">Drugs</button>
-      <button type="button" data-view="appointments" class="nav-btn">Appointments</button>
-      <button type="button" data-view="discharge" class="nav-btn">Discharge</button>
-      <button type="button" data-view="secondopinion" class="nav-btn">2nd Opinion</button>
-      <button type="button" data-view="recorder" class="nav-btn">Recorder</button>
-      <button type="button" data-view="library" class="nav-btn">Library</button>
-      <button type="button" data-view="directory" class="nav-btn">Directory</button>
-      <button type="button" data-view="community" class="nav-btn">Scanner</button>
-      <button type="button" data-view="family" class="nav-btn">Family</button>
-      <button type="button" data-view="tracks" class="nav-btn">Tracks</button>
-      <button type="button" data-view="coverage" class="nav-btn">Coverage</button>
-      <button type="button" data-view="help" class="nav-btn">Help</button>
+      <button type="button" data-view="symptoms" class="nav-btn" data-i18n="nav.symptoms">Symptoms</button>
+      <button type="button" data-view="documents" class="nav-btn" data-i18n="nav.documents">Documents</button>
+      <button type="button" data-view="bills" class="nav-btn" data-i18n="nav.bills">Bills</button>
+      <button type="button" data-view="insurance" class="nav-btn" data-i18n="nav.insurance">Insurance</button>
+      <button type="button" data-view="appointments" class="nav-btn nav-secondary" data-i18n="nav.appointments">Appointments</button>
+      <button type="button" data-view="recorder" class="nav-btn" data-i18n="nav.recorder">Recorder</button>
+      <button type="button" data-view="library" class="nav-btn" data-i18n="nav.library">Library</button>
+      <button type="button" data-view="help" class="nav-btn nav-secondary" data-i18n="nav.help">Help</button>
+      <button type="button" id="nav-more" class="nav-btn nav-more" aria-expanded="false" aria-controls="nav-more-row" data-i18n="nav.more">More</button>
+      <span id="nav-more-row" class="nav-more-row" hidden>
+      <button type="button" data-view="drugs" class="nav-btn nav-secondary" data-i18n="nav.drugs">Drugs</button>
+      <button type="button" data-view="discharge" class="nav-btn nav-secondary" data-i18n="nav.discharge">Discharge</button>
+      <button type="button" data-view="secondopinion" class="nav-btn nav-secondary" data-i18n="nav.secondopinion">2nd Opinion</button>
+      <button type="button" data-view="directory" class="nav-btn nav-secondary" data-i18n="nav.directory">Directory</button>
+      <button type="button" data-view="community" class="nav-btn nav-secondary" data-i18n="nav.scanner">Scanner</button>
+      <button type="button" data-view="family" class="nav-btn nav-secondary" data-i18n="nav.family">Family</button>
+      <button type="button" data-view="tracks" class="nav-btn nav-secondary" data-i18n="nav.tracks">Tracks</button>
+      <button type="button" data-view="coverage" class="nav-btn nav-secondary" data-i18n="nav.coverage">Coverage</button>
+      </span>
     </nav>
   </header>
 
@@ -113,60 +117,76 @@
     <!-- Home View -->
     <section id="view-home" class="view active">
       <div class="hero reveal">
-        <svg class="lamp-vignette" viewBox="0 0 190 230" fill="none" aria-hidden="true" focusable="false">
-          <!-- the lamp: line-drawn arm + shade, and its pool of light -->
-          <circle class="pool" cx="95" cy="168" r="54" fill="rgba(216,190,142,0.10)"/>
-          <circle class="pool" cx="95" cy="168" r="34" fill="rgba(216,190,142,0.12)"/>
-          <path d="M95 168 L95 60" stroke="rgba(216,190,142,0.5)" stroke-width="2" stroke-linecap="round"/>
-          <path d="M95 60 Q60 52 52 24" stroke="rgba(216,190,142,0.5)" stroke-width="2" stroke-linecap="round"/>
-          <path d="M36 26 Q44 8 68 14 L62 38 Q46 42 36 26 Z" fill="rgba(216,190,142,0.16)" stroke="rgba(216,190,142,0.55)" stroke-width="2" stroke-linejoin="round"/>
-          <path d="M62 38 L74 64" stroke="rgba(216,190,142,0.55)" stroke-width="2" stroke-linecap="round"/>
+        <svg class="lamp-vignette" viewBox="0 0 240 250" fill="none" aria-hidden="true" focusable="false">
+          <!-- the desk lamp: theme-inked lines, one pool of lamplight on the work -->
+          <path class="lk-cone" d="M94 96 L58 208 L182 208 L146 96 Z"/>
+          <path class="lk-cone lk-cone-inner" d="M102 96 L82 208 L158 208 L138 96 Z"/>
+          <ellipse class="lk-pool" cx="120" cy="208" rx="60" ry="8"/>
+          <path class="lk-line lk-fill" d="M84 74 Q120 44 156 74 L146 97 Q120 82 94 97 Z" stroke-linejoin="round"/>
+          <circle class="lk-bulb" cx="120" cy="101" r="5.5"/>
+          <path class="lk-line" d="M120 202 V97" stroke-linecap="round"/>
+          <path class="lk-line" d="M104 214 v-7 q0-5 5-5 h22 q5 0 5 5 v7 Z" stroke-linejoin="round"/>
+          <path class="lk-line lk-desk" d="M36 214 H204" stroke-linecap="round"/>
+          <path class="lk-desk" d="M92 204 h36" stroke-linecap="round" stroke-width="3"/>
+          <path class="lk-desk" d="M98 197 h26" stroke-linecap="round"/>
+          <path class="lk-line" d="M152 214 v-13 q0-3 3-3 h11 q3 0 3 3 v13" stroke-linejoin="round"/>
+          <path class="lk-line" d="M169 204 q9 1 0 8" stroke-linecap="round"/>
         </svg>
-        <span class="eyebrow">Free · Open source · Private by design</span>
-        <h1>You deserve to understand your care.</h1>
-        <p>Navigate symptoms, decode bills, fight insurance denials, and advocate for your family. Everything stays private on your device.</p>
-        <p class="margin-note">you're not alone in this.</p>
+        <span class="eyebrow" data-i18n="home.eyebrow">Free · Open source · Private by design</span>
+        <h1 data-i18n="home.title">You deserve to understand your care.</h1>
+        <p data-i18n="home.sub">Navigate symptoms, decode bills, fight insurance denials, and advocate for your family. Everything stays private on your device.</p>
+        <p class="margin-note" data-i18n="home.margin_note">you're not alone in this.</p>
         <div class="hero-actions">
-          <button type="button" class="btn-primary btn-lg" data-goto="symptoms">Describe your symptoms</button>
-          <button type="button" class="btn-ghost" data-goto="insurance">Fight a denial</button>
+          <button type="button" class="btn-primary btn-lg" data-goto="symptoms" data-i18n="home.cta_symptoms">Describe your symptoms</button>
+          <button type="button" class="btn-ghost" data-goto="insurance" data-i18n="home.cta_denial" class="btn-ghost">Fight a denial</button>
         </div>
         <div class="entry-grid">
           <div class="entry-card entry-card-primary">
             <div class="entry-icon">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
             </div>
-            <h2>Something doesn't feel right</h2>
-            <p>Describe how you're feeling and we'll help you understand what might be happening and what to do next.</p>
+            <h2 data-i18n="entry1.title">Something doesn't feel right</h2>
+            <p data-i18n="entry1.desc">Describe how you're feeling and we'll help you understand what might be happening and what to do next.</p>
             <ol class="entry-steps">
-              <li><span class="entry-step-n">1</span>Say what's happening, in your own words</li>
-              <li><span class="entry-step-n">2</span>Get a plain-language read, with urgency called out honestly</li>
-              <li><span class="entry-step-n">3</span>Leave with next steps you can actually act on</li>
+              <li><span class="entry-step-n">1</span><span data-i18n="entry1.step1">Say what's happening, in your own words</span></li>
+              <li><span class="entry-step-n">2</span><span data-i18n="entry1.step2">Get a plain-language read, with urgency called out honestly</span></li>
+              <li><span class="entry-step-n">3</span><span data-i18n="entry1.step3">Leave with next steps you can actually act on</span></li>
             </ol>
-            <p class="hand-note">nothing you write leaves this device.</p>
-            <button type="button" class="btn-primary" data-goto="symptoms">Start a symptom check</button>
+            <p class="hand-note" data-i18n="entry1.hand_note">nothing you write leaves this device.</p>
+            <button type="button" class="btn-primary btn-ink" data-goto="symptoms" data-i18n="entry1.cta">Start a symptom check</button>
+            <aside class="sample-slip sample-slip-compact" aria-label="Sample of an urgent read">
+              <div class="sample-slip-head"><span class="slip-stamp slip-stamp-danger" data-i18n="slip.stamp_sample">SAMPLE</span><span data-i18n="slip.urgent_head">what an urgent read looks like</span></div>
+              <p class="slip-input" data-i18n="slip.urgent_input">“chest pain and shortness of breath for the past hour”</p>
+              <div class="slip-line slip-urgency"><span class="slip-key" data-i18n="slip.key_urgency">urgency</span>
+                <p><span class="stamp-mini stamp-mini-danger" data-i18n="slip.stamp_emergency">emergency</span> <span data-i18n="slip.urgent_body">Don't wait on this app — call your local emergency number now.</span></p></div>
+              <div class="slip-line"><span class="slip-key" data-i18n="slip.key_why">why</span>
+                <p data-i18n="slip.urgent_why">These symptoms together can mean something serious. A straight answer beats a comforting one.</p></div>
+            </aside>
             <div class="entry-card-meta">
-              <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>Private by design</span>
-              <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6L9 17l-5-5"/></svg>No account needed</span>
+              <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg><span data-i18n="entry1.meta_private">Private by design</span></span>
+              <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6L9 17l-5-5"/></svg><span data-i18n="entry1.meta_account">No account needed</span></span>
             </div>
           </div>
           <div class="entry-card" tabindex="0" data-goto="documents" role="button" aria-label="I have a document">
             <div class="entry-icon">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
             </div>
-            <h2>I have a document to understand</h2>
-            <p>Medical records, test results, discharge papers — decoded into plain language.</p>
+            <h2 data-i18n="entry2.title">I have a document to understand</h2>
+            <p data-i18n="entry2.desc">Medical records, test results, discharge papers — decoded into plain language.</p>
             <div class="entry-card-meta">
-              <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>Records · results · referrals</span>
+              <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg><span data-i18n="entry2.meta">Records · results · referrals</span></span>
+            <p class="entry-sample" data-i18n="entry2.sample">→ a lab result, decoded into plain words</p>
             </div>
           </div>
           <div class="entry-card" tabindex="0" data-goto="bills" role="button" aria-label="I need help with costs">
             <div class="entry-icon">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>
             </div>
-            <h2>I need help with costs</h2>
-            <p>Understand your bills, fight denials, and find more affordable alternatives.</p>
+            <h2 data-i18n="entry3.title">I need help with costs</h2>
+            <p data-i18n="entry3.desc">Understand your bills, fight denials, and find more affordable alternatives.</p>
             <div class="entry-card-meta">
-              <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>Bills · denials · savings</span>
+              <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg><span data-i18n="entry3.meta">Bills · denials · savings</span></span>
+            <p class="entry-sample" data-i18n="entry3.sample">→ a $1,200 bill, explained line by line</p>
             </div>
           </div>
         </div>
@@ -178,8 +198,8 @@
         <!-- What's coming up (proactive reminders, demo data) -->
         <div class="coming-up" id="coming-up" hidden>
           <div class="coming-up-head">
-            <h2>What's coming up <span class="demo-badge">Demo data</span></h2>
-            <span class="coming-up-note">Synthetic examples so you can see how reminders look. Real ones are created on this device only; local notifications fire while the app is open — nothing is ever sent over the network.</span>
+            <h2><span data-i18n="comingup.head">What's coming up</span> <span class="demo-badge" data-i18n="comingup.badge">Demo data</span></h2>
+            <span class="coming-up-note" data-i18n="comingup.note">Synthetic examples so you can see how reminders look. Real ones are created on this device only; local notifications fire while the app is open — nothing is ever sent over the network.</span>
           </div>
           <div class="night-tray"><div class="reminder-list" id="reminder-list"></div></div>
         </div>
@@ -187,27 +207,29 @@
         <!-- From your library (recent items, demo data) -->
         <aside class="lib-panel" aria-labelledby="home-lib-heading">
           <div class="coming-up-head">
-            <h2 id="home-lib-heading">From your library <span class="demo-badge">Demo data</span></h2>
+            <h2 id="home-lib-heading"><span data-i18n="libpanel.head">From your library</span> <span class="demo-badge" data-i18n="comingup.badge">Demo data</span></h2>
           </div>
-          <p class="lib-panel-note">Recordings, voicemails, and documents from your matters — catalogued on this device, linked to what they belong to.</p>
+          <p class="lib-panel-note" data-i18n="libpanel.note">Recordings, voicemails, and documents from your matters — catalogued on this device, linked to what they belong to.</p>
           <div id="home-lib-list" class="home-lib-list"></div>
-          <button type="button" class="btn-ghost" data-goto="library">Open the library</button>
+          <p class="hand-note lib-note" data-i18n="libpanel.note2">every call, voicemail, and letter — filed and findable.</p>
+            <button type="button" class="btn-ghost" data-goto="recorder" data-i18n="libpanel.record">Record a call</button>
+            <button type="button" class="btn-ghost" data-goto="library" data-i18n="libpanel.open">Open the library</button>
         </aside>
       </div>
 
       <div class="dash-strip reveal" style="--reveal-delay: 0.15s">
         <div class="dash-card">
-          <h3>Active Tracks</h3>
+          <h3 data-i18n="dash.active_h">Active Tracks</h3>
           <div class="dash-stat" id="dash-active">0</div>
-          <div class="dash-detail">health concerns being monitored</div>
+          <div class="dash-detail" data-i18n="dash.active_d">health concerns being monitored</div>
         </div>
         <div class="dash-card">
-          <h3>Family Members</h3>
+          <h3 data-i18n="dash.family_h">Family Members</h3>
           <div class="dash-stat" id="dash-family">0</div>
-          <div class="dash-detail">profiles you are tracking</div>
+          <div class="dash-detail" data-i18n="dash.family_d">profiles you are tracking</div>
         </div>
         <div class="dash-card">
-          <h3>Resolved</h3>
+          <h3 data-i18n="dash.resolved_h">Resolved</h3>
           <div class="dash-stat" id="dash-resolved">0</div>
           <div class="dash-detail">concerns successfully navigated</div>
         </div>
@@ -222,15 +244,34 @@
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
           </div>
           <div>
-            <h2 class="panel-eyebrow" id="symptoms-heading">Symptom Assessment</h2>
-            <div class="panel-desc">Describe your symptoms and we'll identify possible conditions, assess urgency, and suggest next steps.</div>
+            <h2 class="panel-eyebrow" id="symptoms-heading" data-i18n="symptoms.head">Symptom Assessment</h2>
+            <div class="panel-desc" data-i18n="symptoms.desc">Describe your symptoms and we'll identify possible conditions, assess urgency, and suggest next steps.</div>
           </div>
         </div>
-        <label for="symptom-input" class="field-label">What are you experiencing?</label>
-        <textarea id="symptom-input" rows="4" placeholder="e.g., I've been having chest pain and shortness of breath for the past hour..."></textarea>
-        <button type="button" class="btn-primary" data-action="assess-symptoms">Assess Symptoms</button>
+        <label for="symptom-input" class="field-label" data-i18n="symptoms.label">What are you experiencing?</label>
+        <div class="example-chips">
+          <button type="button" class="example-chip" data-example="I've had a sore throat and low fever for two days, and it hurts to swallow." data-i18n="symptoms.chip1">sore throat, two days</button>
+          <button type="button" class="example-chip" data-example="Dizzy and can't focus since yesterday. I started a new blood pressure medication last week." data-i18n="symptoms.chip2">dizzy since a new medication</button>
+          <button type="button" class="example-chip" data-example="Chest pain and shortness of breath for the past hour." data-i18n="symptoms.chip3">chest pain, one hour</button>
+        </div>
+        <textarea id="symptom-input" rows="5" class="intake-sheet" placeholder="e.g., I've been having chest pain and shortness of breath for the past hour..." data-i18n-placeholder="symptoms.label_ph"></textarea>
+        <div class="emergency-strip">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+          <p><span data-i18n="symptoms.emergency_prefix">If this feels like an emergency, skip the form — </span><strong data-i18n="symptoms.emergency_strong">call your local emergency number now.</strong></p>
+        </div>
+        <button type="button" class="btn-primary" data-action="assess-symptoms" data-i18n="symptoms.assess">Assess Symptoms</button>
         <div id="symptom-results" class="results" aria-live="polite" role="status"></div>
       </div></div>
+      <aside class="sample-slip" aria-label="Sample of a plain-language read">
+        <div class="sample-slip-head"><span class="slip-stamp" data-i18n="slip.stamp_sample">SAMPLE</span><span data-i18n="symptoms.slip_head">what a read looks like</span></div>
+        <p class="slip-input" data-i18n="symptoms.slip_input">“sore throat and low fever for two days, worse when swallowing”</p>
+        <div class="slip-line"><span class="slip-key" data-i18n="symptoms.slip_sounds">what this sounds like</span>
+          <p data-i18n="symptoms.slip_sounds_body">Viral throat infection is the most common cause; strep is possible and worth a quick test.</p></div>
+        <div class="slip-line slip-urgency"><span class="slip-key" data-i18n="slip.key_urgency">urgency</span>
+          <p><span class="stamp-mini" data-i18n="slip.stamp_routine">routine</span> <span data-i18n="symptoms.slip_urgency_body">See a clinician within a few days if it worsens. Immediate care for trouble breathing or swallowing.</span></p></div>
+        <div class="slip-line"><span class="slip-key" data-i18n="symptoms.slip_next">next steps</span>
+          <p data-i18n="symptoms.slip_next_body">Book a same-week visit · Warm fluids and rest · Come back with any new symptom.</p></div>
+      </aside>
     </section>
 
     <!-- Document Decoder -->
@@ -678,9 +719,12 @@
   <div class="ha-toast-region" id="toast-region" aria-live="polite" aria-label="Notifications"></div>
 
   <footer>
-    <p><strong>HealthAdvocate</strong> is here to support, not replace, professional medical guidance. Always consult a qualified healthcare provider for diagnosis and treatment. Your information stays on your device.</p>
+    <p><strong>HealthAdvocate</strong> <span data-i18n="footer.note_tail">is here to support, not replace, professional medical guidance. Always consult a qualified healthcare provider for diagnosis and treatment. Your information stays on your device.</span></p>
   </footer>
 
   <script src="/static/app.js"></script>
+    <script src="/static/i18n.js"></script>
+    <script src="/static/i18n/en.js"></script>
+    <script src="/static/i18n/es.js"></script>
 </body>
 </html>

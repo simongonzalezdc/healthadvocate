@@ -6,6 +6,7 @@ PY ?= .venv/bin/python
 PORT_A ?= 8080
 PORT_B ?= 8081
 NODE_PATH ?= /opt/homebrew/lib/node_modules
+PLAYWRIGHT_BROWSERS_PATH ?= /Users/simongonzalezdecruz/workspaces/.cache/playwright
 CASES_DIR ?= /tmp/ha-ax-coverage-cases
 
 # Clean-room HTTP acceptance gate (audit 2026-09-24 remediation 4).
@@ -44,4 +45,5 @@ a11y-ax:
 	done; \
 	curl -sf http://127.0.0.1:$(PORT_A)/api/health >/dev/null || { echo 'server A failed to start (log: /tmp/ha-ax-server-a.log)'; exit 1; }; \
 	curl -sf http://127.0.0.1:$(PORT_B)/api/health >/dev/null || { echo 'server B failed to start (log: /tmp/ha-ax-server-b.log)'; exit 1; }; \
-	NODE_PATH=$(NODE_PATH) node tests/browser/ax-audit.js
+	AX_BASE=$${AX_BASE:-http://127.0.0.1:$(PORT_A)} AX_COV=$${AX_COV:-http://127.0.0.1:$(PORT_B)} AX_OUT=$${AX_OUT:-/tmp/ha-ax-audit-result.json} \
+	NODE_PATH=$(NODE_PATH) PLAYWRIGHT_BROWSERS_PATH=$${PLAYWRIGHT_BROWSERS_PATH:-$(PLAYWRIGHT_BROWSERS_PATH)} node tests/browser/ax-audit.js

@@ -137,18 +137,54 @@
           <path class="lk-desk" d="M98 197 h26" stroke-linecap="round"/>
           <path class="lk-line" d="M152 214 v-13 q0-3 3-3 h11 q3 0 3 3 v13" stroke-linejoin="round"/>
           <path class="lk-line" d="M169 204 q9 1 0 8" stroke-linecap="round"/>
-      <svg class="nook-still-life" viewBox="0 0 220 240" fill="none" aria-hidden="true" focusable="false">
-          <!-- the sill: a pothos, a cup of tea with steam — the nook's companions -->
-          <path class="nk-wood" d="M28 208 H192" stroke-linecap="round"/>
-          <path class="nk-line" d="M84 208 v-26 q0-6 6-6 h34 q6 0 6 6 v26" stroke-linejoin="round"/>
-          <path class="nk-line" d="M76 182 h64" stroke-linecap="round"/>
-          <path class="nk-leaf" d="M97 176 q-2-26 -18-34 q20-2 24 18 q2-20 16-26 q-4 22-16 42" fill="none"/>
-          <path class="nk-leaf2" d="M118 174 q10-18 26-20 q-8 14-22 24" fill="none"/>
-          <path class="nk-line" d="M158 206 v-20 q0-4 4-4 h14 q4 0 4 4 v20" stroke-linejoin="round"/>
-          <path class="nk-line" d="M180 190 q10 2 0 10" stroke-linecap="round"/>
-          <path class="nk-steam" d="M166 178 q-5-8 0-15 q5-7 0-14" stroke-linecap="round"/>
-          <path class="nk-steam nk-steam2" d="M174 176 q5-8 0-15 q-5-7 0-13" stroke-linecap="round"/>
-        </svg>
+      <svg class="nook-scene" viewBox="0 0 420 520" fill="none" aria-hidden="true" focusable="false">
+        <defs>
+          <radialGradient id="nook-glow" cx="0.5" cy="0.42" r="0.55">
+            <stop offset="0%" stop-color="rgba(224,169,97,0.30)"/>
+            <stop offset="55%" stop-color="rgba(224,169,97,0.12)"/>
+            <stop offset="100%" stop-color="rgba(224,169,97,0)"/>
+          </radialGradient>
+          <linearGradient id="nook-window" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="rgba(224,169,97,0.34)"/>
+            <stop offset="70%" stop-color="rgba(224,169,97,0.10)"/>
+            <stop offset="100%" stop-color="rgba(168,191,143,0.06)"/>
+          </linearGradient>
+        </defs>
+        <rect class="nk-win" x="262" y="30" width="122" height="180" rx="10" fill="url(#nook-window)"/>
+        <path class="nk-frame" d="M262 120 H384 M323 30 V210" stroke-width="5"/>
+        <path class="nk-frame" d="M262 30 h122 v180 h-122 Z"/>
+        <path class="nk-wood" d="M30 148 H168"/>
+        <path class="nk-book" d="M52 148 V100 h13 v48" fill="rgba(149,111,80,0.35)"/>
+        <path class="nk-book" d="M71 148 V94 h11 v54" fill="rgba(122,143,109,0.4)"/>
+        <path class="nk-book" d="M88 148 V104 h15 v44" fill="rgba(180,120,90,0.3)"/>
+        <path class="nk-book" d="M110 148 L126 100 l10 3 -15 47" fill="rgba(150,90,90,0.3)"/>
+        <path class="nk-vine" d="M150 146 q6 40 -4 76 q-8 30 4 52"/>
+        <path class="nk-vine" d="M160 146 q16 34 10 70 q-4 28 8 46"/>
+        <path class="nk-leaf" d="M146 186 q-13-4 -13-17 q13 2 13 17Z"/>
+        <path class="nk-leaf" d="M142 220 q-15-2 -17-15 q15 0 17 15Z"/>
+        <path class="nk-leaf" d="M148 254 q-14-5 -11-18 q13 4 11 18Z"/>
+        <path class="nk-leaf" d="M170 196 q13-7 11-20 q-13 4 -11 20Z"/>
+        <path class="nk-leaf" d="M169 232 q14-3 14-16 q-14 2 -14 16Z"/>
+        <path class="nk-wood" d="M28 468 H392" stroke-width="4"/>
+        <path class="nk-wood" d="M52 468 v14 M368 468 v14"/>
+        <path class="nk-paper" d="M84 452 l52 -6 4 20 -52 6 Z"/>
+        <path class="nk-paper" d="M148 456 l40 -4 3 14 -40 4 Z"/>
+        <path class="lk-cone" d="M204 208 L96 462 L312 462 L256 208 Z"/>
+        <path class="lk-cone lk-cone-inner" d="M216 208 L136 462 L272 462 L244 208 Z"/>
+        <ellipse class="lk-pool" cx="204" cy="458" rx="112" ry="14"/>
+        <path class="lk-line lk-fill" d="M164 118 Q204 74 244 118 L230 154 Q204 132 178 154 Z" stroke-linejoin="round"/>
+        <circle class="lk-bulb" cx="204" cy="162" r="7"/>
+        <path class="lk-line" d="M204 456 V164" stroke-linecap="round"/>
+        <path class="lk-line" d="M180 468 v-10 q0-6 6-6 h36 q6 0 6 6 v10 Z" stroke-linejoin="round"/>
+        <path class="nk-line" d="M330 466 v-30 q0-5 5-5 h22 q5 0 5 5 v30" stroke-linejoin="round"/>
+        <path class="nk-line" d="M362 442 q12 2 0 12" stroke-linecap="round"/>
+        <path class="nk-steam" d="M340 428 q-6-10 0-19 q6-9 0-17" stroke-linecap="round"/>
+        <path class="nk-steam nk-steam2" d="M350 426 q6-10 0-19 q-6-9 0-16" stroke-linecap="round"/>
+        <path class="nk-line" d="M96 466 v-16 q0-5 5-5 h18 q5 0 5 5 v16" stroke-linejoin="round"/>
+        <path class="nk-leaf" d="M112 444 q-14-8 -12-24 q14 6 12 24Z"/>
+        <path class="nk-leaf" d="M114 444 q14-10 14-26 q-16 8 -14 26Z"/>
+        <path class="nk-leaf" d="M112 444 q-2-16 8-26 q6 14 -8 26Z"/>
+      </svg>
                 </svg>
         <span class="eyebrow" data-i18n="home.eyebrow">Free · Open source · Private by design</span>
         <h1 data-i18n="home.title">You deserve to understand your care.</h1>

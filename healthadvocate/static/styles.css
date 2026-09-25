@@ -2152,8 +2152,9 @@ body::after {
 /* programmatic heading focus (WCAG 2.4.3 focusInto) wears ink, not
    the browser's default box — warm, quiet, clearly ours */
 h1[tabindex="-1"], h2[tabindex="-1"], h3[tabindex="-1"] { outline: none; }
-h1[tabindex="-1"]:focus-visible, h2[tabindex="-1"]:focus-visible, h3[tabindex="-1"]:focus-visible,
-h1[tabindex="-1"]:focus, h2[tabindex="-1"]:focus, h3[tabindex="-1"]:focus {
+/* :focus-visible only — programmatic focusInto() fires on every view
+   switch, and a permanent box on the heading reads as a selection bug */
+h1[tabindex="-1"]:focus-visible, h2[tabindex="-1"]:focus-visible, h3[tabindex="-1"]:focus-visible {
   outline: 2px solid rgba(184, 120, 72, 0.45);
   outline-offset: 6px;
   border-radius: 4px;

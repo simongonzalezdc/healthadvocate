@@ -111,6 +111,9 @@ HA.i18n.register('es', {
   'documents.note': 'lo revisamos línea por línea.',
   'bills.note': 'esta parte nunca es divertida. la hacemos juntos.',
   'insurance.note': 'dijeron que no. escribamos la respuesta juntos.',
+  'recorder.note': 'oprímelo cuando estés listo — guardo cada palabra.',
+  'library.note': 'todo archivado, nada perdido.',
+  'directory.note': 'las personas de tu lado, en un mismo lugar.',
 
   /* footer */
   'footer.note_tail': 'está aquí para apoyar, no para reemplazar, la guía médica profesional. Siempre consulta a un profesional de la salud calificado para diagnóstico y tratamiento. Tu información se queda en tu dispositivo.',

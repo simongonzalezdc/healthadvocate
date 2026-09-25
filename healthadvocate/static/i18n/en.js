@@ -110,6 +110,9 @@ HA.i18n.register('en', {
   'documents.note': "we'll go through this line by line.",
   'bills.note': "this part is never fun. we'll do it together.",
   'insurance.note': "they said no. let's write the answer together.",
+  'recorder.note': "press it when you're ready — I'll keep every word.",
+  'library.note': 'everything filed, nothing lost.',
+  'directory.note': 'the people on your side, in one place.',
 
   /* footer */
   'footer.note_tail': 'is here to support, not replace, professional medical guidance. Always consult a qualified healthcare provider for diagnosis and treatment. Your information stays on your device.',

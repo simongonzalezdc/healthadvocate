@@ -597,16 +597,27 @@
     <!-- Call Recorder (demo mode — synthetic audio script, no real recording) -->
     <section id="view-recorder" class="view" aria-labelledby="recorder-heading">
       <div class="panel"><div class="panel-inner">
+        <svg class="nook-frag" viewBox="0 0 170 140" fill="none" aria-hidden="true" focusable="false">
+          <!-- the nook, corner-sized: the cassette, labeled and shelved -->
+          <ellipse cx="86" cy="78" rx="76" ry="46" fill="url(#nf-glow)" filter="url(#nf-softer)"/>
+          <rect x="44" y="42" width="88" height="62" rx="6" fill="#f0e4cc" class="nk-line" stroke-linejoin="round"/>
+          <circle cx="70" cy="66" r="12" fill="none" class="nk-line"/>
+          <circle cx="106" cy="66" r="9" fill="none" class="nk-line"/>
+          <circle cx="70" cy="66" r="4" fill="#7a5c38"/>
+          <circle cx="106" cy="66" r="3.5" fill="#7a5c38"/>
+          <path d="M58 90 h8 M78 90 h8 M98 90 h8" class="nk-line" stroke-width="2" opacity="0.5" stroke-linecap="round"/>
+          <path d="M58 102 h60" class="nk-line" stroke-width="2" opacity="0.4" stroke-linecap="round"/>
+        </svg>
         <div class="panel-header">
           <div class="panel-icon recorder" aria-hidden="true">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 00-3 3v8a3 3 0 006 0V4a3 3 0 00-3-3z"/><path d="M19 10v2a7 7 0 01-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
           </div>
           <div>
-            <h2 class="panel-eyebrow" id="recorder-heading">Call Recorder</h2>
+            <h2 class="panel-eyebrow" id="recorder-heading">Call Recorder</h2> <span class="demo-badge">Demo mode</span>
             <div class="panel-desc">Record medical calls and appointments, see a live transcript, and get a summary with follow-ups. Recording and transcription happen on this device — nothing is uploaded, ever.</div>
           </div>
-          <span class="demo-badge">Demo mode</span>
         </div>
+        <p class="hand-note" data-i18n="recorder.note">press it when you're ready — I'll keep every word.</p>
 
         <div class="rec-stage">
           <div class="privacy-chip">
@@ -656,16 +667,26 @@
     <!-- Library / Catalog (demo data) -->
     <section id="view-library" class="view" aria-labelledby="library-heading">
       <div class="panel"><div class="panel-inner">
+        <svg class="nook-frag" viewBox="0 0 170 140" fill="none" aria-hidden="true" focusable="false">
+          <!-- the nook, corner-sized: the small stack, always within reach -->
+          <ellipse cx="88" cy="82" rx="76" ry="46" fill="url(#nf-glow)" filter="url(#nf-softer)"/>
+          <path d="M46 106 h88" class="nk-wood" stroke-linecap="round"/>
+          <rect x="56" y="72" width="17" height="34" rx="2" fill="#9c6b4a" class="nk-line"/>
+          <rect x="75" y="66" width="13" height="40" rx="2" fill="#7d8f68" class="nk-line"/>
+          <rect x="90" y="74" width="19" height="32" rx="2" fill="#b5825a" class="nk-line"/>
+          <path d="M112 64 l12 -3 7 38 -12 3 Z" fill="#a06a62" class="nk-line" stroke-linejoin="round"/>
+          <path d="M81 66 v-12 l4 3 4 -3 v12" fill="#a06a62"/>
+        </svg>
         <div class="panel-header">
           <div class="panel-icon library" aria-hidden="true">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/></svg>
           </div>
           <div>
-            <h2 class="panel-eyebrow" id="library-heading">Library</h2>
+            <h2 class="panel-eyebrow" id="library-heading">Library</h2> <span class="demo-badge">Demo data</span>
             <div class="panel-desc">Every recording, transcript, and appointment you've saved — catalogued, searchable, and linked to the matter it belongs to. Stored only on this device.</div>
           </div>
-          <span class="demo-badge">Demo data</span>
         </div>
+        <p class="hand-note" data-i18n="library.note">everything filed, nothing lost.</p>
 
         <div class="lib-controls">
           <label class="sr-only" for="lib-search">Search the library</label>
@@ -691,16 +712,24 @@
     <!-- Provider Directory (self-building, demo data) -->
     <section id="view-directory" class="view" aria-labelledby="directory-heading">
       <div class="panel"><div class="panel-inner">
+        <svg class="nook-frag" viewBox="0 0 170 140" fill="none" aria-hidden="true" focusable="false">
+          <!-- the nook, corner-sized: the card box, everyone in one place -->
+          <ellipse cx="88" cy="80" rx="76" ry="46" fill="url(#nf-glow)" filter="url(#nf-softer)"/>
+          <rect x="58" y="34" width="36" height="30" rx="2" fill="#f4e9cf" class="nk-line" transform="rotate(-12 76 49)"/>
+          <rect x="78" y="32" width="36" height="30" rx="2" fill="#f7edd6" class="nk-line" transform="rotate(7 96 47)"/>
+          <path d="M48 62 h80 v42 h-80 Z" fill="#9c6b3f" class="nk-wood" stroke-linejoin="round"/>
+          <path d="M48 76 h80" class="nk-line" stroke-width="2" opacity="0.5"/>
+        </svg>
         <div class="panel-header">
           <div class="panel-icon library" aria-hidden="true">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
           </div>
           <div>
-            <h2 class="panel-eyebrow" id="directory-heading">Directory</h2>
+            <h2 class="panel-eyebrow" id="directory-heading">Directory</h2> <span class="demo-badge">Demo data</span>
             <div class="panel-desc">Your doctors, labs, imaging centers, therapists, pharmacies, and insurers — built automatically from your calls, documents, and appointments. Nothing to type unless you're correcting something. Stored only on this device.</div>
           </div>
-          <span class="demo-badge">Demo data</span>
         </div>
+        <p class="hand-note" data-i18n="directory.note">the people on your side, in one place.</p>
 
         <div class="dir-controls">
           <label class="sr-only" for="dir-search">Search the directory</label>

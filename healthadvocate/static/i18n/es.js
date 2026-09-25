@@ -109,6 +109,8 @@ HA.i18n.register('es', {
 
   /* inner-view hand notes (S+ inner warmth — one human sentence per view) */
   'documents.note': 'lo revisamos línea por línea.',
+  'bills.note': 'esta parte nunca es divertida. la hacemos juntos.',
+  'insurance.note': 'dijeron que no. escribamos la respuesta juntos.',
 
   /* footer */
   'footer.note_tail': 'está aquí para apoyar, no para reemplazar, la guía médica profesional. Siempre consulta a un profesional de la salud calificado para diagnóstico y tratamiento. Tu información se queda en tu dispositivo.',

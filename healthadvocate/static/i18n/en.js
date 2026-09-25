@@ -108,6 +108,8 @@ HA.i18n.register('en', {
 
   /* inner-view hand notes (S+ inner warmth — one human sentence per view) */
   'documents.note': "we'll go through this line by line.",
+  'bills.note': "this part is never fun. we'll do it together.",
+  'insurance.note': "they said no. let's write the answer together.",
 
   /* footer */
   'footer.note_tail': 'is here to support, not replace, professional medical guidance. Always consult a qualified healthcare provider for diagnosis and treatment. Your information stays on your device.',

@@ -7,6 +7,40 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added — 2026-09-24/25 ship
+- **Appeal-letter generator** (F1a): denial + records → complete appeal letter via the
+  local champion lane; INFERRED-labeled, source-cited, editable, .txt download, print
+  view; entry points from insurance, bills, and the library.
+- **Share-safe pack** (F1b): `POST /api/privacy/share-safe` strips names/dates/phones/IDs
+  on-device (OpenMed PII deidentifier, in-process, zero network); type-labeled masks,
+  per-type counts, refuse-unsafe guard; button on document decode (copy/download).
+- **Four user color themes** — gold (default) / rose / moss / blue swatches in the header
+  (WAI-ARIA radiogroup, arrow-key nav, persisted, light + dark each).
+- **The reading-nook art direction**: painterly scene (window glow, bookshelf, pothos,
+  lamp pool, the friend placing a stamped coffee-ringed denial letter, steaming tea),
+  per-view scene fragments + hand-notes (EN/ES), rubber-stamp eyebrow, custom warm icons
+  (stitched-heartline ECG, wax-seal letter, coffee-ring receipt), felt texture + layered
+  warm shadows, frosted header.
+- **i18n frame**: HA.t with authored-English fallback, data-i18n bindings, EN/ES
+  catalogs (~500 keys, parity-tested), auto-cycling language toggle; adding a language
+  is one file + one script tag.
+- **Build stamp**: `/api/version` + footer `build <sha>` — staleness is one glance.
+- Design-system gates as tests: named-color census, four-role radius census, contrast
+  matrix (4 themes × light/dark), theme-layering pin, alignment probe, theme-dots probe.
+
+### Changed
+- One-measure alignment (920px everywhere; --grid-max subsumes --max-w + panel literal).
+- 5-step type scale (13/15/18/28/40) with full migration map; script font ≥16px.
+- AA contrast enforced across all four themes in both modes (9 violations fixed).
+- Service worker: network-first static + cache v3 (stale first-paint killed).
+- ax-audit: SC 4.1.3 "residual" retired (instrument bug — stale needle + snapshot race).
+- Suite grew to 402 tests + 241 subtests; acceptance 35.
+
+### Design
+- S+ certification honestly BLOCKED at blind-audit median 8 (3 pre-registered two-judge
+  rounds; thresholds never moved). Receipts: docs/design/audit-2026-09-24/ and -09-25/.
+
+
 ### Added
 - **Design system: "a warm paper clinic"** (2026-09-24,
   `feat/design-system-20260924`). `docs/DESIGN-SYSTEM.md` is the committed

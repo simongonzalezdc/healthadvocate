@@ -1727,6 +1727,15 @@ document.addEventListener('DOMContentLoaded', () => {
   document.addEventListener('mousedown', () => { HA._modality = 'pointer'; }, true);
   document.addEventListener('touchstart', () => { HA._modality = 'pointer'; }, true);
 
+  /* the mobile scroll hint points at the shelf, then leaves when you arrive */
+  const navEl = document.getElementById('main-nav');
+  const hint = document.getElementById('nav-scroll-hint');
+  if (navEl && hint) {
+    const update = () => { hint.style.opacity = (navEl.scrollLeft + navEl.clientWidth >= navEl.scrollWidth - 8) ? '0' : ''; };
+    navEl.addEventListener('scroll', update, { passive: true });
+    update();
+  }
+
   /* the More disclosure: the reference shelf stays out of the way until asked */
   const navMore = document.getElementById('nav-more');
   const navRow = document.getElementById('nav-more-row');

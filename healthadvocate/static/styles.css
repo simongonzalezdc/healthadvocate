@@ -3224,3 +3224,40 @@ input:focus-visible, textarea:focus-visible, select:focus-visible {
   background: transparent;
 }
 [data-theme="dark"] .eyebrow-stamp { color: var(--ochre-ink-700); }
+
+/* ── G004b: mobile affordances ── */
+.nav-scroll-hint {
+  position: absolute;
+  right: 10px;
+  bottom: 26px;
+  width: 30px; height: 30px;
+  display: none;
+  align-items: center; justify-content: center;
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-full);
+  color: var(--text-2);
+  box-shadow: var(--shadow-l2);
+  animation: hint-bob 2.4s ease-in-out infinite;
+  pointer-events: none;
+  z-index: 5;
+}
+@keyframes hint-bob { 0%,100% { transform: translateX(0); } 50% { transform: translateX(3px); } }
+@media (max-width: 640px) {
+  .nav-scroll-hint { display: flex; }
+}
+@media (prefers-reduced-motion: reduce) { .nav-scroll-hint { animation: none; } }
+
+/* under 390 the shelf wraps to two calm rows instead of clipping */
+@media (max-width: 390px) {
+  #main-nav { flex-wrap: wrap; overflow-x: visible; -webkit-mask-image: none; mask-image: none; }
+  .nav-scroll-hint { display: none; }
+  .nav-btn { flex: 0 0 auto; }
+}
+
+/* the header cluster never clips: it wraps above the nav on narrow phones */
+@media (max-width: 480px) {
+  .header-inner { flex-wrap: wrap; row-gap: var(--space-2); }
+  .header-actions.header-cluster { flex-wrap: wrap; justify-content: flex-end; }
+  .due-badge .due-badge-words { display: none; }  /* count + dot only; aria carries the words */
+}

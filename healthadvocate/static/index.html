@@ -75,18 +75,18 @@
         </div>
         <span class="logo-text">HealthAdvocate</span>
       </div>
-      <div class="header-actions">
+      <div class="header-actions header-cluster">
         <button type="button" class="due-badge" id="due-badge" data-goto="home" hidden aria-label="Reminders due soon — open What's coming up">
           <span class="dot" aria-hidden="true"></span><span id="due-badge-count">1</span><span class="due-badge-words"> reminder due soon</span>
         </button>
         <button type="button" class="icon-btn" id="btn-home" aria-label="Home" title="Home" data-i18n-aria="aria.home">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
         </button>
-        <div class="pal-row" role="group" aria-label="Color theme">
-          <button type="button" class="pal-swatch pal-gold on" data-palette="" aria-label="Color theme: Gold" title="Gold"></button>
-          <button type="button" class="pal-swatch pal-rose" data-palette="plush" aria-label="Color theme: Rose" title="Rose"></button>
-          <button type="button" class="pal-swatch pal-moss" data-palette="moss" aria-label="Color theme: Moss" title="Moss"></button>
-          <button type="button" class="pal-swatch pal-blue" data-palette="blue" aria-label="Color theme: Blue" title="Blue"></button>
+        <div class="pal-row" role="radiogroup" aria-label="Color theme" data-i18n-aria="chrome.theme_group">
+          <button type="button" role="radio" aria-checked="true" class="pal-swatch pal-gold on" data-palette="" aria-label="Color theme: Gold" title="Gold" data-i18n-aria="chrome.theme_gold"></button>
+          <button type="button" role="radio" aria-checked="false" class="pal-swatch pal-rose" data-palette="plush" aria-label="Color theme: Rose" title="Rose" data-i18n-aria="chrome.theme_rose"></button>
+          <button type="button" role="radio" aria-checked="false" class="pal-swatch pal-moss" data-palette="moss" aria-label="Color theme: Moss" title="Moss" data-i18n-aria="chrome.theme_moss"></button>
+          <button type="button" role="radio" aria-checked="false" class="pal-swatch pal-blue" data-palette="blue" aria-label="Color theme: Blue" title="Blue" data-i18n-aria="chrome.theme_blue"></button>
         </div>
         <button type="button" class="icon-btn icon-lang-toggle" id="btn-lang" aria-label="Switch language to Spanish">EN</button>
         <button type="button" class="icon-btn" id="btn-theme" aria-label="Toggle theme" title="Toggle theme">
@@ -114,11 +114,28 @@
       <button type="button" data-view="tracks" class="nav-btn nav-secondary" data-i18n="nav.tracks">Tracks</button>
       <button type="button" data-view="coverage" class="nav-btn nav-secondary" data-i18n="nav.coverage">Coverage</button>
       </span>
-    </nav>
+    <button type=button id="nav-scroll-hint" class="nav-scroll-hint" aria-hidden="true" tabindex="-1" data-goto=""><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></button>
+  </nav>
   </header>
 
   <!-- Main Content -->
   <main id="app-content">
+
+    <!-- Shared painterly defs for the per-view nook fragments (S+ inner
+         warmth): one warm pool of light, two soft blurs — the same
+         technique as the home nook-scene. Rendered at 0x0 so gradient
+         references resolve; never visible, never interactive. -->
+    <svg class="nf-defs" width="0" height="0" aria-hidden="true" focusable="false">
+      <defs>
+        <radialGradient id="nf-glow" cx="0.5" cy="0.5" r="0.5">
+          <stop offset="0%" stop-color="rgba(242,201,138,0.5)"/>
+          <stop offset="60%" stop-color="rgba(242,201,138,0.16)"/>
+          <stop offset="100%" stop-color="rgba(242,201,138,0)"/>
+        </radialGradient>
+        <filter id="nf-soft" x="-40%" y="-40%" width="180%" height="180%"><feGaussianBlur stdDeviation="4"/></filter>
+        <filter id="nf-softer" x="-60%" y="-60%" width="220%" height="220%"><feGaussianBlur stdDeviation="9"/></filter>
+      </defs>
+    </svg>
 
     <!-- Home View -->
     <section id="view-home" class="view active">
@@ -187,6 +204,13 @@
           <rect x="96" y="100" width="18" height="50" rx="2" fill="#b5825a"/>
           <path d="M122 148 L138 98 l12 4 -17 48 Z" fill="#a06a62"/>
           <rect x="156" y="106" width="12" height="44" rx="2" fill="#8f7a99"/>
+          <rect x="44" y="124" width="26" height="26" rx="4" fill="#b3703a"/>
+        </g>
+        <g filter="url(#pn-mist)">
+          <path d="M57 152 q8 36 -2 66 q-7 24 3 42" stroke="#6f9163" stroke-width="4" fill="none"/>
+          <ellipse cx="52" cy="196" rx="11" ry="7" fill="#7d9c6d" transform="rotate(-22 184 196)"/>
+          <ellipse cx="48" cy="226" rx="12" ry="7" fill="#8fae77" transform="rotate(-6 180 226)"/>
+          <ellipse cx="56" cy="254" rx="10" ry="6" fill="#6f9163" transform="rotate(14 188 254)"/>
         </g>
         <!-- mid: the pothos, massed leaf shapes -->
         <g filter="url(#pn-mist)">
@@ -218,6 +242,17 @@
         <path d="M356 464 v-34 q0-6 6-6 h26 q6 0 6 6 v34 Z" fill="#f0e4cc" stroke="#7a5c38" stroke-width="2.5" stroke-linejoin="round"/>
         <path d="M394 438 q14 3 0 14" stroke="#7a5c38" stroke-width="2.5" fill="none" stroke-linecap="round"/>
         <ellipse cx="375" cy="428" rx="16" ry="3.5" fill="#b3703a"/>
+        <!-- the friend: a hand places the stamped, coffee-ringed denial letter -->
+        <g>
+          <path d="M226 450 l66 -10 q7 -1 9 4 l6 17 q1 5 -4 6 l-66 10 q-7 1 -9 -4 l-6 -17 q-1 -5 4 -6 Z" fill="#f7edd6" stroke="#7a5c38" stroke-width="2.5" stroke-linejoin="round"/>
+          <ellipse cx="288" cy="450" rx="10" ry="4.5" fill="none" stroke="rgba(122,84,52,0.55)" stroke-width="2.5"/>
+          <path d="M254 457 h38" stroke="#a06a24" stroke-width="3.5" stroke-linecap="round"/>
+          <path d="M258 450 l11 12 M266 449 l7 8" stroke="#a06a24" stroke-width="2.5" stroke-linecap="round"/>
+          <path d="M314 438 q16 -24 9 -48 q-2 -9 5 -13" stroke="#b57f4e" stroke-width="11" fill="none" stroke-linecap="round"/>
+          <path d="M312 440 q-8 -2 -14 2" stroke="#b57f4e" stroke-width="10" fill="none" stroke-linecap="round"/>
+          <path d="M318 384 q5 -7 11 -4" stroke="#b57f4e" stroke-width="8" fill="none" stroke-linecap="round"/>
+          <path d="M321 391 q-4 3 -1 7 M326 388 q-4 3 -1 7" stroke="#7a5c38" stroke-width="2" stroke-linecap="round"/>
+        </g>
         <path class="nk-steam" d="M366 418 q-7-11 0-21 q7-10 0-19" stroke="#c98a3d" stroke-width="3" fill="none" stroke-linecap="round"/>
         <path class="nk-steam nk-steam2" d="M382 416 q7-11 0-21 q-7-10 0-18" stroke="#c98a3d" stroke-width="3" fill="none" stroke-linecap="round"/>
         <!-- small plant by the lamp base -->
@@ -227,18 +262,18 @@
         <ellipse cx="120" cy="424" rx="11" ry="7" fill="#6f9163" transform="rotate(-4 120 424)"/>
       </svg>
                 </svg>
-        <span class="eyebrow" data-i18n="home.eyebrow">Free · Open source · Private by design</span>
+        <span class="eyebrow eyebrow-stamp" data-i18n="home.eyebrow">Free · Open source · Private by design</span>
         <h1 data-i18n="home.title">You deserve to understand your care.</h1>
         <p data-i18n="home.sub">Sit down with your symptoms, bills, and denial letters. We’ll go through all of it together, at your pace — and everything stays private on your device.</p>
         <p class="margin-note" data-i18n="home.margin_note">you're not alone in this.</p>
         <div class="hero-actions">
           <button type="button" class="btn-primary btn-lg" data-goto="symptoms" data-i18n="home.cta_symptoms">Describe your symptoms</button>
-          <button type="button" class="btn-ghost" data-goto="insurance" data-i18n="home.cta_denial" class="btn-ghost">Fight a denial</button>
+          <button type="button" class="btn-ghost" data-goto="insurance" data-i18n="home.cta_denial">Fight a denial</button>
         </div>
         <div class="entry-grid">
           <div class="entry-card entry-card-primary">
             <div class="entry-icon">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-dasharray="0.1 3.4"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
             </div>
             <h2 data-i18n="entry1.title">Something doesn't feel right</h2>
             <p data-i18n="entry1.desc">Describe how you're feeling and we'll help you understand what might be happening and what to do next.</p>
@@ -275,7 +310,7 @@
           </div>
           <div class="entry-card" tabindex="0" data-goto="bills" role="button" aria-label="I need help with costs">
             <div class="entry-icon">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2h12v20l-2-1.4-2 1.4-2-1.4-2 1.4-2-1.4L6 22z"/><line x1="9" y1="7" x2="15" y2="7"/><line x1="9" y1="11" x2="15" y2="11"/><circle cx="12" cy="16" r="2.8" stroke-dasharray="0.1 2.6"/></svg>
             </div>
             <h2 data-i18n="entry3.title">I need help with costs</h2>
             <p data-i18n="entry3.desc">Understand your bills, fight denials, and find more affordable alternatives.</p>
@@ -334,15 +369,26 @@
     <!-- Symptom Assessment -->
     <section id="view-symptoms" class="view" aria-labelledby="symptoms-heading">
       <div class="panel"><div class="panel-inner">
+        <svg class="nook-frag" viewBox="0 0 170 140" fill="none" aria-hidden="true" focusable="false">
+          <!-- the nook, corner-sized: a mug of tea set down beside the page -->
+          <ellipse cx="86" cy="86" rx="78" ry="46" fill="url(#nf-glow)" filter="url(#nf-softer)"/>
+          <path d="M56 116 q40 8 80 0" class="nk-wood" stroke-linecap="round"/>
+          <path d="M64 58 v44 q0 9 9 9 h32 q9 0 9 -9 V58 Z" fill="#f0e4cc" class="nk-line" stroke-linejoin="round"/>
+          <path d="M114 70 q17 4 0 22" class="nk-line" stroke-linecap="round"/>
+          <ellipse cx="90" cy="59" rx="20" ry="5" fill="#b3703a"/>
+          <path class="nk-steam" d="M82 48 q-7 -10 0 -19 q6 -9 0 -17" stroke-linecap="round"/>
+          <path class="nk-steam nk-steam2" d="M100 46 q7 -10 0 -19 q-6 -9 0 -16" stroke-linecap="round"/>
+        </svg>
         <div class="panel-header">
           <div class="panel-icon symptoms">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-dasharray="0.1 3.4"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
           </div>
           <div>
             <h2 class="panel-eyebrow" id="symptoms-heading" data-i18n="symptoms.head">Symptom Assessment</h2>
             <div class="panel-desc" data-i18n="symptoms.desc">Describe your symptoms and we'll identify possible conditions, assess urgency, and suggest next steps.</div>
           </div>
         </div>
+        <p class="hand-note" data-i18n="symptoms.note">take your time — write it however it comes out.</p>
         <label for="symptom-input" class="field-label" data-i18n="symptoms.label">What are you experiencing?</label>
         <div class="example-chips">
           <button type="button" class="example-chip" data-example="I've had a sore throat and low fever for two days, and it hurts to swallow." data-i18n="symptoms.chip1">sore throat, two days</button>
@@ -372,15 +418,24 @@
     <!-- Document Decoder -->
     <section id="view-documents" class="view" aria-labelledby="documents-heading">
       <div class="panel"><div class="panel-inner">
+        <svg class="nook-frag" viewBox="0 0 170 140" fill="none" aria-hidden="true" focusable="false">
+          <!-- the nook, corner-sized: the letter, sealed and waiting -->
+          <ellipse cx="90" cy="76" rx="74" ry="46" fill="url(#nf-glow)" filter="url(#nf-softer)"/>
+          <path d="M48 32 h84 v64 h-84 Z" fill="#f7edd6" class="nk-line" stroke-linejoin="round"/>
+          <path d="M48 32 l42 32 42 -32" class="nk-line" stroke-linejoin="round"/>
+          <path d="M88 74 q11 -6 17 1 q8 1 6 9 q-1 8 -9 8 q-8 2 -12 -4 q-6 -4 -2 -14 Z" fill="#a06a62" class="nk-line" stroke-linejoin="round"/>
+          <path d="M87 82 q4 -5 9 -3" stroke="#f7edd6" stroke-width="2" stroke-linecap="round" opacity="0.6"/>
+        </svg>
         <div class="panel-header">
           <div class="panel-icon documents">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><circle cx="12" cy="15" r="2.4"/><path d="M12 13.3q1.4 1 1.4 1.7t-1.4 1.7q-1.4-1-1.4-1.7t1.4-1.7z" stroke-width="0.9"/></svg>
           </div>
           <div>
             <h2 class="panel-eyebrow" id="documents-heading">Document Decoder</h2>
             <div class="panel-desc">Paste a medical document and we'll extract and explain all the medical terms, conditions, and medications.</div>
           </div>
         </div>
+        <p class="hand-note" data-i18n="documents.note">we'll go through this line by line.</p>
         <label for="doc-input" class="field-label">Paste your medical document text</label>
         <textarea id="doc-input" rows="6" placeholder="Paste lab results, visit notes, referral letters..."></textarea>
         <button type="button" class="btn-primary" data-action="decode-document">Decode Document</button>
@@ -392,15 +447,25 @@
     <!-- Bill Decoder -->
     <section id="view-bills" class="view" aria-labelledby="bills-heading">
       <div class="panel"><div class="panel-inner">
+        <svg class="nook-frag" viewBox="0 0 170 140" fill="none" aria-hidden="true" focusable="false">
+          <!-- the nook, corner-sized: the receipt, coffee-rung from the long night -->
+          <ellipse cx="88" cy="78" rx="74" ry="46" fill="url(#nf-glow)" filter="url(#nf-softer)"/>
+          <path d="M56 26 h64 v84 l-8 -7 -8 7 -8 -7 -8 7 -8 -7 -8 7 -8 -7 -8 7 Z" fill="#f4e9cf" class="nk-line" stroke-linejoin="round"/>
+          <path d="M66 44 h34 M66 56 h26 M66 68 h30" class="nk-line" stroke-width="2" opacity="0.55" stroke-linecap="round"/>
+          <path d="M66 84 h30" class="nk-line" stroke-width="3" stroke-linecap="round"/>
+          <circle cx="118" cy="44" r="16" fill="none" stroke="#b3703a" stroke-width="3.5" opacity="0.5"/>
+          <path d="M108 36 a13 13 0 0 1 17 -3" fill="none" stroke="#b3703a" stroke-width="2" opacity="0.3" stroke-linecap="round"/>
+        </svg>
         <div class="panel-header">
           <div class="panel-icon bills">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2h12v20l-2-1.4-2 1.4-2-1.4-2 1.4-2-1.4L6 22z"/><line x1="9" y1="7" x2="15" y2="7"/><line x1="9" y1="11" x2="15" y2="11"/><circle cx="12" cy="16" r="2.8" stroke-dasharray="0.1 2.6"/></svg>
           </div>
           <div>
             <h2 class="panel-eyebrow" id="bills-heading">Bill Decoder</h2>
             <div class="panel-desc">Paste your medical bill and we'll flag potential errors, duplicate charges, and upcoding.</div>
           </div>
         </div>
+        <p class="hand-note" data-i18n="bills.note">this part is never fun. we'll do it together.</p>
         <label for="bill-input" class="field-label">Paste your bill text</label>
         <textarea id="bill-input" rows="6" placeholder="Paste your medical bill or explanation of benefits..."></textarea>
         <button type="button" class="btn-primary" data-action="decode-bill">Analyze Bill</button>
@@ -411,6 +476,15 @@
     <!-- Insurance Denial Fighter -->
     <section id="view-insurance" class="view" aria-labelledby="insurance-heading">
       <div class="panel"><div class="panel-inner">
+        <svg class="nook-frag" viewBox="0 0 170 140" fill="none" aria-hidden="true" focusable="false">
+          <!-- the nook, corner-sized: a sprig from the windowsill plant -->
+          <ellipse cx="86" cy="76" rx="72" ry="46" fill="url(#nf-glow)" filter="url(#nf-softer)"/>
+          <path d="M92 122 Q84 76 96 46 Q101 33 95 22" fill="none" class="nk-vine" stroke-linecap="round"/>
+          <ellipse cx="78" cy="94" rx="12" ry="6.5" fill="#7d9c6d" transform="rotate(-24 78 94)"/>
+          <ellipse cx="98" cy="74" rx="11" ry="6" fill="#8fae77" transform="rotate(16 98 74)"/>
+          <ellipse cx="82" cy="54" rx="10" ry="5.5" fill="#6f9163" transform="rotate(-28 82 54)"/>
+          <ellipse cx="97" cy="36" rx="9" ry="5" fill="#8fae77" transform="rotate(8 97 36)"/>
+        </svg>
         <div class="panel-header">
           <div class="panel-icon insurance">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
@@ -420,6 +494,7 @@
             <div class="panel-desc">Paste your denial letter and we'll analyze it, identify the reason, and draft an appeal letter.</div>
           </div>
         </div>
+        <p class="hand-note" data-i18n="insurance.note">they said no. let's write the answer together.</p>
         <label for="denial-input" class="field-label">Paste your denial letter</label>
         <textarea id="denial-input" rows="6" placeholder="Paste the denial letter or explanation of benefits..."></textarea>
         <label for="denial-patient-info" class="field-label">Your medical context (optional)</label>
@@ -444,6 +519,15 @@
     <!-- Drug Checker -->
     <section id="view-drugs" class="view" aria-labelledby="drugs-heading">
       <div class="panel"><div class="panel-inner">
+        <svg class="nook-frag" viewBox="0 0 170 140" fill="none" aria-hidden="true" focusable="false">
+          <!-- the nook, corner-sized: a sprig from the windowsill plant -->
+          <ellipse cx="86" cy="76" rx="72" ry="46" fill="url(#nf-glow)" filter="url(#nf-softer)"/>
+          <path d="M92 122 Q84 76 96 46 Q101 33 95 22" fill="none" class="nk-vine" stroke-linecap="round"/>
+          <ellipse cx="78" cy="94" rx="12" ry="6.5" fill="#7d9c6d" transform="rotate(-24 78 94)"/>
+          <ellipse cx="98" cy="74" rx="11" ry="6" fill="#8fae77" transform="rotate(16 98 74)"/>
+          <ellipse cx="82" cy="54" rx="10" ry="5.5" fill="#6f9163" transform="rotate(-28 82 54)"/>
+          <ellipse cx="97" cy="36" rx="9" ry="5" fill="#8fae77" transform="rotate(8 97 36)"/>
+        </svg>
         <div class="panel-header">
           <div class="panel-icon drugs">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10.5 1.5H16a2 2 0 012 2v17a2 2 0 01-2 2H8a2 2 0 01-2-2v-9"/><path d="M10.5 1.5v5a2 2 0 01-2 2h-5"/></svg>
@@ -453,6 +537,7 @@
             <div class="panel-desc">Enter a drug name to find its generic equivalent, drug class, and cheaper alternatives.</div>
           </div>
         </div>
+        <p class="hand-note" data-i18n="drugs.note">same medicine, gentler on your wallet.</p>
         <label for="drug-input" class="field-label">Drug name</label>
         <input type="text" id="drug-input" placeholder="e.g., Lipitor, Zoloft, Advair">
         <button type="button" class="btn-primary" data-action="check-drug">Check Drug</button>
@@ -463,6 +548,15 @@
     <!-- Appointment Prep -->
     <section id="view-appointments" class="view" aria-labelledby="appointments-heading">
       <div class="panel"><div class="panel-inner">
+        <svg class="nook-frag nook-frag--flip" viewBox="0 0 170 140" fill="none" aria-hidden="true" focusable="false">
+          <!-- the nook, corner-sized: a sprig from the windowsill plant -->
+          <ellipse cx="86" cy="76" rx="72" ry="46" fill="url(#nf-glow)" filter="url(#nf-softer)"/>
+          <path d="M92 122 Q84 76 96 46 Q101 33 95 22" fill="none" class="nk-vine" stroke-linecap="round"/>
+          <ellipse cx="78" cy="94" rx="12" ry="6.5" fill="#7d9c6d" transform="rotate(-24 78 94)"/>
+          <ellipse cx="98" cy="74" rx="11" ry="6" fill="#8fae77" transform="rotate(16 98 74)"/>
+          <ellipse cx="82" cy="54" rx="10" ry="5.5" fill="#6f9163" transform="rotate(-28 82 54)"/>
+          <ellipse cx="97" cy="36" rx="9" ry="5" fill="#8fae77" transform="rotate(8 97 36)"/>
+        </svg>
         <div class="panel-header">
           <div class="panel-icon appointments">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
@@ -472,6 +566,7 @@
             <div class="panel-desc">Prepare for your doctor's visit with talking points, questions to ask, and an advocacy script.</div>
           </div>
         </div>
+        <p class="hand-note" data-i18n="appointments.note">we'll walk in knowing exactly what to ask.</p>
         <label for="appt-symptoms" class="field-label">Your symptoms or reason for visit</label>
         <textarea id="appt-symptoms" rows="3" placeholder="Describe what you want to discuss with your doctor..."></textarea>
         <label for="appt-concern" class="field-label">Specific concern or question (optional)</label>
@@ -484,6 +579,15 @@
     <!-- Discharge Translator -->
     <section id="view-discharge" class="view" aria-labelledby="discharge-heading">
       <div class="panel"><div class="panel-inner">
+        <svg class="nook-frag" viewBox="0 0 170 140" fill="none" aria-hidden="true" focusable="false">
+          <!-- the nook, corner-sized: a sprig from the windowsill plant -->
+          <ellipse cx="86" cy="76" rx="72" ry="46" fill="url(#nf-glow)" filter="url(#nf-softer)"/>
+          <path d="M92 122 Q84 76 96 46 Q101 33 95 22" fill="none" class="nk-vine" stroke-linecap="round"/>
+          <ellipse cx="78" cy="94" rx="12" ry="6.5" fill="#7d9c6d" transform="rotate(-24 78 94)"/>
+          <ellipse cx="98" cy="74" rx="11" ry="6" fill="#8fae77" transform="rotate(16 98 74)"/>
+          <ellipse cx="82" cy="54" rx="10" ry="5.5" fill="#6f9163" transform="rotate(-28 82 54)"/>
+          <ellipse cx="97" cy="36" rx="9" ry="5" fill="#8fae77" transform="rotate(8 97 36)"/>
+        </svg>
         <div class="panel-header">
           <div class="panel-icon discharge">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h4a2 2 0 012 2v14a2 2 0 01-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
@@ -493,6 +597,7 @@
             <div class="panel-desc">Paste discharge instructions and we'll translate medical jargon into plain language.</div>
           </div>
         </div>
+        <p class="hand-note" data-i18n="discharge.note">you rest — we'll turn the jargon back into words.</p>
         <label for="discharge-input" class="field-label">Paste discharge instructions</label>
         <textarea id="discharge-input" rows="6" placeholder="Paste your discharge summary or after-visit instructions..."></textarea>
         <button type="button" class="btn-primary" data-action="translate-discharge">Translate</button>
@@ -503,6 +608,15 @@
     <!-- Second Opinion -->
     <section id="view-secondopinion" class="view" aria-labelledby="secondopinion-heading">
       <div class="panel"><div class="panel-inner">
+        <svg class="nook-frag nook-frag--flip" viewBox="0 0 170 140" fill="none" aria-hidden="true" focusable="false">
+          <!-- the nook, corner-sized: a sprig from the windowsill plant -->
+          <ellipse cx="86" cy="76" rx="72" ry="46" fill="url(#nf-glow)" filter="url(#nf-softer)"/>
+          <path d="M92 122 Q84 76 96 46 Q101 33 95 22" fill="none" class="nk-vine" stroke-linecap="round"/>
+          <ellipse cx="78" cy="94" rx="12" ry="6.5" fill="#7d9c6d" transform="rotate(-24 78 94)"/>
+          <ellipse cx="98" cy="74" rx="11" ry="6" fill="#8fae77" transform="rotate(16 98 74)"/>
+          <ellipse cx="82" cy="54" rx="10" ry="5.5" fill="#6f9163" transform="rotate(-28 82 54)"/>
+          <ellipse cx="97" cy="36" rx="9" ry="5" fill="#8fae77" transform="rotate(8 97 36)"/>
+        </svg>
         <div class="panel-header">
           <div class="panel-icon secondopinion">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
@@ -512,6 +626,7 @@
             <div class="panel-desc">Structure your medical records into a de-identified brief for a second opinion consult.</div>
           </div>
         </div>
+        <p class="hand-note" data-i18n="secondopinion.note">another pair of expert eyes, briefed on your case.</p>
         <label for="secondop-input" class="field-label">Paste your medical records or notes</label>
         <textarea id="secondop-input" rows="6" placeholder="Paste medical records, test results, treatment history..."></textarea>
         <button type="button" class="btn-primary" data-action="create-second-opinion">Create Brief</button>
@@ -522,16 +637,27 @@
     <!-- Call Recorder (demo mode — synthetic audio script, no real recording) -->
     <section id="view-recorder" class="view" aria-labelledby="recorder-heading">
       <div class="panel"><div class="panel-inner">
+        <svg class="nook-frag" viewBox="0 0 170 140" fill="none" aria-hidden="true" focusable="false">
+          <!-- the nook, corner-sized: the cassette, labeled and shelved -->
+          <ellipse cx="86" cy="78" rx="76" ry="46" fill="url(#nf-glow)" filter="url(#nf-softer)"/>
+          <rect x="44" y="42" width="88" height="62" rx="6" fill="#f0e4cc" class="nk-line" stroke-linejoin="round"/>
+          <circle cx="70" cy="66" r="12" fill="none" class="nk-line"/>
+          <circle cx="106" cy="66" r="9" fill="none" class="nk-line"/>
+          <circle cx="70" cy="66" r="4" fill="#7a5c38"/>
+          <circle cx="106" cy="66" r="3.5" fill="#7a5c38"/>
+          <path d="M58 90 h8 M78 90 h8 M98 90 h8" class="nk-line" stroke-width="2" opacity="0.5" stroke-linecap="round"/>
+          <path d="M58 102 h60" class="nk-line" stroke-width="2" opacity="0.4" stroke-linecap="round"/>
+        </svg>
         <div class="panel-header">
           <div class="panel-icon recorder" aria-hidden="true">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 00-3 3v8a3 3 0 006 0V4a3 3 0 00-3-3z"/><path d="M19 10v2a7 7 0 01-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
           </div>
           <div>
-            <h2 class="panel-eyebrow" id="recorder-heading">Call Recorder</h2>
+            <h2 class="panel-eyebrow" id="recorder-heading">Call Recorder</h2> <span class="demo-badge">Demo mode</span>
             <div class="panel-desc">Record medical calls and appointments, see a live transcript, and get a summary with follow-ups. Recording and transcription happen on this device — nothing is uploaded, ever.</div>
           </div>
-          <span class="demo-badge">Demo mode</span>
         </div>
+        <p class="hand-note" data-i18n="recorder.note">press it when you're ready — I'll keep every word.</p>
 
         <div class="rec-stage">
           <div class="privacy-chip">
@@ -581,16 +707,26 @@
     <!-- Library / Catalog (demo data) -->
     <section id="view-library" class="view" aria-labelledby="library-heading">
       <div class="panel"><div class="panel-inner">
+        <svg class="nook-frag" viewBox="0 0 170 140" fill="none" aria-hidden="true" focusable="false">
+          <!-- the nook, corner-sized: the small stack, always within reach -->
+          <ellipse cx="88" cy="82" rx="76" ry="46" fill="url(#nf-glow)" filter="url(#nf-softer)"/>
+          <path d="M46 106 h88" class="nk-wood" stroke-linecap="round"/>
+          <rect x="56" y="72" width="17" height="34" rx="2" fill="#9c6b4a" class="nk-line"/>
+          <rect x="75" y="66" width="13" height="40" rx="2" fill="#7d8f68" class="nk-line"/>
+          <rect x="90" y="74" width="19" height="32" rx="2" fill="#b5825a" class="nk-line"/>
+          <path d="M112 64 l12 -3 7 38 -12 3 Z" fill="#a06a62" class="nk-line" stroke-linejoin="round"/>
+          <path d="M81 66 v-12 l4 3 4 -3 v12" fill="#a06a62"/>
+        </svg>
         <div class="panel-header">
           <div class="panel-icon library" aria-hidden="true">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/></svg>
           </div>
           <div>
-            <h2 class="panel-eyebrow" id="library-heading">Library</h2>
+            <h2 class="panel-eyebrow" id="library-heading">Library</h2> <span class="demo-badge">Demo data</span>
             <div class="panel-desc">Every recording, transcript, and appointment you've saved — catalogued, searchable, and linked to the matter it belongs to. Stored only on this device.</div>
           </div>
-          <span class="demo-badge">Demo data</span>
         </div>
+        <p class="hand-note" data-i18n="library.note">everything filed, nothing lost.</p>
 
         <div class="lib-controls">
           <label class="sr-only" for="lib-search">Search the library</label>
@@ -616,16 +752,24 @@
     <!-- Provider Directory (self-building, demo data) -->
     <section id="view-directory" class="view" aria-labelledby="directory-heading">
       <div class="panel"><div class="panel-inner">
+        <svg class="nook-frag" viewBox="0 0 170 140" fill="none" aria-hidden="true" focusable="false">
+          <!-- the nook, corner-sized: the card box, everyone in one place -->
+          <ellipse cx="88" cy="80" rx="76" ry="46" fill="url(#nf-glow)" filter="url(#nf-softer)"/>
+          <rect x="58" y="34" width="36" height="30" rx="2" fill="#f4e9cf" class="nk-line" transform="rotate(-12 76 49)"/>
+          <rect x="78" y="32" width="36" height="30" rx="2" fill="#f7edd6" class="nk-line" transform="rotate(7 96 47)"/>
+          <path d="M48 62 h80 v42 h-80 Z" fill="#9c6b3f" class="nk-wood" stroke-linejoin="round"/>
+          <path d="M48 76 h80" class="nk-line" stroke-width="2" opacity="0.5"/>
+        </svg>
         <div class="panel-header">
           <div class="panel-icon library" aria-hidden="true">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
           </div>
           <div>
-            <h2 class="panel-eyebrow" id="directory-heading">Directory</h2>
+            <h2 class="panel-eyebrow" id="directory-heading">Directory</h2> <span class="demo-badge">Demo data</span>
             <div class="panel-desc">Your doctors, labs, imaging centers, therapists, pharmacies, and insurers — built automatically from your calls, documents, and appointments. Nothing to type unless you're correcting something. Stored only on this device.</div>
           </div>
-          <span class="demo-badge">Demo data</span>
         </div>
+        <p class="hand-note" data-i18n="directory.note">the people on your side, in one place.</p>
 
         <div class="dir-controls">
           <label class="sr-only" for="dir-search">Search the directory</label>
@@ -650,6 +794,15 @@
     <!-- Community Health Scanner -->
     <section id="view-community" class="view" aria-labelledby="community-heading">
       <div class="panel"><div class="panel-inner">
+        <svg class="nook-frag" viewBox="0 0 170 140" fill="none" aria-hidden="true" focusable="false">
+          <!-- the nook, corner-sized: a sprig from the windowsill plant -->
+          <ellipse cx="86" cy="76" rx="72" ry="46" fill="url(#nf-glow)" filter="url(#nf-softer)"/>
+          <path d="M92 122 Q84 76 96 46 Q101 33 95 22" fill="none" class="nk-vine" stroke-linecap="round"/>
+          <ellipse cx="78" cy="94" rx="12" ry="6.5" fill="#7d9c6d" transform="rotate(-24 78 94)"/>
+          <ellipse cx="98" cy="74" rx="11" ry="6" fill="#8fae77" transform="rotate(16 98 74)"/>
+          <ellipse cx="82" cy="54" rx="10" ry="5.5" fill="#6f9163" transform="rotate(-28 82 54)"/>
+          <ellipse cx="97" cy="36" rx="9" ry="5" fill="#8fae77" transform="rotate(8 97 36)"/>
+        </svg>
         <div class="panel-header">
           <div class="panel-icon community">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/></svg>
@@ -659,6 +812,7 @@
             <div class="panel-desc">Analyze public health bulletins, recalls, or alerts to understand how they affect you.</div>
           </div>
         </div>
+        <p class="hand-note" data-i18n="community.note">what's going around, without the panic.</p>
         <label for="community-input" class="field-label">Paste a health bulletin or alert</label>
         <textarea id="community-input" rows="6" placeholder="Paste a news article, CDC alert, FDA recall, or health advisory..."></textarea>
         <button type="button" class="btn-primary" data-action="scan-community">Scan</button>
@@ -669,6 +823,15 @@
     <!-- Family Tracker -->
     <section id="view-family" class="view" aria-labelledby="family-heading">
       <div class="panel"><div class="panel-inner">
+        <svg class="nook-frag nook-frag--flip" viewBox="0 0 170 140" fill="none" aria-hidden="true" focusable="false">
+          <!-- the nook, corner-sized: a sprig from the windowsill plant -->
+          <ellipse cx="86" cy="76" rx="72" ry="46" fill="url(#nf-glow)" filter="url(#nf-softer)"/>
+          <path d="M92 122 Q84 76 96 46 Q101 33 95 22" fill="none" class="nk-vine" stroke-linecap="round"/>
+          <ellipse cx="78" cy="94" rx="12" ry="6.5" fill="#7d9c6d" transform="rotate(-24 78 94)"/>
+          <ellipse cx="98" cy="74" rx="11" ry="6" fill="#8fae77" transform="rotate(16 98 74)"/>
+          <ellipse cx="82" cy="54" rx="10" ry="5.5" fill="#6f9163" transform="rotate(-28 82 54)"/>
+          <ellipse cx="97" cy="36" rx="9" ry="5" fill="#8fae77" transform="rotate(8 97 36)"/>
+        </svg>
         <div class="panel-header">
           <div class="panel-icon family">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
@@ -678,6 +841,7 @@
             <div class="panel-desc">Track health conditions and medications for your family members.</div>
           </div>
         </div>
+        <p class="hand-note" data-i18n="family.note">one shelf for everyone you look after.</p>
         <div class="form-row">
           <label for="family-name" class="sr-only">Family member name</label>
           <input type="text" id="family-name" placeholder="Family member name">
@@ -699,8 +863,18 @@
     <!-- Health Tracks -->
 
     <section id="view-coverage" class="view" aria-labelledby="coverage-heading">
+      <svg class="nook-frag" viewBox="0 0 170 140" fill="none" aria-hidden="true" focusable="false">
+        <!-- the nook, corner-sized: a sprig from the windowsill plant -->
+        <ellipse cx="86" cy="76" rx="72" ry="46" fill="url(#nf-glow)" filter="url(#nf-softer)"/>
+        <path d="M92 122 Q84 76 96 46 Q101 33 95 22" fill="none" class="nk-vine" stroke-linecap="round"/>
+        <ellipse cx="78" cy="94" rx="12" ry="6.5" fill="#7d9c6d" transform="rotate(-24 78 94)"/>
+        <ellipse cx="98" cy="74" rx="11" ry="6" fill="#8fae77" transform="rotate(16 98 74)"/>
+        <ellipse cx="82" cy="54" rx="10" ry="5.5" fill="#6f9163" transform="rotate(-28 82 54)"/>
+        <ellipse cx="97" cy="36" rx="9" ry="5" fill="#8fae77" transform="rotate(8 97 36)"/>
+      </svg>
       <h2 id="coverage-heading">Coverage Continuity</h2>
       <p class="view-desc">One calm place for your next coverage action. Local and private. No payments or submissions from this screen.</p>
+      <p class="hand-note" data-i18n="coverage.note">one step at a time — we won't lose the thread.</p>
       <div class="card coverage-card">
         <label for="coverage-title">Case title (synthetic)</label>
         <input id="coverage-title" name="coverage-title" type="text" autocomplete="off" placeholder="e.g. Synthetic job-loss coverage case">
@@ -755,6 +929,15 @@
 
     <section id="view-tracks" class="view" aria-labelledby="tracks-heading">
       <div class="panel"><div class="panel-inner">
+        <svg class="nook-frag" viewBox="0 0 170 140" fill="none" aria-hidden="true" focusable="false">
+          <!-- the nook, corner-sized: a sprig from the windowsill plant -->
+          <ellipse cx="86" cy="76" rx="72" ry="46" fill="url(#nf-glow)" filter="url(#nf-softer)"/>
+          <path d="M92 122 Q84 76 96 46 Q101 33 95 22" fill="none" class="nk-vine" stroke-linecap="round"/>
+          <ellipse cx="78" cy="94" rx="12" ry="6.5" fill="#7d9c6d" transform="rotate(-24 78 94)"/>
+          <ellipse cx="98" cy="74" rx="11" ry="6" fill="#8fae77" transform="rotate(16 98 74)"/>
+          <ellipse cx="82" cy="54" rx="10" ry="5.5" fill="#6f9163" transform="rotate(-28 82 54)"/>
+          <ellipse cx="97" cy="36" rx="9" ry="5" fill="#8fae77" transform="rotate(8 97 36)"/>
+        </svg>
         <div class="panel-header">
           <div class="panel-icon tracks">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
@@ -764,6 +947,7 @@
             <div class="panel-desc">Track ongoing health concerns over time.</div>
           </div>
         </div>
+        <p class="hand-note" data-i18n="tracks.note">small notes, watched patiently over time.</p>
         <div class="form-row">
           <label for="track-concern" class="sr-only">What are you tracking?</label>
           <input type="text" id="track-concern" placeholder="What are you tracking?">
@@ -784,12 +968,22 @@
     <!-- Help & real humans (E2) -->
     <section id="view-help" class="view" aria-labelledby="help-heading">
       <div class="panel"><div class="panel-inner">
+        <svg class="nook-frag nook-frag--flip" viewBox="0 0 170 140" fill="none" aria-hidden="true" focusable="false">
+          <!-- the nook, corner-sized: a sprig from the windowsill plant -->
+          <ellipse cx="86" cy="76" rx="72" ry="46" fill="url(#nf-glow)" filter="url(#nf-softer)"/>
+          <path d="M92 122 Q84 76 96 46 Q101 33 95 22" fill="none" class="nk-vine" stroke-linecap="round"/>
+          <ellipse cx="78" cy="94" rx="12" ry="6.5" fill="#7d9c6d" transform="rotate(-24 78 94)"/>
+          <ellipse cx="98" cy="74" rx="11" ry="6" fill="#8fae77" transform="rotate(16 98 74)"/>
+          <ellipse cx="82" cy="54" rx="10" ry="5.5" fill="#6f9163" transform="rotate(-28 82 54)"/>
+          <ellipse cx="97" cy="36" rx="9" ry="5" fill="#8fae77" transform="rotate(8 97 36)"/>
+        </svg>
         <div class="panel-header">
           <div>
             <h2 class="panel-eyebrow" id="help-heading">Help &amp; Real Humans</h2>
             <div class="panel-desc">HealthAdvocate is software, not a clinician, and some decisions belong to a person. These widely published US resources point to real people. HealthAdvocate never contacts anyone on your behalf.</div>
           </div>
         </div>
+        <p class="hand-note" data-i18n="help.note">when software isn't enough, a person answers.</p>
         <div class="result-section">
           <h3>Crisis support (US)</h3>
           <div class="crisis-card">

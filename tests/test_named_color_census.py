@@ -51,3 +51,41 @@ def test_component_rules_use_tokens_not_anonymous_hexes():
         "blocks only — name it, token it, or use the art allowlist):\n"
         + "\n".join(violations[:40])
     )
+
+
+def test_radius_census_four_roles():
+    """G004 (PRD v2.2 alias map): radii resolve to exactly four roles —
+    plate 3px, tile 8px, card 16px, chip full (999px). --radius-lg/xl alias
+    card; --radius-tag aliases the chip role; no ad-hoc px radii survive."""
+    import re
+    code = re.sub(r"/\*.*?\*/", "", CSS, flags=re.S)
+    tok = dict(re.findall(r"(--[\w-]+)\s*:\s*([^;]+);", code))
+
+    def resolves(name, depth=0):
+        v = tok.get(name, "").strip()
+        if v.startswith("var("):
+            inner = re.match(r"var\(([\w-]+)\)", v)
+            return resolves(inner.group(1)) if inner and depth < 5 else None
+        m = re.match(r"([\d.]+)px", v)
+        return float(m.group(1)) if m else (999.0 if "999" in v else None)
+
+    roles = {"plate": 3.0, "tile": 8.0, "card": 16.0, "chip": 999.0}
+    mapping = {
+        "--radius-btn": "plate", "--radius-sm": "tile",
+        "--radius": "card", "--radius-lg": "card", "--radius-xl": "card",
+        "--radius-tag": "chip",
+    }
+    problems = []
+    for t, role in mapping.items():
+        got = resolves(t)
+        if got != roles[role]:
+            problems.append(f"{t} resolves {got}, expected {roles[role]} ({role})")
+    # no ad-hoc radius literals in component rules (outside tokens + art selectors)
+    for m in re.finditer(r"([^{}]+)\{([^{}]*)\}", code):
+        sel = m.group(1).strip()
+        if sel.startswith((":root", "[data-theme", "html[data-palette")) or ".nk-" in sel or ".lk-" in sel:
+            continue
+        for rm in re.finditer(r"border-radius:\s*([\d.]+)px", m.group(2)):
+            if float(rm.group(1)) not in (3.0, 8.0, 16.0):
+                problems.append(f"ad-hoc radius {rm.group(1)}px in `{sel[:40]}`")
+    assert not problems, "radius census violations:\n" + "\n".join(problems[:15])

@@ -5,6 +5,11 @@ HA.i18n.register('en', {
   'skip.link': 'Skip to main content',
   'aria.home': 'Home',
   'aria.theme': 'Toggle theme',
+  'chrome.theme_group': 'Color theme',
+  'chrome.theme_gold': 'Color theme: Gold',
+  'chrome.theme_rose': 'Color theme: Rose',
+  'chrome.theme_moss': 'Color theme: Moss',
+  'chrome.theme_blue': 'Color theme: Blue',
   'aria.lang': 'Switch language to Spanish',
 
   /* nav */
@@ -99,6 +104,24 @@ HA.i18n.register('en', {
   'symptoms.slip_urgency_body': 'See a clinician within a few days if it worsens. Immediate care for trouble breathing or swallowing.',
   'symptoms.slip_next': 'next steps',
   'symptoms.slip_next_body': 'Book a same-week visit · Warm fluids and rest · Come back with any new symptom.',
+  'symptoms.note': 'take your time — write it however it comes out.',
+
+  /* inner-view hand notes (S+ inner warmth — one human sentence per view) */
+  'documents.note': "we'll go through this line by line.",
+  'bills.note': "this part is never fun. we'll do it together.",
+  'insurance.note': "they said no. let's write the answer together.",
+  'recorder.note': "press it when you're ready — I'll keep every word.",
+  'library.note': 'everything filed, nothing lost.',
+  'directory.note': 'the people on your side, in one place.',
+  'drugs.note': 'same medicine, gentler on your wallet.',
+  'appointments.note': "we'll walk in knowing exactly what to ask.",
+  'discharge.note': "you rest — we'll turn the jargon back into words.",
+  'secondopinion.note': 'another pair of expert eyes, briefed on your case.',
+  'community.note': "what's going around, without the panic.",
+  'family.note': 'one shelf for everyone you look after.',
+  'tracks.note': 'small notes, watched patiently over time.',
+  'help.note': "when software isn't enough, a person answers.",
+  'coverage.note': "one step at a time — we won't lose the thread.",
 
   /* footer */
   'footer.note_tail': 'is here to support, not replace, professional medical guidance. Always consult a qualified healthcare provider for diagnosis and treatment. Your information stays on your device.',

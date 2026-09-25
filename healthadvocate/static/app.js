@@ -1457,11 +1457,11 @@ const HA = {
       <div class="contact-fields">
         ${c.fields.map(f => `<div class="contact-field">
           <span class="k">${this.escapeHtml(f.k)}</span>
-          <span class="v">${f.href ? `<a href="${this.escapeHtml(f.href)}">${this.escapeHtml(f.v)}</a>` : this.escapeHtml(f.v)}</span>
+          <span class="v">${f.href ? `<a href="${this.escapeHtml(f.href)}">${this.escapeHtml(f.v)}</a>` : this.escapeHtml(f.v)}
           ${f.prov === 'confirmed' ? this.provChip('confirmed', PROV_LABEL.confirmed)
             : f.prov === 'extracted' ? this.provChip('extracted', f.from || PROV_LABEL.extracted)
-            : this.provChip('inferred', (f.from ? 'inferred · ' + f.from : PROV_LABEL.inferred))}
-          ${f.prov !== 'confirmed' ? `<button type="button" class="xref-chip" data-action="dir-confirm-field" data-contact="${this.escapeHtml(c.id)}" data-field="${this.escapeHtml(f.k)}">Confirm</button>` : ''}
+            : this.provChip('inferred', (f.from ? 'inferred · ' + f.from : PROV_LABEL.inferred))}</span>
+          <span class="row-actions">${f.prov !== 'confirmed' ? `<button type="button" class="xref-chip" data-action="dir-confirm-field" data-contact="${this.escapeHtml(c.id)}" data-field="${this.escapeHtml(f.k)}">Confirm</button>` : ''}</span>
         </div>`).join('')}
       </div>
       <div class="contact-actions">
@@ -1727,6 +1727,15 @@ document.addEventListener('DOMContentLoaded', () => {
   document.addEventListener('mousedown', () => { HA._modality = 'pointer'; }, true);
   document.addEventListener('touchstart', () => { HA._modality = 'pointer'; }, true);
 
+  /* the mobile scroll hint points at the shelf, then leaves when you arrive */
+  const navEl = document.getElementById('main-nav');
+  const hint = document.getElementById('nav-scroll-hint');
+  if (navEl && hint) {
+    const update = () => { hint.style.opacity = (navEl.scrollLeft + navEl.clientWidth >= navEl.scrollWidth - 8) ? '0' : ''; };
+    navEl.addEventListener('scroll', update, { passive: true });
+    update();
+  }
+
   /* the More disclosure: the reference shelf stays out of the way until asked */
   const navMore = document.getElementById('nav-more');
   const navRow = document.getElementById('nav-more-row');
@@ -1791,16 +1800,31 @@ document.addEventListener('DOMContentLoaded', () => {
   /* Color themes: four plush palettes, per-person, both light and dark */
   const palRow = document.querySelector('.pal-row');
   if (palRow) {
-    const applyPal = (v) => {
+    const applyPal = (v, focus) => {
       if (v) document.documentElement.setAttribute('data-palette', v);
       else document.documentElement.removeAttribute('data-palette');
       localStorage.setItem('ha-palette', v);
-      palRow.querySelectorAll('.pal-swatch').forEach(b => b.classList.toggle('on', b.dataset.palette === v));
+      palRow.querySelectorAll('.pal-swatch').forEach(b => {
+        const on = b.dataset.palette === v;
+        b.classList.toggle('on', on);
+        b.setAttribute('aria-checked', String(on));
+        if (focus && on) b.focus();
+      });
     };
     applyPal(localStorage.getItem('ha-palette') || '');
     palRow.addEventListener('click', (e) => {
       const b = e.target.closest('.pal-swatch');
       if (b) applyPal(b.dataset.palette);
+    });
+    /* radios navigate by arrow keys (WAI-ARIA radiogroup pattern) */
+    palRow.addEventListener('keydown', (e) => {
+      const swatches = [...palRow.querySelectorAll('.pal-swatch')];
+      const i = swatches.indexOf(document.activeElement);
+      if (i < 0) return;
+      let next = null;
+      if (e.key === 'ArrowRight' || e.key === 'ArrowDown') next = swatches[(i + 1) % swatches.length];
+      else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') next = swatches[(i - 1 + swatches.length) % swatches.length];
+      if (next) { e.preventDefault(); applyPal(next.dataset.palette, true); }
     });
   }
 

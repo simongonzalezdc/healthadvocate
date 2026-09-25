@@ -170,10 +170,10 @@
   --slate-medium: rgba(111, 168, 220, 0.18);
 
   --text-1: #f1ecdd;
-  --text-2: #b0ac9e;
-  --text-3: #94917f;
-  --border: #2c3a2f;
-  --border-light: #1f2c23;
+  --text-2: #c3bfaf;
+  --text-3: #a09c8a;
+  --border: #34453a;
+  --border-light: #26332b;
 
   --ochre-ink-700: #f4b866;
   --coral-ink-700: #f79b8b;
@@ -2396,3 +2396,49 @@ h1[tabindex="-1"]:focus-visible, h2[tabindex="-1"]:focus-visible, h3[tabindex="-
 
 /* library panel breathes between list and actions */
 .lib-note { margin: var(--space-4) 0 var(--space-2); }
+
+/* ── r6 wave 4 — external trio (GLM + gpt-5.6-sol + opus) convergent fixes ── */
+
+/* heading focus underlines the WORDS, not the whole column — a block
+   border overshoots past the last word and reads as a stray rule */
+h1[tabindex="-1"]:focus-visible, h2[tabindex="-1"]:focus-visible, h3[tabindex="-1"]:focus-visible {
+  outline: none;
+  border-bottom: none;
+  padding-bottom: 0;
+  text-decoration: underline;
+  text-decoration-color: var(--warm);
+  text-decoration-thickness: 2.5px;
+  text-underline-offset: 10px;
+  text-decoration-style: solid;
+}
+
+/* the lamp inhabits the hero's right half: cone of light, visible pool —
+   the desk's signature, not a corner sticker */
+.lamp-vignette {
+  top: 50%;
+  right: 6%;
+  transform: translateY(-56%);
+  width: 300px;
+  height: auto;
+  opacity: 1;
+}
+@media (max-width: 900px) { .lamp-vignette { display: none; } }
+@media (min-width: 901px) and (max-width: 1120px) { .lamp-vignette { width: 230px; right: 4%; } }
+.lamp-vignette .cone { animation: lamp-breathe 9.5s ease-in-out infinite; }
+
+/* nav tiers read as tiers: patient actions, then a quiet reference shelf */
+#main-nav { row-gap: 2px; }
+.nav-btn { font-weight: 600; }
+.nav-secondary { font-weight: 400; font-size: 12px; color: var(--text-3); padding: 4px 9px; }
+.nav-secondary:hover { color: var(--text-1); }
+.nav-secondary.active { color: var(--accent); }
+
+/* handwritten notes are ink, not gray: the caseworker wrote in pen */
+.margin-note, .hand-note, .chips-note, .entry-sample, .sample-slip-head, .lib-note {
+  color: var(--status-caution-ink);
+}
+.margin-note, .hand-note, .entry-sample { font-size: 16px; }
+
+/* the header due-chip is chrome, not a second CTA */
+.due-badge { opacity: 0.92; }
+.due-badge .due-badge-words { font-size: 11px; }

@@ -435,16 +435,24 @@ async function tabWalk(page, journey, step, maxSteps = 70) {
     await page.click('#view-symptoms [data-action="assess-symptoms"]');
     await page.waitForFunction(() => {
       const t = document.getElementById('symptom-results').textContent.trim();
-      return t.length > 0 && !/loading|analyzing/i.test(t.slice(0, 24));
+      return t.length > 0 && !/loading|analyzing|working on this/i.test(t.slice(0, 24));
     }, null, { timeout: 20000 });
-    await settle(page);
+    /* CDP's AX tree lags an innerHTML swap into a live region; settle()'s
+       450ms lost the race and read an empty subtree over exposed content
+       (proven by a settled repro: same text IN AX TREE). Give the tree
+       time to recompute before judging the announcement. */
+    await settle(page, 1200);
     const ann = await axNodeForDomId(cdp, page, 'symptom-results');
     const annText = await page.evaluate(() => document.getElementById('symptom-results').textContent.trim());
-    const annInAx = await axTreeContainsText(cdp, 'Model processing was blocked'); // single StaticText node; full domText spans nodes
+    /* assert on what the app HONESTLY renders, not on one historical
+       banner copy: the needle is the region's own first line, and the
+       refusal-class copy check covers the current NEEDS_HUMAN wording */
+    const annNeedle = annText.split('\n')[0].trim().slice(0, 60);
+    const annInAx = await axTreeContainsText(cdp, annNeedle);
     journeys[J].steps.push({ step: 'announce-assess', node: ann, domText: annText.slice(0, 240), textPresentInAxTree: annInAx });
     if (!ann || !ann.live || ann.live === 'off')
       finding(J, 'announce-assess', '4.1.3', 'AA', 'symptom results region not exposed as live in the AX tree after update', JSON.stringify(ann));
-    else if (!annInAx || !/model|privacy|blocked|unable|offline/i.test(annText))
+    else if (!annInAx || !/human decision|model|privacy|blocked|unable|offline|would not answer/i.test(annText))
       finding(J, 'announce-assess', '4.1.3', 'AA', 'dynamic symptom result text not present in the AX tree', JSON.stringify({ ann, annText: annText.slice(0, 120), annInAx }));
     // structure after results render (heading outline of the populated view)
     const countsAfter = await auditStructure(cdp, page, J, 'after-assess');

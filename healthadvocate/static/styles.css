@@ -2898,3 +2898,27 @@ html[data-palette="blue"][data-theme="dark"] {
 }
 
 
+
+/* ── color themes: four swatches in the header, per person ── */
+.pal-row {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-right: var(--space-1);
+}
+.pal-swatch {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: 2px solid var(--color-border);
+  cursor: pointer;
+  padding: 0;
+  transition: transform var(--dur-1) var(--ease), box-shadow var(--dur-2) var(--ease);
+}
+.pal-swatch:hover { transform: scale(1.15); }
+.pal-swatch:focus-visible { outline: 2px solid var(--color-focus-ring); outline-offset: 2px; }
+.pal-swatch.on { box-shadow: 0 0 0 2px var(--bg-body), 0 0 0 4px var(--color-focus-ring); }
+.pal-gold { background: #b3831f; }
+.pal-rose { background: #b56a80; }
+.pal-moss { background: #7a9a5a; }
+.pal-blue { background: #6f95b8; }

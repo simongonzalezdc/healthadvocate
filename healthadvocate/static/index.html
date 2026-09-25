@@ -82,6 +82,12 @@
         <button type="button" class="icon-btn" id="btn-home" aria-label="Home" title="Home" data-i18n-aria="aria.home">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
         </button>
+        <div class="pal-row" role="group" aria-label="Color theme">
+          <button type="button" class="pal-swatch pal-gold on" data-palette="" aria-label="Color theme: Gold" title="Gold"></button>
+          <button type="button" class="pal-swatch pal-rose" data-palette="plush" aria-label="Color theme: Rose" title="Rose"></button>
+          <button type="button" class="pal-swatch pal-moss" data-palette="moss" aria-label="Color theme: Moss" title="Moss"></button>
+          <button type="button" class="pal-swatch pal-blue" data-palette="blue" aria-label="Color theme: Blue" title="Blue"></button>
+        </div>
         <button type="button" class="icon-btn icon-lang-toggle" id="btn-lang" aria-label="Switch language to Spanish">EN</button>
         <button type="button" class="icon-btn" id="btn-theme" aria-label="Toggle theme" title="Toggle theme">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" id="theme-icon"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
@@ -734,31 +740,6 @@
     <p><strong>HealthAdvocate</strong> <span data-i18n="footer.note_tail">is here to support, not replace, professional medical guidance. Always consult a qualified healthcare provider for diagnosis and treatment. Your information stays on your device.</span></p>
   </footer>
 
-  <div id="palette-menu" role="group" aria-label="Palette preview — CEO decision view">
-    <span class="pm-label">palette</span>
-    <button type="button" data-palette="" class="on">gold</button>
-    <button type="button" data-palette="plush">plush</button>
-    <button type="button" data-palette="moss">moss</button>
-    <button type="button" data-palette="blue">blue</button>
-  </div>
-  <script>
-    (function () {
-      var menu = document.getElementById('palette-menu');
-      if (!menu) return;
-      var saved = localStorage.getItem('ha-palette') || '';
-      if (saved) document.documentElement.setAttribute('data-palette', saved);
-      menu.addEventListener('click', function (e) {
-        var b = e.target.closest('button[data-palette]');
-        if (!b) return;
-        var v = b.dataset.palette;
-        if (v) document.documentElement.setAttribute('data-palette', v);
-        else document.documentElement.removeAttribute('data-palette');
-        localStorage.setItem('ha-palette', v);
-        menu.querySelectorAll('button').forEach(function (x) { x.classList.toggle('on', x === b); });
-      });
-      menu.querySelectorAll('button').forEach(function (x) { x.classList.toggle('on', x.dataset.palette === saved); });
-    })();
-  </script>
   <script src="/static/app.js"></script>
     <script src="/static/i18n.js"></script>
     <script src="/static/i18n/en.js"></script>

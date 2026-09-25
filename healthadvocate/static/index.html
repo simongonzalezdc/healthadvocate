@@ -734,6 +734,31 @@
     <p><strong>HealthAdvocate</strong> <span data-i18n="footer.note_tail">is here to support, not replace, professional medical guidance. Always consult a qualified healthcare provider for diagnosis and treatment. Your information stays on your device.</span></p>
   </footer>
 
+  <div id="palette-menu" role="group" aria-label="Palette preview — CEO decision view">
+    <span class="pm-label">palette</span>
+    <button type="button" data-palette="">nook</button>
+    <button type="button" data-palette="plush">plush</button>
+    <button type="button" data-palette="moss">moss</button>
+    <button type="button" data-palette="chai">chai</button>
+  </div>
+  <script>
+    (function () {
+      var menu = document.getElementById('palette-menu');
+      if (!menu) return;
+      var saved = localStorage.getItem('ha-palette') || '';
+      if (saved) document.documentElement.setAttribute('data-palette', saved);
+      menu.addEventListener('click', function (e) {
+        var b = e.target.closest('button[data-palette]');
+        if (!b) return;
+        var v = b.dataset.palette;
+        if (v) document.documentElement.setAttribute('data-palette', v);
+        else document.documentElement.removeAttribute('data-palette');
+        localStorage.setItem('ha-palette', v);
+        menu.querySelectorAll('button').forEach(function (x) { x.classList.toggle('on', x === b); });
+      });
+      menu.querySelectorAll('button').forEach(function (x) { x.classList.toggle('on', x.dataset.palette === saved); });
+    })();
+  </script>
   <script src="/static/app.js"></script>
     <script src="/static/i18n.js"></script>
     <script src="/static/i18n/en.js"></script>

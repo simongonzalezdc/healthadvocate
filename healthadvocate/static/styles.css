@@ -15,22 +15,24 @@
 :root {
   /* ── 1. Primitives + legacy-pinned tokens (literal values — the suite
         parses these as raw colors; they are the AA-proven base) ────── */
-  --bg-body: #eddcbc;
-  --bg-surface: #f9f0da;
-  --bg-elevated: #e3d0a9;
-  --bg-muted: #d8c394;
-  --bg-input: #f4e9cf;
+  /* papers — named for what they are: warm, edible, never clinical */
+  --bg-body: #eddcbc;      /* warm oat */
+  --bg-surface: #f9f0da;   /* oat milk */
+  --bg-elevated: #e3d0a9;  /* wheat */
+  --bg-muted: #d8c394;     /* toasted wheat */
+  --bg-input: #f4e9cf;     /* porridge */
 
-  --accent: #6a4a18;
-  --accent-hover: #553b13;
+  --accent: #6a4a18;       /* deep amber */
+  --accent-hover: #553b13; /* amber crust */
   --accent-light: rgba(106, 74, 24, 0.11);
   --accent-medium: rgba(106, 74, 24, 0.19);
 
-  --warm: #b3831f;
+  --warm: #b3831f;         /* brewed honey */
   --warm-light: rgba(179, 131, 31, 0.14);
   --warm-medium: rgba(179, 131, 31, 0.22);
 
-  --coral: #d8402f;
+  --coral: #d8402f;        /* madder red */
+  --coral-hover: var(--coral-hover);  /* madder, banked */
   --coral-light: rgba(216, 64, 47, 0.09);
   --coral-medium: rgba(216, 64, 47, 0.16);
 
@@ -102,14 +104,17 @@
   --step-5: clamp(2rem, 1.35rem + 3vw, 2.875rem); /* hero display */
 
   /* space — 4px ladder, one vocabulary */
-  --space-1: 4px;
-  --space-2: 8px;
-  --space-3: 12px;
-  --space-4: 16px;
-  --space-5: 24px;
-  --space-6: 32px;
-  --space-7: 48px;
-  --space-8: 64px;
+  /* the felt ramp: 4/8/12/18/24/32/48/72 — stepped, honest about its
+     broken harmony, densifiable by one variable (--sp) */
+  --sp: 1;
+  --space-1: calc(4px * var(--sp));
+  --space-2: calc(8px * var(--sp));
+  --space-3: calc(12px * var(--sp));
+  --space-4: calc(18px * var(--sp));
+  --space-5: calc(24px * var(--sp));
+  --space-6: calc(32px * var(--sp));
+  --space-7: calc(48px * var(--sp));
+  --space-8: calc(72px * var(--sp));
   --space-section: clamp(48px, 32px + 4vw, 88px);
 
   /* shape */
@@ -988,7 +993,7 @@ textarea { resize: vertical; min-height: 100px; line-height: 1.55; }
               transform var(--dur-1) var(--ease);
 }
 [data-theme="dark"] .btn-danger { color: var(--bg-body); }
-.btn-danger:hover { background-color: #a8483c; transform: translateY(-1px); box-shadow: 0 5px 0 var(--btn-edge-danger); }
+.btn-danger:hover { background-color: var(--coral-hover); transform: translateY(-1px); box-shadow: 0 5px 0 var(--btn-edge-danger); }
 [data-theme="dark"] .btn-danger:hover { background-color: #e0897f; }
 .btn-danger:active { transform: translateY(3px); box-shadow: 0 1px 0 var(--btn-edge-danger); }
 .btn-danger:focus-visible { outline: 2px solid var(--color-focus-ring); outline-offset: 3px; }
@@ -2644,26 +2649,41 @@ h1[tabindex="-1"]:focus-visible, h2[tabindex="-1"]:focus-visible, h3[tabindex="-
 .entry-card, .cat-card, .reminder-card, .sample-slip, .analysis-item { border-radius: 12px; }
 .icon-btn, .nav-btn, .example-chip, .due-badge { border-radius: 9px; }
 
-/* elevation the craft way: ambient layer + key light + contact shadow */
+/* ═══ THE FELT LAW — depth = layer softness, never translucency.
+   Layers are OPAQUE warm materials that stack like blankets on a desk:
+   L0 desk (page) · L1 mats (panels) · L2 cards (items) · L3 notes
+   (slips, stamps). Each layer up: warmer shadow (cocoa, never black),
+   longer blur (softer fibers), a 1px fiber-light on its top edge. ═══ */
 :root {
-  --shadow-card: 0 1px 1px rgba(58, 53, 44, 0.04), 0 2px 6px rgba(58, 53, 44, 0.05), 0 10px 28px rgba(58, 53, 44, 0.09);
-  --shadow-raised: 0 1px 1px rgba(58, 53, 44, 0.05), 0 4px 10px rgba(58, 53, 44, 0.07), 0 18px 44px rgba(58, 53, 44, 0.12);
+  --shadow-l1: 0 1px 2px rgba(90, 62, 30, 0.06), 0 6px 18px rgba(90, 62, 30, 0.08);
+  --shadow-l2: 0 1px 2px rgba(90, 62, 30, 0.07), 0 3px 8px rgba(90, 62, 30, 0.06), 0 12px 30px rgba(90, 62, 30, 0.11);
+  --shadow-l3: 0 2px 3px rgba(90, 62, 30, 0.08), 0 6px 14px rgba(90, 62, 30, 0.09), 0 22px 48px rgba(90, 62, 30, 0.14);
+  --pal-dot-gold: #b3831f;   /* brewed honey */
+  --pal-dot-rose: #b56a80;   /* petal rose */
+  --pal-dot-moss: #7a9a5a;   /* pothos leaf */
+  --pal-dot-blue: #6f95b8;   /* powder denim */
+  --fiber-light: inset 0 1px 0 rgba(255, 250, 236, 0.6);
+  --fiber-shade: inset 0 -1px 0 rgba(90, 62, 30, 0.07);
 }
 [data-theme="dark"] {
-  --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.35), 0 10px 30px rgba(0, 0, 0, 0.32);
-  --shadow-raised: 0 2px 4px rgba(0, 0, 0, 0.4), 0 20px 48px rgba(0, 0, 0, 0.38);
+  --shadow-l1: 0 1px 2px rgba(0, 0, 0, 0.3), 0 6px 18px rgba(0, 0, 0, 0.26);
+  --shadow-l2: 0 1px 2px rgba(0, 0, 0, 0.34), 0 3px 8px rgba(0, 0, 0, 0.28), 0 12px 30px rgba(0, 0, 0, 0.3);
+  --shadow-l3: 0 2px 3px rgba(0, 0, 0, 0.38), 0 6px 14px rgba(0, 0, 0, 0.32), 0 22px 48px rgba(0, 0, 0, 0.34);
+  --fiber-light: inset 0 1px 0 rgba(255, 240, 214, 0.05);
+  --fiber-shade: inset 0 -1px 0 rgba(0, 0, 0, 0.22);
 }
 .panel { box-shadow: var(--shadow-raised); }
 .entry-card, .cat-card, .reminder-card, .sample-slip, .lib-panel { box-shadow: var(--shadow-card); }
 
-/* material: every planar surface gets a 1px top light + bottom shade */
-.panel-inner, .entry-card, .cat-card, .sample-slip {
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.55), inset 0 -1px 0 rgba(90, 70, 45, 0.06), var(--shadow-card);
+/* L1 mats: panels rest on the desk */
+.panel { box-shadow: var(--fiber-light), var(--shadow-l1); }
+.panel-inner { box-shadow: var(--fiber-light), var(--fiber-shade); }
+/* L2 cards: items on the mats */
+.entry-card, .cat-card, .reminder-card, .lib-panel {
+  box-shadow: var(--fiber-light), var(--fiber-shade), var(--shadow-l2);
 }
-[data-theme="dark"] .panel-inner, [data-theme="dark"] .entry-card,
-[data-theme="dark"] .cat-card, [data-theme="dark"] .sample-slip {
-  box-shadow: inset 0 1px 0 rgba(255, 240, 214, 0.06), inset 0 -1px 0 rgba(0, 0, 0, 0.25), var(--shadow-card);
-}
+/* L3 notes: the slips and stamps, closest to the hand */
+.sample-slip { box-shadow: var(--fiber-light), var(--fiber-shade), var(--shadow-l3); }
 
 /* the desk lamp re-inks to the nook: cocoa lines by day, tea-light by night */
 .lamp-vignette .lk-line { stroke: rgba(58, 53, 44, 0.72); }
@@ -2940,10 +2960,10 @@ html[data-palette="blue"][data-theme="dark"] {
 .pal-swatch:hover { transform: scale(1.15); }
 .pal-swatch:focus-visible { outline: 2px solid var(--color-focus-ring); outline-offset: 2px; }
 .pal-swatch.on { box-shadow: 0 0 0 2px var(--bg-body), 0 0 0 4px var(--color-focus-ring); }
-.pal-gold { background: #b3831f; }
-.pal-rose { background: #b56a80; }
-.pal-moss { background: #7a9a5a; }
-.pal-blue { background: #6f95b8; }
+.pal-gold { background: var(--pal-dot-gold); }
+.pal-rose { background: var(--pal-dot-rose); }
+.pal-moss { background: var(--pal-dot-moss); }
+.pal-blue { background: var(--pal-dot-blue); }
 
 /* reminder tray chrome goes quiet: paper rules and neutral edges only —
    color belongs to the stamps and the states, not to the furniture */

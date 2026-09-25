@@ -138,6 +138,15 @@ _MODULE_SCHEMAS = {
   "scientific_context": "string - what the science actually says",
   "recommended_action": "string"
 }""",
+    "appeal_letter": """{
+  "letter": "string - the complete, ready-to-edit appeal letter, starting with the subject line",
+  "summary": "string - one-sentence note on how the letter uses the case file",
+  "appeal_arguments": ["string - each argument must trace to a case-file fact"]
+}""",
+    "med_questions": """{
+  "questions": ["string - questions about this medication to ask a clinician, each grounded in the listed medications"],
+  "summary": "string - one-sentence note on which listed medications were considered"
+}""",
 }
 
 
@@ -432,6 +441,7 @@ _LABEL_SECTION_RE = re.compile(
     r"|Billing\s+Rights|Estimated\s+Overcharge|Medical\s+Terms\s+Explained"
     r"|Follow[\s-]?up\s+Needed|Possible\s+Conditions|Recommended\s+Specialist"
     r"|Credibility|Scientific\s+Context|Recommended\s+Action"
+    r"|Letter|Questions"
     r")\s*[:：]\s*",
     re.IGNORECASE,
 )
@@ -470,6 +480,8 @@ _FIELD_MAP = {
     "credibility": "credibility",
     "scientific context": "scientific_context",
     "recommended action": "recommended_action",
+    "letter": "letter",
+    "questions": "questions",
 }
 
 _LIST_FIELDS = {
@@ -477,7 +489,7 @@ _LIST_FIELDS = {
     "follow_up_steps", "key_questions", "records_to_bring", "treatment_concerns",
     "talking_points", "questions_to_ask", "appeal_arguments", "common_side_effects",
     "warnings", "doctor_questions", "suspicious_charges", "billing_rights",
-    "possible_conditions",
+    "possible_conditions", "questions",
 }
 
 

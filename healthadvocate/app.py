@@ -37,6 +37,7 @@ from healthadvocate.core import (
     community_health,
     family_tracker,
     health_tracks,
+    appeal_letter,
 )
 
 from healthadvocate.privacy.logging_redaction import install_redacting_log_filter
@@ -129,6 +130,12 @@ class BillRequest(BaseModel):
 class DenialRequest(BaseModel):
     denial_text: str
     patient_info: str = ""
+    profile_id: Optional[str] = None
+
+class AppealLetterRequest(BaseModel):
+    denial_text: str = Field(max_length=_MAX_INPUT_LENGTH)
+    record_text: str = Field(default="", max_length=_MAX_INPUT_LENGTH)
+    user_words: str = Field(default="", max_length=_MAX_INPUT_LENGTH)
     profile_id: Optional[str] = None
 
 class DrugRequest(BaseModel):
@@ -261,6 +268,22 @@ async def fight_denial(request: DenialRequest):
     _validate_length(request.denial_text, "Denial text")
     result = await run_in_threadpool(
         insurance_fighter.fight_denial, engine, request.denial_text, request.patient_info, request.profile_id
+    )
+    return result
+
+@app.post("/api/insurance/appeal-letter")
+async def generate_appeal_letter(request: AppealLetterRequest):
+    """F1a: structured case file + appeal letter via the loopback champion lane."""
+    _validate_length(request.denial_text, "Denial text")
+    _validate_length(request.record_text, "Record text")
+    _validate_length(request.user_words, "Your words")
+    result = await run_in_threadpool(
+        appeal_letter.generate_appeal_letter,
+        engine,
+        request.denial_text,
+        request.record_text,
+        request.user_words,
+        request.profile_id,
     )
     return result
 

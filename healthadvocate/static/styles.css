@@ -3129,3 +3129,7 @@ main > .view::after {
 }
 .appeal-studio h3 { font-size: 13px; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 6px; }
 [data-theme="dark"] .appeal-studio { border-top-color: rgba(224, 169, 97, 0.3); }
+
+/* F1b: the share-safe box */
+.share-safe-box textarea { margin-top: var(--space-2); font-size: var(--step-0); }
+.share-safe-detail { font-size: 13px; color: var(--text-2); font-family: var(--font-mono); margin: 2px 0 6px; }

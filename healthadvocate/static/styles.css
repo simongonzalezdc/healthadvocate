@@ -32,7 +32,7 @@
   --warm-medium: rgba(179, 131, 31, 0.22);
 
   --coral: #d8402f;        /* madder red */
-  --coral-hover: var(--coral-hover);  /* madder, banked */
+  --coral-hover: #a8483c;  /* madder, banked */
   --coral-light: rgba(216, 64, 47, 0.09);
   --coral-medium: rgba(216, 64, 47, 0.16);
 
@@ -94,14 +94,18 @@
   --font-sans: var(--font);
   --font-display: Charter, "Bitstream Charter", Georgia, "Times New Roman", serif;
   --font-mono: ui-monospace, "SF Mono", "Cascadia Mono", Menlo, Consolas, monospace;
-  --step--2: 0.75rem;   /* 12px  fine print, badge labels */
-  --step--1: 0.8438rem; /* 13.5px captions */
+  /* the five steps (S+ migration map, PRD v2.2): 13 meta / 15 body / 18 lede+nav
+     / 28 heading / 40 display; 12px is the EXEMPT fine-print size (footer legal,
+     table meta, stamp numerals only); --step-3 folds into heading; --step-4/5 cap
+     at the 40px display role. */
+  --step--2: 0.75rem;   /* 12px  EXEMPT fine print — enumerated classes only */
+  --step--1: 0.8125rem; /* 13px  meta */
   --step-0: 0.9375rem;  /* 15px  body */
-  --step-1: 1.0625rem;  /* 17px  card titles */
-  --step-2: 1.25rem;    /* 20px  view titles */
-  --step-3: 1.5625rem;  /* 25px  section display */
-  --step-4: 1.9375rem;  /* 31px  hero (mobile) */
-  --step-5: clamp(2rem, 1.35rem + 3vw, 2.875rem); /* hero display */
+  --step-1: 1.125rem;   /* 18px  lede, nav, card titles */
+  --step-2: 1.75rem;    /* 28px  view/panel headings */
+  --step-3: 1.75rem;    /* 28px  (folded: alias of step-2, retired as distinct) */
+  --step-4: 2.5rem;     /* 40px  display (mobile hero) */
+  --step-5: clamp(2rem, 1.35rem + 2vw, 2.5rem); /* display, capped at 40px */
 
   /* space — 4px ladder, one vocabulary */
   /* the felt ramp: 4/8/12/18/24/32/48/72 — stepped, honest about its
@@ -2014,6 +2018,8 @@ footer strong { color: var(--color-text-muted); }
    ═════════════════════════════════════════════════════════════════ */
 
 :root { --font-hand: "Bradley Hand", "Chalkboard SE", "Marker Felt", "Segoe Print", cursive; }
+/* the hand never writes small: script voice is >=16px or it isn't used */
+.margin-note, .hand-note, .chips-note, .entry-sample, .sample-slip-head, .lib-note { font-size: max(1rem, 16px); }
 
 /* ── 1. LAMPLIGHT — the page is a lit place, and the light lives ── */
 body::before { animation: lamp-breathe 9.5s ease-in-out infinite; }
@@ -2748,8 +2754,8 @@ html[data-palette="plush"]:root {
   --bg-elevated: #e2c6b6;
   --bg-muted: #d6b4a2;
   --bg-input: #f4e3d8;
-  --accent: #9c3f52;
-  --accent-hover: #833344;
+  --accent: #863647;
+  --accent-hover: #6f2c3a;
   --accent-light: rgba(156,63,82,0.10);
   --accent-medium: rgba(156,63,82,0.18);
   --warm: #bf6a3b;
@@ -2762,8 +2768,8 @@ html[data-palette="plush"]:root {
   --slate-light: rgba(138,107,143,0.11);
   --slate-medium: rgba(138,107,143,0.19);
   --text-1: #432b30;
-  --text-2: #776066;
-  --text-3: #8d7a80;
+  --text-2: #665358;
+  --text-3: #6f6065;
   --border: #e0c4b8;
   --border-light: #ecd8cd;
   --ochre-ink-700: #94502a;
@@ -2812,8 +2818,8 @@ html[data-palette="moss"]:root {
   --bg-elevated: #d0d7b2;
   --bg-muted: #c2cb9f;
   --bg-input: #e9eddb;
-  --accent: #3d6b38;
-  --accent-hover: #315a2d;
+  --accent: #396434;
+  --accent-hover: #2d5229;
   --accent-light: rgba(61,107,56,0.10);
   --accent-medium: rgba(61,107,56,0.18);
   --warm: #c9862f;
@@ -2826,8 +2832,8 @@ html[data-palette="moss"]:root {
   --slate-light: rgba(95,125,143,0.11);
   --slate-medium: rgba(95,125,143,0.19);
   --text-1: #2b3327;
-  --text-2: #5c6852;
-  --text-3: #71806a;
+  --text-2: #56614c;
+  --text-3: #616e5b;
   --border: #cdd4b4;
   --border-light: #dde2c8;
   --ochre-ink-700: #8a5a1a;
@@ -2877,8 +2883,8 @@ html[data-palette="blue"]:root {
   --bg-muted: #b4c6d4;
   --bg-input: #e2ebf1;
 
-  --accent: #3a6491;
-  --accent-hover: #2e5377;
+  --accent: #365d87;
+  --accent-hover: #2a4d70;
   --accent-light: rgba(58, 100, 145, 0.10);
   --accent-medium: rgba(58, 100, 145, 0.18);
 
@@ -2895,8 +2901,8 @@ html[data-palette="blue"]:root {
   --slate-medium: rgba(79, 130, 150, 0.19);
 
   --text-1: #22303c;
-  --text-2: #5d6b78;
-  --text-3: #74828f;
+  --text-2: #566470;
+  --text-3: #5c6771;
   --border: #cbd8e1;
   --border-light: #dde6ec;
 

@@ -46,9 +46,11 @@ HA.i18n.register('en', {
   'entry2.title': 'I have a document to understand',
   'entry2.desc': 'Medical records, test results, discharge papers — decoded into plain language.',
   'entry2.meta': 'Records · results · referrals',
+  'entry2.sample': '→ a lab result, decoded into plain words',
   'entry3.title': 'I need help with costs',
   'entry3.desc': 'Understand your bills, fight denials, and find more affordable alternatives.',
   'entry3.meta': 'Bills · denials · savings',
+  'entry3.sample': '→ a $1,200 bill, explained line by line',
 
   /* home sample slips */
   'slip.urgent_head': 'what an urgent read looks like',
@@ -68,6 +70,8 @@ HA.i18n.register('en', {
   'libpanel.head': 'From your library',
   'libpanel.note': 'Recordings, voicemails, and documents from your matters — catalogued on this device, linked to what they belong to.',
   'libpanel.open': 'Open the library',
+  'libpanel.note2': 'every call, voicemail, and letter — filed and findable.',
+  'libpanel.record': 'Record a call',
   'dash.active_h': 'Active Tracks',
   'dash.active_d': 'health concerns being monitored',
   'dash.family_h': 'Family Members',

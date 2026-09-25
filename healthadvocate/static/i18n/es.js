@@ -47,9 +47,11 @@ HA.i18n.register('es', {
   'entry2.title': 'Tengo un documento que entender',
   'entry2.desc': 'Expedientes médicos, resultados de laboratorio, cartas de alta — decodificados a lenguaje claro.',
   'entry2.meta': 'Expedientes · resultados · referencias',
+  'entry2.sample': '→ un resultado de laboratorio, decodificado en palabras claras',
   'entry3.title': 'Necesito ayuda con los costos',
   'entry3.desc': 'Entiende tus facturas, pelea negaciones y encuentra alternativas más accesibles.',
   'entry3.meta': 'Facturas · negaciones · ahorros',
+  'entry3.sample': '→ una factura de $1,200, explicada línea por línea',
 
   /* home sample slips */
   'slip.urgent_head': 'cómo se ve una lectura urgente',
@@ -69,6 +71,8 @@ HA.i18n.register('es', {
   'libpanel.head': 'De tu biblioteca',
   'libpanel.note': 'Grabaciones, correos de voz y documentos de tus asuntos — catalogados en este dispositivo, ligados a lo que les pertenece.',
   'libpanel.open': 'Abrir la biblioteca',
+  'libpanel.note2': 'cada llamada, correo de voz y carta — archivada y fácil de encontrar.',
+  'libpanel.record': 'Graba una llamada',
   'dash.active_h': 'Seguimientos activos',
   'dash.active_d': 'preocupaciones de salud en observación',
   'dash.family_h': 'Miembros de la familia',

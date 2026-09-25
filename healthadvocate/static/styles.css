@@ -2363,3 +2363,33 @@ h1[tabindex="-1"]:focus-visible, h2[tabindex="-1"]:focus-visible, h3[tabindex="-
 
 /* language switcher: same focus contract as its sibling icon buttons */
 .icon-lang-toggle:focus-visible { outline: 2px solid var(--color-focus-ring); outline-offset: 2px; }
+
+/* ── r6 wave 3 — judge round r7 findings ── */
+
+/* heading focus is a hand-sketched underline, not a box: the caseworker
+   underlines what matters; a rectangle reads as a selection bug */
+h1[tabindex="-1"]:focus-visible, h2[tabindex="-1"]:focus-visible, h3[tabindex="-1"]:focus-visible {
+  outline: none;
+  border-bottom: 2px solid var(--warm);
+  border-radius: 0 0 45% 45% / 0 0 14px 8px;
+  padding-bottom: 2px;
+}
+
+/* side cards sit ABOVE the deepened page, never below it */
+.entry-card:not(.entry-card-primary) { background: var(--bg-surface); }
+
+/* stamp and handwritten head share the line without crowding */
+.sample-slip-head { gap: 10px; align-items: baseline; }
+.slip-stamp { flex-shrink: 0; }
+
+/* sample lines give the side cards a lived-in bottom edge */
+.entry-sample {
+  font-family: var(--font-hand);
+  font-size: 15px;
+  color: var(--color-text-muted);
+  margin: var(--space-3) 0 0;
+}
+.entry-card-meta { margin-top: var(--space-4); }
+
+/* library panel breathes between list and actions */
+.lib-note { margin: var(--space-4) 0 var(--space-2); }

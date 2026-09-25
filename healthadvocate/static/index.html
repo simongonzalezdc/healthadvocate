@@ -144,7 +144,7 @@
               <li><span class="entry-step-n">3</span><span data-i18n="entry1.step3">Leave with next steps you can actually act on</span></li>
             </ol>
             <p class="hand-note" data-i18n="entry1.hand_note">nothing you write leaves this device.</p>
-            <button type="button" class="btn-primary" data-goto="symptoms" data-i18n="entry1.cta" class="btn-ink">Start a symptom check</button>
+            <button type="button" class="btn-primary btn-ink" data-goto="symptoms" data-i18n="entry1.cta">Start a symptom check</button>
             <aside class="sample-slip sample-slip-compact" aria-label="Sample of an urgent read">
               <div class="sample-slip-head"><span class="slip-stamp slip-stamp-danger" data-i18n="slip.stamp_sample">SAMPLE</span><span data-i18n="slip.urgent_head">what an urgent read looks like</span></div>
               <p class="slip-input" data-i18n="slip.urgent_input">“chest pain and shortness of breath for the past hour”</p>
@@ -166,6 +166,7 @@
             <p data-i18n="entry2.desc">Medical records, test results, discharge papers — decoded into plain language.</p>
             <div class="entry-card-meta">
               <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg><span data-i18n="entry2.meta">Records · results · referrals</span></span>
+            <p class="entry-sample" data-i18n="entry2.sample">→ a lab result, decoded into plain words</p>
             </div>
           </div>
           <div class="entry-card" tabindex="0" data-goto="bills" role="button" aria-label="I need help with costs">
@@ -176,6 +177,7 @@
             <p data-i18n="entry3.desc">Understand your bills, fight denials, and find more affordable alternatives.</p>
             <div class="entry-card-meta">
               <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg><span data-i18n="entry3.meta">Bills · denials · savings</span></span>
+            <p class="entry-sample" data-i18n="entry3.sample">→ a $1,200 bill, explained line by line</p>
             </div>
           </div>
         </div>
@@ -200,7 +202,9 @@
           </div>
           <p class="lib-panel-note" data-i18n="libpanel.note">Recordings, voicemails, and documents from your matters — catalogued on this device, linked to what they belong to.</p>
           <div id="home-lib-list" class="home-lib-list"></div>
-          <button type="button" class="btn-ghost" data-goto="library" data-i18n="libpanel.open">Open the library</button>
+          <p class="hand-note lib-note" data-i18n="libpanel.note2">every call, voicemail, and letter — filed and findable.</p>
+            <button type="button" class="btn-ghost" data-goto="recorder" data-i18n="libpanel.record">Record a call</button>
+            <button type="button" class="btn-ghost" data-goto="library" data-i18n="libpanel.open">Open the library</button>
         </aside>
       </div>
 

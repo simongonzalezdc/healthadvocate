@@ -1,0 +1,101 @@
+/* Español (latinoamericano neutro) — mismo registro cálido y honesto que el inglés.
+ * Regla de traducción: lenguaje claro, sin jerga; la urgencia se dice siempre
+ * completa, nunca se suaviza. */
+HA.i18n.register('es', {
+  /* chrome */
+  'skip.link': 'Saltar al contenido principal',
+  'aria.home': 'Inicio',
+  'aria.theme': 'Cambiar tema',
+  'aria.lang': 'Cambiar idioma a inglés',
+
+  /* nav */
+  'nav.symptoms': 'Síntomas',
+  'nav.documents': 'Documentos',
+  'nav.bills': 'Facturas',
+  'nav.insurance': 'Seguros',
+  'nav.drugs': 'Medicinas',
+  'nav.appointments': 'Citas',
+  'nav.discharge': 'Alta médica',
+  'nav.secondopinion': '2a Opinión',
+  'nav.recorder': 'Grabadora',
+  'nav.library': 'Biblioteca',
+  'nav.directory': 'Directorio',
+  'nav.scanner': 'Escáner',
+  'nav.family': 'Familia',
+  'nav.tracks': 'Seguimientos',
+  'nav.coverage': 'Cobertura',
+  'nav.help': 'Ayuda',
+
+  /* home hero */
+  'home.eyebrow': 'Gratis · Código abierto · Privado por diseño',
+  'home.title': 'Mereces entender tu atención médica.',
+  'home.sub': 'Entiende síntomas, decodifica facturas, pelea negaciones de seguros y defiende a tu familia. Todo se queda privado en tu dispositivo.',
+  'home.margin_note': 'no estás solo en esto.',
+  'home.cta_symptoms': 'Describe tus síntomas',
+  'home.cta_denial': 'Pelea una negación',
+
+  /* home entry cards */
+  'entry1.title': 'Algo no se siente bien',
+  'entry1.desc': 'Cuenta cómo te sientes y te ayudaremos a entender qué podría estar pasando y qué hacer después.',
+  'entry1.step1': 'Di lo que te pasa, con tus propias palabras',
+  'entry1.step2': 'Recibe una lectura en lenguaje claro, con la urgencia dicha con honestidad',
+  'entry1.step3': 'Sal con pasos siguientes que sí puedes hacer',
+  'entry1.hand_note': 'nada de lo que escribas sale de este dispositivo.',
+  'entry1.cta': 'Empezar una revisión de síntomas',
+  'entry1.meta_private': 'Privado por diseño',
+  'entry1.meta_account': 'Sin cuenta necesaria',
+  'entry2.title': 'Tengo un documento que entender',
+  'entry2.desc': 'Expedientes médicos, resultados de laboratorio, cartas de alta — decodificados a lenguaje claro.',
+  'entry2.meta': 'Expedientes · resultados · referencias',
+  'entry3.title': 'Necesito ayuda con los costos',
+  'entry3.desc': 'Entiende tus facturas, pelea negaciones y encuentra alternativas más accesibles.',
+  'entry3.meta': 'Facturas · negaciones · ahorros',
+
+  /* home sample slips */
+  'slip.urgent_head': 'cómo se ve una lectura urgente',
+  'slip.urgent_input': '“dolor de pecho y falta de aire durante la última hora”',
+  'slip.key_urgency': 'urgencia',
+  'slip.key_why': 'por qué',
+  'slip.urgent_body': 'No esperes a esta app — llama ahora al número de emergencias de tu localidad.',
+  'slip.urgent_why': 'Estos síntomas juntos pueden significar algo grave. Una respuesta directa vale más que una que consuela.',
+  'slip.stamp_sample': 'EJEMPLO',
+  'slip.stamp_routine': 'rutinario',
+  'slip.stamp_emergency': 'emergencia',
+
+  /* home panels */
+  'comingup.head': 'Lo que se viene',
+  'comingup.badge': 'Datos de ejemplo',
+  'comingup.note': 'Ejemplos sintéticos para que veas cómo se ven los recordatorios. Los reales se crean solo en este dispositivo; las notificaciones locales suenan mientras la app está abierta — nunca se envía nada por la red.',
+  'libpanel.head': 'De tu biblioteca',
+  'libpanel.note': 'Grabaciones, correos de voz y documentos de tus asuntos — catalogados en este dispositivo, ligados a lo que les pertenece.',
+  'libpanel.open': 'Abrir la biblioteca',
+  'dash.active_h': 'Seguimientos activos',
+  'dash.active_d': 'preocupaciones de salud en observación',
+  'dash.family_h': 'Miembros de la familia',
+  'dash.family_d': 'perfiles que estás siguiendo',
+  'dash.resolved_h': 'Resueltos',
+  'dash.resolved_d': 'preocupaciones que puedes archivar',
+
+  /* symptoms view */
+  'symptoms.head': 'Revisión de síntomas',
+  'symptoms.desc': 'Cuenta tus síntomas y identificaremos posibles condiciones, evaluaremos la urgencia y te daremos pasos siguientes.',
+  'symptoms.label': '¿Qué estás sintiendo?',
+  'symptoms.label_ph': 'p. ej., llevo una hora con dolor de pecho y falta de aire...',
+  'symptoms.chips_note': 'dilo como te salga —',
+  'symptoms.chip1': 'dolor de garganta, dos días',
+  'symptoms.chip2': 'mareado desde una medicina nueva',
+  'symptoms.chip3': 'dolor de pecho, una hora',
+  'symptoms.assess': 'Evaluar síntomas',
+  'symptoms.emergency_prefix': 'Si esto se siente como una emergencia, sáltate el formulario — ',
+  'symptoms.emergency_strong': 'llama ahora al número de emergencias de tu localidad.',
+  'symptoms.slip_head': 'cómo se ve una lectura',
+  'symptoms.slip_input': '“dolor de garganta y fiebre baja por dos días, peor al tragar”',
+  'symptoms.slip_sounds': 'qué parece esto',
+  'symptoms.slip_sounds_body': 'Lo más común es una infección viral de garganta; podría haber estreptococo y vale la pena una prueba rápida.',
+  'symptoms.slip_urgency_body': 'Consulta a un médico en los próximos días si empeora. Atención inmediata si hay dificultad para respirar o tragar.',
+  'symptoms.slip_next': 'pasos a seguir',
+  'symptoms.slip_next_body': 'Pide una cita esta semana · Líquidos calientes y descanso · Regresa con cualquier síntoma nuevo.',
+
+  /* footer */
+  'footer.note_tail': 'está aquí para apoyar, no para reemplazar, la guía médica profesional. Siempre consulta a un profesional de la salud calificado para diagnóstico y tratamiento. Tu información se queda en tu dispositivo.',
+});

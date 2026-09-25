@@ -1,0 +1,100 @@
+/* English catalog — the source of truth for every key.
+ * Structure: <area>.<element>[.<variant>]. JS templates use HA.t('key'). */
+HA.i18n.register('en', {
+  /* chrome */
+  'skip.link': 'Skip to main content',
+  'aria.home': 'Home',
+  'aria.theme': 'Toggle theme',
+  'aria.lang': 'Switch language to Spanish',
+
+  /* nav */
+  'nav.symptoms': 'Symptoms',
+  'nav.documents': 'Documents',
+  'nav.bills': 'Bills',
+  'nav.insurance': 'Insurance',
+  'nav.drugs': 'Drugs',
+  'nav.appointments': 'Appointments',
+  'nav.discharge': 'Discharge',
+  'nav.secondopinion': '2nd Opinion',
+  'nav.recorder': 'Recorder',
+  'nav.library': 'Library',
+  'nav.directory': 'Directory',
+  'nav.scanner': 'Scanner',
+  'nav.family': 'Family',
+  'nav.tracks': 'Tracks',
+  'nav.coverage': 'Coverage',
+  'nav.help': 'Help',
+
+  /* home hero */
+  'home.eyebrow': 'Free · Open source · Private by design',
+  'home.title': 'You deserve to understand your care.',
+  'home.sub': "Navigate symptoms, decode bills, fight insurance denials, and advocate for your family. Everything stays private on your device.",
+  'home.margin_note': "you're not alone in this.",
+  'home.cta_symptoms': 'Describe your symptoms',
+  'home.cta_denial': 'Fight a denial',
+
+  /* home entry cards */
+  'entry1.title': "Something doesn't feel right",
+  'entry1.desc': "Describe how you're feeling and we'll help you understand what might be happening and what to do next.",
+  'entry1.step1': "Say what's happening, in your own words",
+  'entry1.step2': 'Get a plain-language read, with urgency called out honestly',
+  'entry1.step3': 'Leave with next steps you can actually act on',
+  'entry1.hand_note': 'nothing you write leaves this device.',
+  'entry1.cta': 'Start a symptom check',
+  'entry1.meta_private': 'Private by design',
+  'entry1.meta_account': 'No account needed',
+  'entry2.title': 'I have a document to understand',
+  'entry2.desc': 'Medical records, test results, discharge papers — decoded into plain language.',
+  'entry2.meta': 'Records · results · referrals',
+  'entry3.title': 'I need help with costs',
+  'entry3.desc': 'Understand your bills, fight denials, and find more affordable alternatives.',
+  'entry3.meta': 'Bills · denials · savings',
+
+  /* home sample slips */
+  'slip.urgent_head': 'what an urgent read looks like',
+  'slip.urgent_input': '“chest pain and shortness of breath for the past hour”',
+  'slip.key_urgency': 'urgency',
+  'slip.key_why': 'why',
+  'slip.urgent_body': "Don't wait on this app — call your local emergency number now.",
+  'slip.urgent_why': 'These symptoms together can mean something serious. A straight answer beats a comforting one.',
+  'slip.stamp_sample': 'SAMPLE',
+  'slip.stamp_routine': 'routine',
+  'slip.stamp_emergency': 'emergency',
+
+  /* home panels */
+  'comingup.head': "What's coming up",
+  'comingup.badge': 'Demo data',
+  'comingup.note': 'Synthetic examples so you can see how reminders look. Real ones are created on this device only; local notifications fire while the app is open — nothing is ever sent over the network.',
+  'libpanel.head': 'From your library',
+  'libpanel.note': 'Recordings, voicemails, and documents from your matters — catalogued on this device, linked to what they belong to.',
+  'libpanel.open': 'Open the library',
+  'dash.active_h': 'Active Tracks',
+  'dash.active_d': 'health concerns being monitored',
+  'dash.family_h': 'Family Members',
+  'dash.family_d': 'profiles you are tracking',
+  'dash.resolved_h': 'Resolved',
+  'dash.resolved_d': 'concerns you can close the file on',
+
+  /* symptoms view */
+  'symptoms.head': 'Symptom Assessment',
+  'symptoms.desc': "Describe your symptoms and we'll identify possible conditions, assess urgency, and suggest next steps.",
+  'symptoms.label': 'What are you experiencing?',
+  'symptoms.label_ph': "e.g., I've been having chest pain and shortness of breath for the past hour...",
+  'symptoms.chips_note': 'say it however it comes out —',
+  'symptoms.chip1': 'sore throat, two days',
+  'symptoms.chip2': 'dizzy since a new medication',
+  'symptoms.chip3': 'chest pain, one hour',
+  'symptoms.assess': 'Assess Symptoms',
+  'symptoms.emergency_prefix': 'If this feels like an emergency, skip the form — ',
+  'symptoms.emergency_strong': 'call your local emergency number now.',
+  'symptoms.slip_head': 'what a read looks like',
+  'symptoms.slip_input': '“sore throat and low fever for two days, worse when swallowing”',
+  'symptoms.slip_sounds': 'what this sounds like',
+  'symptoms.slip_sounds_body': 'Viral throat infection is the most common cause; strep is possible and worth a quick test.',
+  'symptoms.slip_urgency_body': 'See a clinician within a few days if it worsens. Immediate care for trouble breathing or swallowing.',
+  'symptoms.slip_next': 'next steps',
+  'symptoms.slip_next_body': 'Book a same-week visit · Warm fluids and rest · Come back with any new symptom.',
+
+  /* footer */
+  'footer.note_tail': 'is here to support, not replace, professional medical guidance. Always consult a qualified healthcare provider for diagnosis and treatment. Your information stays on your device.',
+});

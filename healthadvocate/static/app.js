@@ -1590,6 +1590,16 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('btn-home').addEventListener('click', () => HA.showView('home'));
   document.getElementById('btn-theme').addEventListener('click', () => HA.toggleTheme());
 
+  /* Bilingual frame: bind static strings, then re-render dynamic views
+     when the language changes (their templates build with HA.t) */
+  if (HA.i18n) {
+    HA.i18n.init();
+    document.addEventListener('ha:lang', () => {
+      const active = document.querySelector('.view.active');
+      if (active) HA.showView(active.id.replace('view-', ''));
+    });
+  }
+
   /* Example chips: tap one to start the intake sheet with that sentence */
   document.addEventListener('click', (e) => {
     const chip = e.target.closest('.example-chip');

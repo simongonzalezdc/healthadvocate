@@ -105,6 +105,10 @@ HA.i18n.register('es', {
   'symptoms.slip_urgency_body': 'Consulta a un médico en los próximos días si empeora. Atención inmediata si hay dificultad para respirar o tragar.',
   'symptoms.slip_next': 'pasos a seguir',
   'symptoms.slip_next_body': 'Pide una cita esta semana · Líquidos calientes y descanso · Regresa con cualquier síntoma nuevo.',
+  'symptoms.note': 'tómate tu tiempo — escríbelo como te salga.',
+
+  /* inner-view hand notes (S+ inner warmth — one human sentence per view) */
+  'documents.note': 'lo revisamos línea por línea.',
 
   /* footer */
   'footer.note_tail': 'está aquí para apoyar, no para reemplazar, la guía médica profesional. Siempre consulta a un profesional de la salud calificado para diagnóstico y tratamiento. Tu información se queda en tu dispositivo.',

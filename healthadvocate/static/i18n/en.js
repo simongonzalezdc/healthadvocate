@@ -104,6 +104,10 @@ HA.i18n.register('en', {
   'symptoms.slip_urgency_body': 'See a clinician within a few days if it worsens. Immediate care for trouble breathing or swallowing.',
   'symptoms.slip_next': 'next steps',
   'symptoms.slip_next_body': 'Book a same-week visit · Warm fluids and rest · Come back with any new symptom.',
+  'symptoms.note': 'take your time — write it however it comes out.',
+
+  /* inner-view hand notes (S+ inner warmth — one human sentence per view) */
+  'documents.note': "we'll go through this line by line.",
 
   /* footer */
   'footer.note_tail': 'is here to support, not replace, professional medical guidance. Always consult a qualified healthcare provider for diagnosis and treatment. Your information stays on your device.',

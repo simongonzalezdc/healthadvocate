@@ -121,6 +121,22 @@
   <!-- Main Content -->
   <main id="app-content">
 
+    <!-- Shared painterly defs for the per-view nook fragments (S+ inner
+         warmth): one warm pool of light, two soft blurs — the same
+         technique as the home nook-scene. Rendered at 0x0 so gradient
+         references resolve; never visible, never interactive. -->
+    <svg class="nf-defs" width="0" height="0" aria-hidden="true" focusable="false">
+      <defs>
+        <radialGradient id="nf-glow" cx="0.5" cy="0.5" r="0.5">
+          <stop offset="0%" stop-color="rgba(242,201,138,0.5)"/>
+          <stop offset="60%" stop-color="rgba(242,201,138,0.16)"/>
+          <stop offset="100%" stop-color="rgba(242,201,138,0)"/>
+        </radialGradient>
+        <filter id="nf-soft" x="-40%" y="-40%" width="180%" height="180%"><feGaussianBlur stdDeviation="4"/></filter>
+        <filter id="nf-softer" x="-60%" y="-60%" width="220%" height="220%"><feGaussianBlur stdDeviation="9"/></filter>
+      </defs>
+    </svg>
+
     <!-- Home View -->
     <section id="view-home" class="view active">
       <div class="hero reveal">
@@ -353,6 +369,16 @@
     <!-- Symptom Assessment -->
     <section id="view-symptoms" class="view" aria-labelledby="symptoms-heading">
       <div class="panel"><div class="panel-inner">
+        <svg class="nook-frag" viewBox="0 0 170 140" fill="none" aria-hidden="true" focusable="false">
+          <!-- the nook, corner-sized: a mug of tea set down beside the page -->
+          <ellipse cx="86" cy="86" rx="78" ry="46" fill="url(#nf-glow)" filter="url(#nf-softer)"/>
+          <path d="M56 116 q40 8 80 0" class="nk-wood" stroke-linecap="round"/>
+          <path d="M64 58 v44 q0 9 9 9 h32 q9 0 9 -9 V58 Z" fill="#f0e4cc" class="nk-line" stroke-linejoin="round"/>
+          <path d="M114 70 q17 4 0 22" class="nk-line" stroke-linecap="round"/>
+          <ellipse cx="90" cy="59" rx="20" ry="5" fill="#b3703a"/>
+          <path class="nk-steam" d="M82 48 q-7 -10 0 -19 q6 -9 0 -17" stroke-linecap="round"/>
+          <path class="nk-steam nk-steam2" d="M100 46 q7 -10 0 -19 q-6 -9 0 -16" stroke-linecap="round"/>
+        </svg>
         <div class="panel-header">
           <div class="panel-icon symptoms">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-dasharray="0.1 3.4"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
@@ -362,6 +388,7 @@
             <div class="panel-desc" data-i18n="symptoms.desc">Describe your symptoms and we'll identify possible conditions, assess urgency, and suggest next steps.</div>
           </div>
         </div>
+        <p class="hand-note" data-i18n="symptoms.note">take your time — write it however it comes out.</p>
         <label for="symptom-input" class="field-label" data-i18n="symptoms.label">What are you experiencing?</label>
         <div class="example-chips">
           <button type="button" class="example-chip" data-example="I've had a sore throat and low fever for two days, and it hurts to swallow." data-i18n="symptoms.chip1">sore throat, two days</button>
@@ -391,6 +418,14 @@
     <!-- Document Decoder -->
     <section id="view-documents" class="view" aria-labelledby="documents-heading">
       <div class="panel"><div class="panel-inner">
+        <svg class="nook-frag" viewBox="0 0 170 140" fill="none" aria-hidden="true" focusable="false">
+          <!-- the nook, corner-sized: the letter, sealed and waiting -->
+          <ellipse cx="90" cy="76" rx="74" ry="46" fill="url(#nf-glow)" filter="url(#nf-softer)"/>
+          <path d="M48 32 h84 v64 h-84 Z" fill="#f7edd6" class="nk-line" stroke-linejoin="round"/>
+          <path d="M48 32 l42 32 42 -32" class="nk-line" stroke-linejoin="round"/>
+          <path d="M88 74 q11 -6 17 1 q8 1 6 9 q-1 8 -9 8 q-8 2 -12 -4 q-6 -4 -2 -14 Z" fill="#a06a62" class="nk-line" stroke-linejoin="round"/>
+          <path d="M87 82 q4 -5 9 -3" stroke="#f7edd6" stroke-width="2" stroke-linecap="round" opacity="0.6"/>
+        </svg>
         <div class="panel-header">
           <div class="panel-icon documents">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><circle cx="12" cy="15" r="2.4"/><path d="M12 13.3q1.4 1 1.4 1.7t-1.4 1.7q-1.4-1-1.4-1.7t1.4-1.7z" stroke-width="0.9"/></svg>
@@ -400,6 +435,7 @@
             <div class="panel-desc">Paste a medical document and we'll extract and explain all the medical terms, conditions, and medications.</div>
           </div>
         </div>
+        <p class="hand-note" data-i18n="documents.note">we'll go through this line by line.</p>
         <label for="doc-input" class="field-label">Paste your medical document text</label>
         <textarea id="doc-input" rows="6" placeholder="Paste lab results, visit notes, referral letters..."></textarea>
         <button type="button" class="btn-primary" data-action="decode-document">Decode Document</button>

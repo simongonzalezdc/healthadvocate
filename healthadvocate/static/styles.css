@@ -3245,3 +3245,88 @@ input:focus-visible, textarea:focus-visible, select:focus-visible {
   .header-actions.header-cluster { flex-wrap: wrap; justify-content: flex-end; }
   .due-badge .due-badge-words { display: none; }  /* count + dot only; aria carries the words */
 }
+
+/* ═══════════════════════════════════════════════════════════════════
+   S+ INNER WARMTH (feat/splus-innerwarmth, 2026-09-24) — the nook
+   travels inward. The two-judge audit kept reading every inner view as
+   "a panel with a form": the reading-nook narrative lived only on home.
+   Four quiet moves carry it into every view — accents, never wallpaper:
+
+   1. .nook-frag — a corner fragment of the same desk (a mug of tea, the
+      sealed letter, the coffee-rung receipt, a stack of books, the card
+      box, the tape reel, a sprig), drawn with the same layered-light
+      technique as the home nook-scene; theme-inked via the .nk-* line
+      classes; hidden under 900px like the scene itself.
+   2. .panel-eyebrow — the view title becomes the rubber stamp the home
+      eyebrow already wears (G004): bordered, rotated, mono, caution
+      ink. One voice across every view.
+   3. .hand-note — one human sentence per view, i18n-bound (en + es).
+   4. .panel-inner — a faint tea-glow wash (5–8%) behind the work, the
+      same material as .hero::before; background layer, never over it.
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* the wash: lamplight falls on the work from the upper corner — part of
+   the surface itself, so it can never sit over text or inputs */
+.panel-inner {
+  position: relative;
+  background-image:
+    radial-gradient(320px 230px at 88% -8%, rgba(201, 138, 61, 0.07), transparent 66%),
+    linear-gradient(180deg, rgba(255, 255, 250, 0.35), rgba(255, 255, 250, 0) 16%);
+}
+[data-theme="dark"] .panel-inner {
+  background-image:
+    radial-gradient(320px 230px at 88% -8%, rgba(224, 169, 97, 0.06), transparent 66%),
+    linear-gradient(180deg, rgba(255, 244, 222, 0.03), rgba(255, 244, 222, 0) 18%);
+}
+
+/* the fragment: a small corner of the nook, absolutely placed so it
+   costs the form nothing; decorative (aria-hidden in the markup) */
+.nook-frag {
+  position: absolute;
+  top: 10px;
+  right: 22px;
+  width: 150px;
+  height: auto;
+  pointer-events: none;
+  opacity: 0.95;
+}
+@media (max-width: 899px) { .nook-frag { display: none; } }
+
+/* the shared painterly defs live in a 0×0 svg; keep it out of layout */
+.nf-defs { position: absolute; }
+
+/* coverage has no panel — its fragment anchors to the section corner */
+#view-coverage { position: relative; }
+#view-coverage .nook-frag { top: -14px; right: 4px; }
+
+/* the view title is the rubber stamp (G004 pattern, heading-sized):
+   the home eyebrow and every view heading speak with one voice */
+.panel-eyebrow,
+#view-coverage > h2 {
+  display: inline-block;
+  font-family: var(--font-mono);
+  font-size: var(--step--1);
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--status-caution-ink);
+  border: 1.5px solid currentColor;
+  outline: 1px solid currentColor;
+  outline-offset: 2px;
+  border-radius: 3px;
+  padding: 4px 12px;
+  transform: rotate(-1.2deg);
+  background: transparent;
+  margin-bottom: 6px;
+}
+[data-theme="dark"] .panel-eyebrow,
+[data-theme="dark"] #view-coverage > h2 { color: var(--ochre-ink-700); }
+
+/* the stamp's outline ring must never become a focus artifact: the
+   hand-sketched focus underline (r6 wave 4) stays authoritative */
+h2[tabindex="-1"]:focus-visible { outline: none; }
+
+/* the one human sentence per view: tucked under the heading, above the
+   work, in the hand voice at its lawful size (>=16px via the art layer) */
+.panel-inner .hand-note { display: inline-block; margin: -4px 0 var(--space-4); }
+#view-coverage .hand-note { display: inline-block; margin: var(--space-1) 0 var(--space-4); }

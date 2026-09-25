@@ -3343,3 +3343,11 @@ h2[tabindex="-1"]:focus-visible { outline: none; }
 .pal-rose { background: var(--pal-dot-rose); }
 .pal-moss { background: var(--pal-dot-moss); }
 .pal-blue { background: var(--pal-dot-blue); }
+
+/* build stamp: staleness detection at a glance */
+.build-stamp {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-3);
+  margin-top: var(--space-2);
+}

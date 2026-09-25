@@ -1022,8 +1022,15 @@
 
   <footer>
     <p><strong>HealthAdvocate</strong> <span data-i18n="footer.note_tail">is here to support, not replace, professional medical guidance. Always consult a qualified healthcare provider for diagnosis and treatment. Your information stays on your device.</span></p>
+  <p id="build-stamp" class="build-stamp"></p>
   </footer>
 
+  <script>
+    fetch('/api/version').then(r => r.json()).then(d => {
+      const el = document.getElementById('build-stamp');
+      if (el) el.textContent = 'build ' + d.build;
+    }).catch(() => {});
+  </script>
   <script src="/static/app.js"></script>
     <script src="/static/i18n.js"></script>
     <script src="/static/i18n/en.js"></script>

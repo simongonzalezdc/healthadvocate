@@ -296,6 +296,15 @@ body::after {
 
 /* ── Header ─── */
 header {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  backdrop-filter: blur(14px) saturate(1.15);
+  -webkit-backdrop-filter: blur(14px) saturate(1.15);
+  background: color-mix(in srgb, var(--bg-body) 78%, transparent);
+  border-bottom: 1px solid var(--border-light);
+}
+header.inner {
   background: var(--color-surface);
   border-bottom: 1px solid var(--color-border);
   position: sticky; top: 0; z-index: 50;
@@ -2635,9 +2644,26 @@ h1[tabindex="-1"]:focus-visible, h2[tabindex="-1"]:focus-visible, h3[tabindex="-
 .entry-card, .cat-card, .reminder-card, .sample-slip, .analysis-item { border-radius: 12px; }
 .icon-btn, .nav-btn, .example-chip, .due-badge { border-radius: 9px; }
 
-/* soft warm shadows site-wide */
-:root { --shadow-card: 0 1px 2px rgba(58, 53, 44, 0.06), 0 6px 22px rgba(58, 53, 44, 0.08); }
-[data-theme="dark"] { --shadow-card: 0 1px 2px rgba(8, 6, 4, 0.3), 0 8px 26px rgba(8, 6, 4, 0.28); }
+/* elevation the craft way: ambient layer + key light + contact shadow */
+:root {
+  --shadow-card: 0 1px 1px rgba(58, 53, 44, 0.04), 0 2px 6px rgba(58, 53, 44, 0.05), 0 10px 28px rgba(58, 53, 44, 0.09);
+  --shadow-raised: 0 1px 1px rgba(58, 53, 44, 0.05), 0 4px 10px rgba(58, 53, 44, 0.07), 0 18px 44px rgba(58, 53, 44, 0.12);
+}
+[data-theme="dark"] {
+  --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.35), 0 10px 30px rgba(0, 0, 0, 0.32);
+  --shadow-raised: 0 2px 4px rgba(0, 0, 0, 0.4), 0 20px 48px rgba(0, 0, 0, 0.38);
+}
+.panel { box-shadow: var(--shadow-raised); }
+.entry-card, .cat-card, .reminder-card, .sample-slip, .lib-panel { box-shadow: var(--shadow-card); }
+
+/* material: every planar surface gets a 1px top light + bottom shade */
+.panel-inner, .entry-card, .cat-card, .sample-slip {
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.55), inset 0 -1px 0 rgba(90, 70, 45, 0.06), var(--shadow-card);
+}
+[data-theme="dark"] .panel-inner, [data-theme="dark"] .entry-card,
+[data-theme="dark"] .cat-card, [data-theme="dark"] .sample-slip {
+  box-shadow: inset 0 1px 0 rgba(255, 240, 214, 0.06), inset 0 -1px 0 rgba(0, 0, 0, 0.25), var(--shadow-card);
+}
 
 /* the desk lamp re-inks to the nook: cocoa lines by day, tea-light by night */
 .lamp-vignette .lk-line { stroke: rgba(58, 53, 44, 0.72); }
@@ -2926,8 +2952,7 @@ html[data-palette="blue"][data-theme="dark"] {
 /* ═══ the reading nook gains TEXTURE and DIMENSION ═══ */
 
 /* felt on every wall: dual turbulence, warm, subtle */
-body::after { opacity: 0.022; }
-[data-theme="dark"] body::after { opacity: 0.03; }
+body::after { display: none; }
 
 /* panels carry form: top light, bottom shade — not flat fills */
 .panel-inner {
@@ -2936,6 +2961,40 @@ body::after { opacity: 0.022; }
 [data-theme="dark"] .panel-inner {
   background-image: linear-gradient(180deg, rgba(255, 244, 222, 0.03), rgba(255, 244, 222, 0) 18%);
 }
+
+/* atmosphere: large soft color pools behind the content, never over it */
+.hero::before {
+  content: '';
+  position: absolute;
+  inset: -8% -6% auto;
+  height: 120%;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    radial-gradient(560px 420px at 82% 30%, rgba(201, 138, 61, 0.13), transparent 68%),
+    radial-gradient(420px 380px at 12% 20%, rgba(149, 111, 80, 0.08), transparent 70%);
+}
+[data-theme="dark"] .hero::before {
+  background:
+    radial-gradient(560px 420px at 82% 30%, rgba(224, 169, 97, 0.12), transparent 68%),
+    radial-gradient(420px 380px at 12% 20%, rgba(168, 191, 143, 0.05), transparent 70%);
+}
+
+/* letterpress on the display voice */
+.hero h1 { text-shadow: 0 1px 0 rgba(255, 252, 240, 0.5); }
+[data-theme="dark"] .hero h1 { text-shadow: 0 1px 0 rgba(0, 0, 0, 0.35); }
+
+/* engraved hairlines between major sections */
+main > .view::after {
+  content: '';
+  display: block;
+  height: 1px;
+  margin: var(--space-7) auto 0;
+  max-width: 72%;
+  background: linear-gradient(90deg, transparent, var(--border), transparent);
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.5);
+}
+[data-theme="dark"] main > .view::after { box-shadow: 0 1px 0 rgba(255, 240, 214, 0.04); }
 
 /* the scene: window glow, shelf, hanging vines, lamp pool, tea */
 .nook-scene {
@@ -2970,8 +3029,7 @@ body::after { opacity: 0.022; }
 /* ═══ the reading nook gains TEXTURE and DIMENSION ═══ */
 
 /* felt on every wall: weave + warm turbulence, subtle */
-body::after { opacity: 0.022; }
-[data-theme="dark"] body::after { opacity: 0.03; }
+body::after { display: none; }
 
 /* panels carry form: top light, bottom shade — not flat fills */
 .panel-inner {
@@ -2980,6 +3038,40 @@ body::after { opacity: 0.022; }
 [data-theme="dark"] .panel-inner {
   background-image: linear-gradient(180deg, rgba(255, 244, 222, 0.03), rgba(255, 244, 222, 0) 18%);
 }
+
+/* atmosphere: large soft color pools behind the content, never over it */
+.hero::before {
+  content: '';
+  position: absolute;
+  inset: -8% -6% auto;
+  height: 120%;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    radial-gradient(560px 420px at 82% 30%, rgba(201, 138, 61, 0.13), transparent 68%),
+    radial-gradient(420px 380px at 12% 20%, rgba(149, 111, 80, 0.08), transparent 70%);
+}
+[data-theme="dark"] .hero::before {
+  background:
+    radial-gradient(560px 420px at 82% 30%, rgba(224, 169, 97, 0.12), transparent 68%),
+    radial-gradient(420px 380px at 12% 20%, rgba(168, 191, 143, 0.05), transparent 70%);
+}
+
+/* letterpress on the display voice */
+.hero h1 { text-shadow: 0 1px 0 rgba(255, 252, 240, 0.5); }
+[data-theme="dark"] .hero h1 { text-shadow: 0 1px 0 rgba(0, 0, 0, 0.35); }
+
+/* engraved hairlines between major sections */
+main > .view::after {
+  content: '';
+  display: block;
+  height: 1px;
+  margin: var(--space-7) auto 0;
+  max-width: 72%;
+  background: linear-gradient(90deg, transparent, var(--border), transparent);
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.5);
+}
+[data-theme="dark"] main > .view::after { box-shadow: 0 1px 0 rgba(255, 240, 214, 0.04); }
 
 /* the scene: window glow, shelf, hanging vines, lamp pool, tea */
 .nook-scene {

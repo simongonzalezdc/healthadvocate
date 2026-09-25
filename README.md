@@ -1,5 +1,26 @@
 <div align="center">
 
+## What it does
+
+**HealthAdvocate is a free, open-source, local-first companion for people facing the
+medical system** — everything runs on your device; nothing is sent anywhere.
+
+- **Symptom check** — describe what you feel in your own words; get a plain-language
+  read with urgency called out honestly, and next steps you can act on.
+- **Appeal-letter generator** — bring a denial and your records; get a complete,
+  editable appeal letter drafted locally, every machine-drafted claim labeled and
+  traceable to a source. Download it, print it, send it.
+- **Share-safe copy** — strip names, dates, phone numbers, and IDs from any document
+  before you show it to a new doctor, an insurer, or a forum — with an exact count of
+  what was removed.
+- **Decoders** — documents, bills, discharge papers, drug labels: medical language
+  translated into plain words.
+- **Insurance & coverage** — fight denials, track appeals, keep your case file.
+- **Library, directory, recorder** — every call, voicemail, and letter catalogued and
+  cross-linked; providers fill in as you work.
+- **Four warm color themes** (gold · rose · moss · blue) and a dark mode — the reading
+  nook, not the clinic. Fully bilingual English/Español.
+
 # HealthAdvocate
 
 > HealthAdvocate is a health advocacy and patient-navigation tooling that helps people navigating healthcare systems and builders of advocacy tools advocate and navigate health workflows with structured support.

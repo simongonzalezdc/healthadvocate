@@ -234,9 +234,33 @@ class TrackUpdateRequest(BaseModel):
 # Health check
 # ---------------------------------------------------------------------------
 
+def _git_build() -> str:
+    """Build stamp: the serving commit, read once at startup. Staleness in
+    a browser tab becomes one-glance detectable (empor #2: a shipped build
+    was invisible because the old service worker answered first)."""
+    import subprocess
+    from pathlib import Path
+    try:
+        return subprocess.run(
+            ["git", "rev-parse", "--short", "HEAD"],
+            cwd=Path(__file__).resolve().parent.parent,
+            capture_output=True, text=True, timeout=5,
+        ).stdout.strip() or "unknown"
+    except Exception:
+        return "unknown"
+
+
+_BUILD = _git_build()
+
+
 @app.get("/api/health")
 async def health_check():
-    return {"status": "ok", "service": "HealthAdvocate", "version": "1.0.0"}
+    return {"status": "ok", "service": "HealthAdvocate", "version": "1.0.0", "build": _BUILD}
+
+
+@app.get("/api/version")
+async def version_stamp():
+    return {"build": _BUILD}
 
 # ---------------------------------------------------------------------------
 # Feature endpoints

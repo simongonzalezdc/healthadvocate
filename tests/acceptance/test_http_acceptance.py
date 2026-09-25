@@ -457,7 +457,7 @@ class TestModelFailureMode:
         # this tests+CI-only PR.
         assert payload["status"] == "ok"
         assert payload["service"] == "HealthAdvocate"
-        assert set(payload) == {"status", "service", "version"}
+        assert {"status", "service", "version"} <= set(payload)
 
     def test_index_served(self, failure_client):
         response = failure_client.get("/")

@@ -57,3 +57,10 @@ inhabit the hero's right half (the trio's dead-zone finding). Handwritten
 notes are pen ink (warm ochre), not pencil gray. Tape stays on the featured
 card only. Focus is the caseworker's pen: a warm underline beneath the words,
 never a box.
+
+## Ship addendum (2026-09-25, PR #51)
+The S+ program build landed at honest blind-audit 8 (3 pre-registered two-judge rounds;
+the >=9 bar never met; thresholds never moved — receipts in docs/design/audit-2026-09-25/).
+Landed with it: one-measure alignment, the friend + custom warm icons, warmth fragments
+in every view, radiogroup swatches, AA across all themes, mobile affordances. The nook
+kept its stamps, handwriting, tea, and lamp — the over-polish warning held.

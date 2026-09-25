@@ -3299,6 +3299,10 @@ input:focus-visible, textarea:focus-visible, select:focus-visible {
 #view-coverage { position: relative; }
 #view-coverage .nook-frag { top: -14px; right: 4px; }
 
+/* the sprig leans the other way on alternating views, so the same plant
+   never reads as one stamped clip-art repeated */
+.nook-frag--flip { transform: scaleX(-1); }
+
 /* the view title is the rubber stamp (G004 pattern, heading-sized):
    the home eyebrow and every view heading speak with one voice */
 .panel-eyebrow,

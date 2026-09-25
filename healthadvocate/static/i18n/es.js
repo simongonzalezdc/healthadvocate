@@ -114,6 +114,15 @@ HA.i18n.register('es', {
   'recorder.note': 'oprímelo cuando estés listo — guardo cada palabra.',
   'library.note': 'todo archivado, nada perdido.',
   'directory.note': 'las personas de tu lado, en un mismo lugar.',
+  'drugs.note': 'la misma medicina, más amable con tu bolsillo.',
+  'appointments.note': 'vamos a entrar sabiendo exactamente qué preguntar.',
+  'discharge.note': 'tú descansa — devolvemos la jerga a palabras claras.',
+  'secondopinion.note': 'otra mirada experta, con tu caso por delante.',
+  'community.note': 'lo que anda circulando, sin el pánico.',
+  'family.note': 'un estante para cada persona que cuidas.',
+  'tracks.note': 'notas pequeñas, observadas con paciencia.',
+  'help.note': 'cuando el software no alcanza, responde una persona.',
+  'coverage.note': 'un paso a la vez — no perdemos el hilo.',
 
   /* footer */
   'footer.note_tail': 'está aquí para apoyar, no para reemplazar, la guía médica profesional. Siempre consulta a un profesional de la salud calificado para diagnóstico y tratamiento. Tu información se queda en tu dispositivo.',

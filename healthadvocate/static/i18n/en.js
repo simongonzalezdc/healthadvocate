@@ -113,6 +113,15 @@ HA.i18n.register('en', {
   'recorder.note': "press it when you're ready — I'll keep every word.",
   'library.note': 'everything filed, nothing lost.',
   'directory.note': 'the people on your side, in one place.',
+  'drugs.note': 'same medicine, gentler on your wallet.',
+  'appointments.note': "we'll walk in knowing exactly what to ask.",
+  'discharge.note': "you rest — we'll turn the jargon back into words.",
+  'secondopinion.note': 'another pair of expert eyes, briefed on your case.',
+  'community.note': "what's going around, without the panic.",
+  'family.note': 'one shelf for everyone you look after.',
+  'tracks.note': 'small notes, watched patiently over time.',
+  'help.note': "when software isn't enough, a person answers.",
+  'coverage.note': "one step at a time — we won't lose the thread.",
 
   /* footer */
   'footer.note_tail': 'is here to support, not replace, professional medical guidance. Always consult a qualified healthcare provider for diagnosis and treatment. Your information stays on your device.',

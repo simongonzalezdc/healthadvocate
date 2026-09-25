@@ -15,20 +15,20 @@
 :root {
   /* ── 1. Primitives + legacy-pinned tokens (literal values — the suite
         parses these as raw colors; they are the AA-proven base) ────── */
-  --bg-body: #faf6ec;
-  --bg-surface: #fffdf7;
-  --bg-elevated: #f5efdf;
-  --bg-muted: #ece5d2;
-  --bg-input: #faf7ee;
+  --bg-body: #eddcbc;
+  --bg-surface: #f9f0da;
+  --bg-elevated: #e3d0a9;
+  --bg-muted: #d8c394;
+  --bg-input: #f4e9cf;
 
-  --accent: #106b3f;
-  --accent-hover: #0c5732;
-  --accent-light: rgba(16, 107, 63, 0.09);
-  --accent-medium: rgba(16, 107, 63, 0.17);
+  --accent: #6a4a18;
+  --accent-hover: #553b13;
+  --accent-light: rgba(106, 74, 24, 0.11);
+  --accent-medium: rgba(106, 74, 24, 0.19);
 
-  --warm: #c96b1a;
-  --warm-light: rgba(201, 107, 26, 0.10);
-  --warm-medium: rgba(201, 107, 26, 0.18);
+  --warm: #b3831f;
+  --warm-light: rgba(179, 131, 31, 0.14);
+  --warm-medium: rgba(179, 131, 31, 0.22);
 
   --coral: #d8402f;
   --coral-light: rgba(216, 64, 47, 0.09);
@@ -39,17 +39,17 @@
   --slate-medium: rgba(61, 107, 158, 0.16);
 
   --text-1: #1f2620;
-  --text-2: #5c6055;
+  --text-2: #5f5847;
   /* tertiary text must clear WCAG AA 4.5:1 on every light surface it sits on
      (body #faf8f5, surface #fff, elevated #f2f0eb, input #f6f4f0) */
-  --text-3: #61645a;
+  --text-3: #5b523c;
   --border: #e3dcc8;
   --border-light: #ece7d6;
 
   /* status inks — text on tints, measured ≥4.5:1 on tint-over-every-surface */
-  --ochre-ink-700: #a35414;
-  --coral-ink-700: #b02f1f;
-  --slate-ink-700: #35567e;
+  --ochre-ink-700: #8a5a1e;
+  --coral-ink-700: #9c4a35;
+  --slate-ink-700: #4f6b85;
 
   /* ── 2. Semantic tokens ───────────────────────────────────────────
      The legacy-pinned tokens above carry the literal values (suite parses
@@ -262,8 +262,8 @@ body::before {
   z-index: -1;
   pointer-events: none;
   background:
-    radial-gradient(1100px 720px at 20% -12%, rgba(201, 107, 26, 0.08), transparent 62%),
-    radial-gradient(820px 560px at 104% 112%, rgba(16, 107, 63, 0.06), transparent 58%);
+    radial-gradient(1100px 720px at 20% -12%, rgba(179, 131, 31, 0.12), transparent 62%),
+    radial-gradient(820px 560px at 104% 112%, rgba(138, 98, 32, 0.07), transparent 58%);
 }
 body::after {
   content: '';
@@ -2150,7 +2150,7 @@ body::after {
    Scoped to non-dark: a bare :root here would tie the light value and,
    being later in the file, overwrite [data-theme="dark"]'s --bg-body
    (equal specificity — file order wins). That WAS darkmode-broken. */
-:root:not([data-theme="dark"]) { --bg-body: #f6f2ea; }
+:root:not([data-theme="dark"]) { --bg-body: #eddcbc; }
 
 /* programmatic heading focus (WCAG 2.4.3 focusInto) wears ink, not
    the browser's default box — warm, quiet, clearly ours */
@@ -2573,16 +2573,16 @@ h1[tabindex="-1"]:focus-visible, h2[tabindex="-1"]:focus-visible, h3[tabindex="-
 
 /* dark nook: cocoa night, sage and tea instead of emerald murk */
 [data-theme="dark"] {
-  --bg-body: #191612;
-  --bg-surface: #241f18;
-  --bg-elevated: #1e1913;
-  --bg-muted: #2e2820;
-  --bg-input: #1e1913;
+  --bg-body: #1c1610;
+  --bg-surface: #292118;
+  --bg-elevated: #221b12;
+  --bg-muted: #342a1d;
+  --bg-input: #221b12;
 
-  --accent: #a8bf8f;
-  --accent-hover: #b9cca4;
-  --accent-light: rgba(168, 191, 143, 0.13);
-  --accent-medium: rgba(168, 191, 143, 0.22);
+  --accent: #d9a84e;
+  --accent-hover: #e2b765;
+  --accent-light: rgba(217, 168, 78, 0.14);
+  --accent-medium: rgba(217, 168, 78, 0.23);
 
   --warm: #e0a961;
   --warm-light: rgba(224, 169, 97, 0.13);
@@ -2612,7 +2612,7 @@ h1[tabindex="-1"]:focus-visible, h2[tabindex="-1"]:focus-visible, h3[tabindex="-
 
 /* light nook: one place, so theme layering stays honest */
 :root:not([data-theme="dark"]) {
-  --btn-edge: #57714f;
+  --btn-edge: #6b4c1a;
   --btn-edge-danger: #8a4a38;
 }
 
@@ -2695,11 +2695,11 @@ h1[tabindex="-1"]:focus-visible, h2[tabindex="-1"]:focus-visible, h3[tabindex="-
 
 /* plush / light */
 html[data-palette="plush"]:root {
-  --bg-body: #f2ddd3;
-  --bg-surface: #fbf1ea;
-  --bg-elevated: #eed7cb;
-  --bg-muted: #e4c8ba;
-  --bg-input: #f8ece4;
+  --bg-body: #ecd0c2;
+  --bg-surface: #f8e9e0;
+  --bg-elevated: #e2c6b6;
+  --bg-muted: #d6b4a2;
+  --bg-input: #f4e3d8;
   --accent: #9c3f52;
   --accent-hover: #833344;
   --accent-light: rgba(156,63,82,0.10);
@@ -2759,11 +2759,11 @@ html[data-palette="plush"][data-theme="dark"] {
 
 /* moss / light */
 html[data-palette="moss"]:root {
-  --bg-body: #e9ecd8;
-  --bg-surface: #f8f9ee;
-  --bg-elevated: #dfe4c9;
-  --bg-muted: #d2d9b8;
-  --bg-input: #f4f6e8;
+  --bg-body: #dde2c2;
+  --bg-surface: #eff2e0;
+  --bg-elevated: #d0d7b2;
+  --bg-muted: #c2cb9f;
+  --bg-input: #e9eddb;
   --accent: #3d6b38;
   --accent-hover: #315a2d;
   --accent-light: rgba(61,107,56,0.10);
@@ -2823,11 +2823,11 @@ html[data-palette="moss"][data-theme="dark"] {
 
 /* blue / light */
 html[data-palette="blue"]:root {
-  --bg-body: #e6ecf1;
-  --bg-surface: #f7fafc;
-  --bg-elevated: #d9e3ea;
-  --bg-muted: #c9d7e2;
-  --bg-input: #f0f5f8;
+  --bg-body: #d5e0e9;
+  --bg-surface: #e9f0f5;
+  --bg-elevated: #c7d5e0;
+  --bg-muted: #b4c6d4;
+  --bg-input: #e2ebf1;
 
   --accent: #3a6491;
   --accent-hover: #2e5377;

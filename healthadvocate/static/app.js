@@ -1629,6 +1629,22 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  /* Color themes: four plush palettes, per-person, both light and dark */
+  const palRow = document.querySelector('.pal-row');
+  if (palRow) {
+    const applyPal = (v) => {
+      if (v) document.documentElement.setAttribute('data-palette', v);
+      else document.documentElement.removeAttribute('data-palette');
+      localStorage.setItem('ha-palette', v);
+      palRow.querySelectorAll('.pal-swatch').forEach(b => b.classList.toggle('on', b.dataset.palette === v));
+    };
+    applyPal(localStorage.getItem('ha-palette') || '');
+    palRow.addEventListener('click', (e) => {
+      const b = e.target.closest('.pal-swatch');
+      if (b) applyPal(b.dataset.palette);
+    });
+  }
+
   /* Example chips: tap one to start the intake sheet with that sentence */
   document.addEventListener('click', (e) => {
     const chip = e.target.closest('.example-chip');

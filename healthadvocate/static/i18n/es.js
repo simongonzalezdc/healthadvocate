@@ -30,7 +30,7 @@ HA.i18n.register('es', {
   /* home hero */
   'home.eyebrow': 'Gratis · Código abierto · Privado por diseño',
   'home.title': 'Mereces entender tu atención médica.',
-  'home.sub': 'Entiende síntomas, decodifica facturas, pelea negaciones de seguros y defiende a tu familia. Todo se queda privado en tu dispositivo.',
+  'home.sub': 'Siéntete con tus síntomas, tus facturas y tus cartas de negación. Vamos a revisarlas juntos, a tu ritmo — y todo se queda privado en tu dispositivo.',
   'home.margin_note': 'no estás solo en esto.',
   'home.cta_symptoms': 'Describe tus síntomas',
   'home.cta_denial': 'Pelea una negación',

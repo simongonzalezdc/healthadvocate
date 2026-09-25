@@ -29,7 +29,7 @@ HA.i18n.register('en', {
   /* home hero */
   'home.eyebrow': 'Free · Open source · Private by design',
   'home.title': 'You deserve to understand your care.',
-  'home.sub': "Navigate symptoms, decode bills, fight insurance denials, and advocate for your family. Everything stays private on your device.",
+  'home.sub': "Sit down with your symptoms, bills, and denial letters. We'll go through all of it together, at your pace — and everything stays private on your device.",
   'home.margin_note': "you're not alone in this.",
   'home.cta_symptoms': 'Describe your symptoms',
   'home.cta_denial': 'Fight a denial',

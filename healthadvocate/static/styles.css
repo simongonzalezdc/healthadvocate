@@ -15,20 +15,20 @@
 :root {
   /* ── 1. Primitives + legacy-pinned tokens (literal values — the suite
         parses these as raw colors; they are the AA-proven base) ────── */
-  --bg-body: #faf6ec;
-  --bg-surface: #fffdf7;
-  --bg-elevated: #f5efdf;
-  --bg-muted: #ece5d2;
-  --bg-input: #faf7ee;
+  --bg-body: #eddcbc;
+  --bg-surface: #f9f0da;
+  --bg-elevated: #e3d0a9;
+  --bg-muted: #d8c394;
+  --bg-input: #f4e9cf;
 
-  --accent: #106b3f;
-  --accent-hover: #0c5732;
-  --accent-light: rgba(16, 107, 63, 0.09);
-  --accent-medium: rgba(16, 107, 63, 0.17);
+  --accent: #6a4a18;
+  --accent-hover: #553b13;
+  --accent-light: rgba(106, 74, 24, 0.11);
+  --accent-medium: rgba(106, 74, 24, 0.19);
 
-  --warm: #c96b1a;
-  --warm-light: rgba(201, 107, 26, 0.10);
-  --warm-medium: rgba(201, 107, 26, 0.18);
+  --warm: #b3831f;
+  --warm-light: rgba(179, 131, 31, 0.14);
+  --warm-medium: rgba(179, 131, 31, 0.22);
 
   --coral: #d8402f;
   --coral-light: rgba(216, 64, 47, 0.09);
@@ -39,17 +39,17 @@
   --slate-medium: rgba(61, 107, 158, 0.16);
 
   --text-1: #1f2620;
-  --text-2: #5c6055;
+  --text-2: #5f5847;
   /* tertiary text must clear WCAG AA 4.5:1 on every light surface it sits on
      (body #faf8f5, surface #fff, elevated #f2f0eb, input #f6f4f0) */
-  --text-3: #61645a;
+  --text-3: #5b523c;
   --border: #e3dcc8;
   --border-light: #ece7d6;
 
   /* status inks — text on tints, measured ≥4.5:1 on tint-over-every-surface */
-  --ochre-ink-700: #a35414;
-  --coral-ink-700: #b02f1f;
-  --slate-ink-700: #35567e;
+  --ochre-ink-700: #8a5a1e;
+  --coral-ink-700: #9c4a35;
+  --slate-ink-700: #4f6b85;
 
   /* ── 2. Semantic tokens ───────────────────────────────────────────
      The legacy-pinned tokens above carry the literal values (suite parses
@@ -262,8 +262,8 @@ body::before {
   z-index: -1;
   pointer-events: none;
   background:
-    radial-gradient(1100px 720px at 20% -12%, rgba(201, 107, 26, 0.08), transparent 62%),
-    radial-gradient(820px 560px at 104% 112%, rgba(16, 107, 63, 0.06), transparent 58%);
+    radial-gradient(1100px 720px at 20% -12%, rgba(179, 131, 31, 0.12), transparent 62%),
+    radial-gradient(820px 560px at 104% 112%, rgba(138, 98, 32, 0.07), transparent 58%);
 }
 body::after {
   content: '';
@@ -2150,7 +2150,7 @@ body::after {
    Scoped to non-dark: a bare :root here would tie the light value and,
    being later in the file, overwrite [data-theme="dark"]'s --bg-body
    (equal specificity — file order wins). That WAS darkmode-broken. */
-:root:not([data-theme="dark"]) { --bg-body: #f6f2ea; }
+:root:not([data-theme="dark"]) { --bg-body: #eddcbc; }
 
 /* programmatic heading focus (WCAG 2.4.3 focusInto) wears ink, not
    the browser's default box — warm, quiet, clearly ours */
@@ -2562,3 +2562,363 @@ h1[tabindex="-1"]:focus-visible, h2[tabindex="-1"]:focus-visible, h3[tabindex="-
 
 /* the micro-label breathes in dark: spring-emerald, one step lighter */
 [data-theme="dark"] .eyebrow { color: #86dcb0; }
+
+/* ═══════════════════════════════════════════════════════════════════
+   THE READING NOOK — art-direction pivot (CEO: plush blankets, tea,
+   a soft plant; everything in the directory aligned to one narrative)
+   The app is a warm armchair where you sort frightening paperwork with
+   a friend: oat paper, sage plant-green ink, honey-tea light, cocoa
+   text, plush edges, nothing clinical.
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* dark nook: cocoa night, sage and tea instead of emerald murk */
+[data-theme="dark"] {
+  --bg-body: #1c1610;
+  --bg-surface: #292118;
+  --bg-elevated: #221b12;
+  --bg-muted: #342a1d;
+  --bg-input: #221b12;
+
+  --accent: #d9a84e;
+  --accent-hover: #e2b765;
+  --accent-light: rgba(217, 168, 78, 0.14);
+  --accent-medium: rgba(217, 168, 78, 0.23);
+
+  --warm: #e0a961;
+  --warm-light: rgba(224, 169, 97, 0.13);
+  --warm-medium: rgba(224, 169, 97, 0.21);
+
+  --coral: #dd8a70;
+  --coral-light: rgba(221, 138, 112, 0.13);
+  --coral-medium: rgba(221, 138, 112, 0.20);
+
+  --slate: #93aec6;
+  --slate-light: rgba(147, 174, 198, 0.12);
+  --slate-medium: rgba(147, 174, 198, 0.19);
+
+  --text-1: #f0e9da;
+  --text-2: #c6beac;
+  --text-3: #a39b89;
+  --border: #3a332a;
+  --border-light: #2b251d;
+
+  --ochre-ink-700: #e6bc7f;
+  --coral-ink-700: #e8a48e;
+  --slate-ink-700: #abc2d6;
+
+  --btn-edge: #3a332a;
+  --btn-edge-danger: #7e4433;
+}
+
+/* light nook: one place, so theme layering stays honest */
+:root:not([data-theme="dark"]) {
+  --btn-edge: #6b4c1a;
+  --btn-edge-danger: #8a4a38;
+}
+
+/* plush: everything softens — radii grow, undersides become shadows,
+   matte always (plush is not gel: no glow, no shine) */
+:root {
+  --radius: 10px;
+  --radius-lg: 14px;
+  --radius-xl: 18px;
+  --radius-sm: 10px;
+  --radius-btn: 12px;
+  --radius-tag: 8px;
+}
+.btn-primary, .btn-ink {
+  border-radius: 12px;
+  box-shadow: 0 3px 10px rgba(58, 53, 44, 0.18);
+}
+.btn-primary:hover, .btn-ink:hover { box-shadow: 0 5px 14px rgba(58, 53, 44, 0.2); }
+.btn-primary:active, .btn-ink:active { box-shadow: 0 1px 5px rgba(58, 53, 44, 0.16); transform: translateY(1px); }
+[data-theme="dark"] .btn-primary, [data-theme="dark"] .btn-ink { box-shadow: 0 3px 10px rgba(8, 6, 4, 0.4); }
+
+.panel { border-radius: var(--radius-xl); }
+.panel-inner { border-radius: calc(var(--radius-xl) - 3px); }
+.entry-card, .cat-card, .reminder-card, .sample-slip, .analysis-item { border-radius: 12px; }
+.icon-btn, .nav-btn, .example-chip, .due-badge { border-radius: 9px; }
+
+/* soft warm shadows site-wide */
+:root { --shadow-card: 0 1px 2px rgba(58, 53, 44, 0.06), 0 6px 22px rgba(58, 53, 44, 0.08); }
+[data-theme="dark"] { --shadow-card: 0 1px 2px rgba(8, 6, 4, 0.3), 0 8px 26px rgba(8, 6, 4, 0.28); }
+
+/* the desk lamp re-inks to the nook: cocoa lines by day, tea-light by night */
+.lamp-vignette .lk-line { stroke: rgba(58, 53, 44, 0.72); }
+.lamp-vignette .lk-desk { stroke: rgba(58, 53, 44, 0.5); }
+.lamp-vignette .lk-fill { fill: rgba(201, 138, 61, 0.24); }
+.lamp-vignette .lk-cone { fill: rgba(201, 138, 61, 0.10); }
+.lamp-vignette .lk-cone-inner { fill: rgba(201, 138, 61, 0.08); }
+.lamp-vignette .lk-pool { fill: rgba(201, 138, 61, 0.30); }
+.lamp-vignette .lk-bulb { fill: rgba(201, 138, 61, 0.85); }
+[data-theme="dark"] .lamp-vignette .lk-line { stroke: rgba(224, 169, 97, 0.8); }
+[data-theme="dark"] .lamp-vignette .lk-desk { stroke: rgba(224, 169, 97, 0.55); }
+[data-theme="dark"] .lamp-vignette .lk-fill { fill: rgba(224, 169, 97, 0.28); }
+[data-theme="dark"] .lamp-vignette .lk-cone { fill: rgba(224, 169, 97, 0.10); }
+[data-theme="dark"] .lamp-vignette .lk-pool { fill: rgba(224, 169, 97, 0.22); }
+[data-theme="dark"] .lamp-vignette .lk-bulb { fill: rgba(224, 169, 97, 0.9); }
+
+/* the focus pen writes sage now */
+h1[tabindex="-1"]:focus-visible, h2[tabindex="-1"]:focus-visible, h3[tabindex="-1"]:focus-visible {
+  text-decoration-color: var(--warm);
+}
+
+/* the sill: potted pothos + steaming tea, drawn in the theme's ink */
+.nook-still-life {
+  position: absolute;
+  bottom: 6%;
+  right: 3.5%;
+  width: 210px;
+  height: auto;
+  pointer-events: none;
+  opacity: 0.95;
+}
+.nk-line { stroke: rgba(58, 53, 44, 0.7); stroke-width: 2.5; }
+.nk-wood { stroke: rgba(58, 53, 44, 0.45); stroke-width: 3; }
+.nk-leaf { stroke: #6b8767; stroke-width: 2.5; }
+.nk-leaf2 { stroke: #7d9a72; stroke-width: 2.5; }
+.nk-steam { stroke: rgba(201, 138, 61, 0.6); stroke-width: 2.5; animation: steam-rise 5.5s ease-in-out infinite; }
+.nk-steam2 { animation-delay: 1.6s; }
+@keyframes steam-rise {
+  0%, 100% { opacity: 0.35; transform: translateY(0); }
+  50% { opacity: 0.8; transform: translateY(-3px); }
+}
+[data-theme="dark"] .nk-line { stroke: rgba(224, 169, 97, 0.75); }
+[data-theme="dark"] .nk-wood { stroke: rgba(224, 169, 97, 0.4); }
+[data-theme="dark"] .nk-leaf { stroke: #a8bf8f; }
+[data-theme="dark"] .nk-leaf2 { stroke: #b9cca4; }
+[data-theme="dark"] .nk-steam { stroke: rgba(224, 169, 97, 0.55); }
+@media (max-width: 900px) { .nook-still-life { display: none; } }
+@media (prefers-reduced-motion: reduce) { .nk-steam { animation: none; } }
+
+/* ══ PALETTE CLOSET — CEO decision view: chromatic cozy families ══ */
+
+/* plush / light */
+html[data-palette="plush"]:root {
+  --bg-body: #ecd0c2;
+  --bg-surface: #f8e9e0;
+  --bg-elevated: #e2c6b6;
+  --bg-muted: #d6b4a2;
+  --bg-input: #f4e3d8;
+  --accent: #9c3f52;
+  --accent-hover: #833344;
+  --accent-light: rgba(156,63,82,0.10);
+  --accent-medium: rgba(156,63,82,0.18);
+  --warm: #bf6a3b;
+  --warm-light: rgba(191,106,59,0.12);
+  --warm-medium: rgba(191,106,59,0.20);
+  --coral: #b8503f;
+  --coral-light: rgba(184,80,63,0.11);
+  --coral-medium: rgba(184,80,63,0.19);
+  --slate: #8a6b8f;
+  --slate-light: rgba(138,107,143,0.11);
+  --slate-medium: rgba(138,107,143,0.19);
+  --text-1: #432b30;
+  --text-2: #776066;
+  --text-3: #8d7a80;
+  --border: #e0c4b8;
+  --border-light: #ecd8cd;
+  --ochre-ink-700: #94502a;
+  --coral-ink-700: #993b2c;
+  --slate-ink-700: #6b5370;
+  --btn-edge: #7c3042;
+  --btn-edge-danger: #7e382c;
+}
+
+/* plush / dark */
+html[data-palette="plush"][data-theme="dark"] {
+  --bg-body: #241a1c;
+  --bg-surface: #2f2326;
+  --bg-elevated: #291f22;
+  --bg-muted: #3a2b2f;
+  --bg-input: #291f22;
+  --accent: #e2a0a8;
+  --accent-hover: #eab1b8;
+  --accent-light: rgba(226,160,168,0.14);
+  --accent-medium: rgba(226,160,168,0.23);
+  --warm: #e3a06b;
+  --warm-light: rgba(227,160,107,0.14);
+  --warm-medium: rgba(227,160,107,0.22);
+  --coral: #e08a76;
+  --coral-light: rgba(224,138,118,0.14);
+  --coral-medium: rgba(224,138,118,0.21);
+  --slate: #b39ac0;
+  --slate-light: rgba(179,154,192,0.13);
+  --slate-medium: rgba(179,154,192,0.20);
+  --text-1: #f2e6e3;
+  --text-2: #cdb5b4;
+  --text-3: #ab9294;
+  --border: #453237;
+  --border-light: #33262a;
+  --ochre-ink-700: #eab98a;
+  --coral-ink-700: #eda28f;
+  --slate-ink-700: #c4adc9;
+  --btn-edge: #5a2f38;
+  --btn-edge-danger: #6e382c;
+}
+
+/* moss / light */
+html[data-palette="moss"]:root {
+  --bg-body: #dde2c2;
+  --bg-surface: #eff2e0;
+  --bg-elevated: #d0d7b2;
+  --bg-muted: #c2cb9f;
+  --bg-input: #e9eddb;
+  --accent: #3d6b38;
+  --accent-hover: #315a2d;
+  --accent-light: rgba(61,107,56,0.10);
+  --accent-medium: rgba(61,107,56,0.18);
+  --warm: #c9862f;
+  --warm-light: rgba(201,134,47,0.13);
+  --warm-medium: rgba(201,134,47,0.21);
+  --coral: #bd5c3a;
+  --coral-light: rgba(189,92,58,0.11);
+  --coral-medium: rgba(189,92,58,0.19);
+  --slate: #5f7d8f;
+  --slate-light: rgba(95,125,143,0.11);
+  --slate-medium: rgba(95,125,143,0.19);
+  --text-1: #2b3327;
+  --text-2: #5c6852;
+  --text-3: #71806a;
+  --border: #cdd4b4;
+  --border-light: #dde2c8;
+  --ochre-ink-700: #8a5a1a;
+  --coral-ink-700: #94462a;
+  --slate-ink-700: #46617a;
+  --btn-edge: #2c4f28;
+  --btn-edge-danger: #7e3a24;
+}
+
+/* moss / dark */
+html[data-palette="moss"][data-theme="dark"] {
+  --bg-body: #161c11;
+  --bg-surface: #212a1a;
+  --bg-elevated: #1b2415;
+  --bg-muted: #2b3622;
+  --bg-input: #1b2415;
+  --accent: #a3c98a;
+  --accent-hover: #b4d69c;
+  --accent-light: rgba(163,201,138,0.14);
+  --accent-medium: rgba(163,201,138,0.23);
+  --warm: #e2ac5e;
+  --warm-light: rgba(226,172,94,0.14);
+  --warm-medium: rgba(226,172,94,0.22);
+  --coral: #e08a62;
+  --coral-light: rgba(224,138,98,0.14);
+  --coral-medium: rgba(224,138,98,0.21);
+  --slate: #93b3c6;
+  --slate-light: rgba(147,179,198,0.13);
+  --slate-medium: rgba(147,179,198,0.20);
+  --text-1: #eee9d8;
+  --text-2: #c2c1a8;
+  --text-3: #9ea287;
+  --border: #37412a;
+  --border-light: #29311f;
+  --ochre-ink-700: #e8bc7a;
+  --coral-ink-700: #eba486;
+  --slate-ink-700: #a8c4d4;
+  --btn-edge: #2b422a;
+  --btn-edge-danger: #6e3a24;
+}
+
+/* blue / light */
+html[data-palette="blue"]:root {
+  --bg-body: #d5e0e9;
+  --bg-surface: #e9f0f5;
+  --bg-elevated: #c7d5e0;
+  --bg-muted: #b4c6d4;
+  --bg-input: #e2ebf1;
+
+  --accent: #3a6491;
+  --accent-hover: #2e5377;
+  --accent-light: rgba(58, 100, 145, 0.10);
+  --accent-medium: rgba(58, 100, 145, 0.18);
+
+  --warm: #c98a3d;
+  --warm-light: rgba(201, 138, 61, 0.13);
+  --warm-medium: rgba(201, 138, 61, 0.21);
+
+  --coral: #bd6a4a;
+  --coral-light: rgba(189, 106, 74, 0.12);
+  --coral-medium: rgba(189, 106, 74, 0.20);
+
+  --slate: #4f8296;
+  --slate-light: rgba(79, 130, 150, 0.11);
+  --slate-medium: rgba(79, 130, 150, 0.19);
+
+  --text-1: #22303c;
+  --text-2: #5d6b78;
+  --text-3: #74828f;
+  --border: #cbd8e1;
+  --border-light: #dde6ec;
+
+  --ochre-ink-700: #8a5a1a;
+  --coral-ink-700: #8f4630;
+  --slate-ink-700: #3f647e;
+  --btn-edge: #274d70;
+  --btn-edge-danger: #7e3a28;
+}
+
+/* blue / dark */
+html[data-palette="blue"][data-theme="dark"] {
+  --bg-body: #121922;
+  --bg-surface: #1b2530;
+  --bg-elevated: #16202a;
+  --bg-muted: #24303c;
+  --bg-input: #16202a;
+
+  --accent: #8fb6d9;
+  --accent-hover: #a3c3e2;
+  --accent-light: rgba(143, 182, 217, 0.14);
+  --accent-medium: rgba(143, 182, 217, 0.23);
+
+  --warm: #e0a961;
+  --warm-light: rgba(224, 169, 97, 0.14);
+  --warm-medium: rgba(224, 169, 97, 0.22);
+
+  --coral: #dd8a70;
+  --coral-light: rgba(221, 138, 112, 0.14);
+  --coral-medium: rgba(221, 138, 112, 0.21);
+
+  --slate: #93aec6;
+  --slate-light: rgba(147, 174, 198, 0.13);
+  --slate-medium: rgba(147, 174, 198, 0.20);
+
+  --text-1: #e9f0f6;
+  --text-2: #b8c6d2;
+  --text-3: #93a3b1;
+  --border: #2e3c4a;
+  --border-light: #222d38;
+
+  --ochre-ink-700: #e6bc7f;
+  --coral-ink-700: #eda28f;
+  --slate-ink-700: #a8c4d4;
+  --btn-edge: #1f3248;
+  --btn-edge-danger: #6e3a28;
+}
+
+
+
+/* ── color themes: four swatches in the header, per person ── */
+.pal-row {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-right: var(--space-1);
+}
+.pal-swatch {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: 2px solid var(--color-border);
+  cursor: pointer;
+  padding: 0;
+  transition: transform var(--dur-1) var(--ease), box-shadow var(--dur-2) var(--ease);
+}
+.pal-swatch:hover { transform: scale(1.15); }
+.pal-swatch:focus-visible { outline: 2px solid var(--color-focus-ring); outline-offset: 2px; }
+.pal-swatch.on { box-shadow: 0 0 0 2px var(--bg-body), 0 0 0 4px var(--color-focus-ring); }
+.pal-gold { background: #b3831f; }
+.pal-rose { background: #b56a80; }
+.pal-moss { background: #7a9a5a; }
+.pal-blue { background: #6f95b8; }

@@ -11,7 +11,7 @@ openai>=2.41.0
 openmed[hf]==2.5.0
 faker>=40.19.1
 pysbd>=0.3.4
-transformers>=5.10.1
+transformers>=5.18.0
 huggingface-hub>=0.30
 accelerate>=1.13.0
 tokenizers>=0.15

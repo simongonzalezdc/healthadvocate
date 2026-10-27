@@ -83,6 +83,57 @@ jobs:
       - name: Compile
         run: .venv/bin/python -m compileall -q healthadvocate
 
+      # --- Shared CI contract (KyaniteLabs/.github, pinned) ---
+      # Layers 3, 5 and 6 from the org contract. The contract repo needs an
+      # authenticated clone on this instance, so it uses the job token exactly
+      # like the checkout above, into a path outside the workspace.
+      - name: Check out the shared CI contract
+        env:
+          JOB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          JOB_TOKEN_FALLBACK: ${{ github.token }}
+        run: |
+          set -eu
+          export GIT_TERMINAL_PROMPT=0
+          TOKEN="${JOB_TOKEN:-${JOB_TOKEN_FALLBACK:-}}"
+          git clone --quiet --filter=blob:none --no-checkout "https://x-access-token:${TOKEN}@git.kyanitelabs.tech/KyaniteLabs/.github.git" /tmp/ci-contract
+          git -C /tmp/ci-contract checkout --quiet acc41fc663d5b1ef623a406fddff912823b29f93
+
+      # Layer 3: README blocks tagged ```bash readme-test run against this
+      # checkout. Exit 2 = not applicable (no tagged blocks) passes.
+      - name: Layer 3 executable README blocks
+        shell: bash
+        run: |
+          set -uo pipefail
+          rc=0
+          python3 /tmp/ci-contract/scripts/readme_exec.py . || rc=$?
+          if [ "$rc" -eq 2 ]; then
+            echo "gate evidence: executable README check not applicable here"
+          elif [ "$rc" -ne 0 ]; then
+            exit "$rc"
+          fi
+
+      # Layer 5: version and self-description consistency. Exit 2 = not
+      # applicable (no package version source) passes.
+      - name: Layer 5 self-description consistency
+        shell: bash
+        run: |
+          set -uo pipefail
+          rc=0
+          python3 /tmp/ci-contract/scripts/self_description_check.py . || rc=$?
+          if [ "$rc" -eq 2 ]; then
+            echo "gate evidence: self-description check not applicable here"
+          elif [ "$rc" -ne 0 ]; then
+            exit "$rc"
+          fi
+
+      # Layer 6: structure signals. Advisory: a snapshot that never fails the job.
+      - name: Layer 6 structure signals (advisory)
+        shell: bash
+        run: |
+          if ! python3 /tmp/ci-contract/scripts/structure_signals.py .; then
+            echo "structure signals: not measured on this run (advisory)"
+          fi
+
       # --- Gate 4: dependency audit (pip-audit) ---
       # Reviewer-approved allowlist: add `--ignore-vuln <ID>` lines below ONLY
       # with a justification comment; every entry is reviewed like code.

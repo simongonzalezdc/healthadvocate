@@ -104,8 +104,10 @@ jobs:
         shell: bash
         run: |
           set -uo pipefail
+          script=/tmp/ci-contract/scripts/readme_exec.py
+          [ -f "$script" ] || { echo "$script missing" >&2; exit 1; }
           rc=0
-          python3 /tmp/ci-contract/scripts/readme_exec.py . || rc=$?
+          python3 "$script" . || rc=$?
           if [ "$rc" -eq 2 ]; then
             echo "gate evidence: executable README check not applicable here"
           elif [ "$rc" -ne 0 ]; then
@@ -118,8 +120,10 @@ jobs:
         shell: bash
         run: |
           set -uo pipefail
+          script=/tmp/ci-contract/scripts/self_description_check.py
+          [ -f "$script" ] || { echo "$script missing" >&2; exit 1; }
           rc=0
-          python3 /tmp/ci-contract/scripts/self_description_check.py . || rc=$?
+          python3 "$script" . || rc=$?
           if [ "$rc" -eq 2 ]; then
             echo "gate evidence: self-description check not applicable here"
           elif [ "$rc" -ne 0 ]; then

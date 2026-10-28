@@ -494,9 +494,13 @@ If you reference this project in academic work, please cite OpenMed:
 
 ## License
 
-This project is licensed under the [Apache License 2.0](LICENSE).
+HealthAdvocate is licensed under the [Apache License, Version 2.0](LICENSE).
 
-OpenMed is a separate project by Maziyar Panahi, used here as a dependency under its own [Apache 2.0 license](https://github.com/maziyarpanahi/openmed/blob/main/LICENSE).
+- Attribution notices for this project are in [NOTICE](NOTICE).
+- The licence grants no trademark rights (§6), so a fork may not present itself as HealthAdvocate.
+- OpenMed is a separate project by Maziyar Panahi, used here as a dependency under its own [Apache 2.0 license](https://github.com/maziyarpanahi/openmed/blob/main/LICENSE).
+
+Contributions are accepted under the same licence.
 
 <!-- s-plus-geo:start -->
 
@@ -553,9 +557,5 @@ Treat the README status and release tags as source of truth for maturity. Valida
 ## Contributing
 
 Issues and PRs welcome on the canonical remote. Keep public docs free of secrets and machine-local paths.
-
-## License
-
-See [LICENSE](LICENSE) in this repository (or package metadata if license is package-only).
 
 <!-- s-plus-geo:end -->

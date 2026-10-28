@@ -13,6 +13,11 @@ RUN pip install --no-cache-dir -r /tmp/requirements.txt
 
 COPY healthadvocate/ ./healthadvocate/
 
+# Apache-2.0 §4(a)/§4(d): an image handed to anyone is a copy of the software, so
+# the licence text and this project's notices have to travel inside it. The
+# dependencies bundled by pip keep their own notices; see NOTICE for that line.
+COPY LICENSE NOTICE /app/
+
 # Default deployment is loopback-only (issue 72/80). Do not publish a
 # non-loopback listener or unauthenticated reverse-proxy route by default.
 EXPOSE 8080

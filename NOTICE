@@ -1,0 +1,19 @@
+HealthAdvocate
+Copyright 2026 Simon Gonzalez De Cruz
+
+This product includes software developed for the HealthAdvocate project
+(https://git.kyanitelabs.tech/simon/healthadvocate).
+
+Third-party components
+----------------------
+
+No third-party source code is vendored into this repository. Dependencies are
+consumed as unmodified packages, and the exact pinned set is
+requirements.lock.txt.
+
+A built artifact that bundles those packages (for example the container image)
+is a copy of them as well, so their licence texts and notices travel with it.
+
+Medical NER, PII detection and deidentification use OpenMed, by Maziyar Panahi,
+licensed under the Apache License, Version 2.0:
+https://github.com/maziyarpanahi/openmed

@@ -18,6 +18,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   canonical"; the trunk of record is canonical Forgejo, and the continuity record ships with the
   code it governs.
 
+### Changed — 2026-10-28
+- **The repo is now Apache-2.0, and says so in one place.** `LICENSE` was MIT while the README
+  claimed Apache-2.0 in its badge, its "licensed under" line and its product table — a public
+  contradiction that had been in the tree since 2026-07 at the latest. The root `LICENSE` now carries
+  the Apache License, Version 2.0 text verbatim, `NOTICE` carries the §4(d) attribution, and the
+  README's duplicate `## License` section is gone.
+- **The container image now carries the licence and the notice.** An image handed to anyone is a copy
+  of the software, so §4(a)/§4(d) apply to it; the `Dockerfile` copies `LICENSE` and `NOTICE` into
+  `/app`. The previous image shipped neither, which was already a notice violation under MIT.
+- **New pins so this cannot drift again:** `tests/test_license_claim_matches_file.py` asserts the
+  README claims the licence the file carries, that there is exactly one licence section, that the
+  Apache text's wording is unchanged, that `NOTICE` exists with the holder, and that the image copies
+  both files. The governance gate never covered this — it inventories dependencies only.
+
 ### Added — 2026-09-24/25 ship
 - **Appeal-letter generator** (F1a): denial + records → complete appeal letter via the
   local champion lane; INFERRED-labeled, source-cited, editable, .txt download, print

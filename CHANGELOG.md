@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added — 2026-10-28
+- **Coverage Continuity Track record of record, imported into the repo.** The specification,
+  the wayfinder map, nine decision records and twelve acceptance records existed only as issue
+  bodies on the GitHub mirror — a copy that has carried no tested master push since 2026-06-04.
+  They now live under `docs/continuity/` with explicit provenance (`docs/continuity/README.md`):
+  bodies and the decisive comments are verbatim, and the only edit is that links between imported
+  issues point at the local files instead of the mirror.
+- `docs/wayfinder/coverage-continuity-current-state.md` no longer claims "GitHub remains
+  canonical"; the trunk of record is canonical Forgejo, and the continuity record ships with the
+  code it governs.
+
 ### Added — 2026-09-24/25 ship
 - **Appeal-letter generator** (F1a): denial + records → complete appeal letter via the
   local champion lane; INFERRED-labeled, source-cited, editable, .txt download, print

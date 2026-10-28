@@ -214,6 +214,45 @@ class MissionAndBoundaryTests(unittest.TestCase):
         self.assertNotIn("90%+", README)
 
 
+class PublicFacePointsAtCanonicalTests(unittest.TestCase):
+    """The public face must point at the trunk of record, not the frozen mirror.
+
+    Canonical is Forgejo (``git.kyanitelabs.tech/simon/healthadvocate``); the
+    GitHub copy is a read-only mirror that has carried no tested master push
+    since 2026-06-04. Two failure modes are pinned here: an install instruction
+    that sends new readers to the mirror, and merge debris committed into the
+    public docs (five markers in README, one in CHANGELOG, 2026-09-24 to
+    2026-10-28).
+    """
+
+    CANONICAL_URL = "https://git.kyanitelabs.tech/simon/healthadvocate"
+    MIRROR_URL = "https://github.com/simongonzalezdc/healthadvocate"
+
+    def test_no_merge_conflict_markers_in_public_docs(self):
+        for name in ("README.md", "CHANGELOG.md"):
+            text = (ROOT / name).read_text()
+            for marker in ("<<<<<<< ", ">>>>>>> "):
+                self.assertNotIn(
+                    marker,
+                    text,
+                    f"{name} carries a committed merge-conflict marker",
+                )
+
+    def test_install_instruction_clones_the_canonical_remote(self):
+        install = README.split("### Install", 1)[1].split("### Run", 1)[0]
+        self.assertIn(f"git clone {self.CANONICAL_URL}", install)
+        self.assertNotIn(self.MIRROR_URL, install)
+
+    def test_product_table_lists_canonical_first_and_labels_the_mirror(self):
+        row = next(
+            line
+            for line in README.splitlines()
+            if line.startswith("| **Source** |")
+        )
+        self.assertLess(row.index("Canonical (Forgejo)"), row.index(self.MIRROR_URL))
+        self.assertIn("read-only mirror", row)
+
+
 class ChangelogTests(unittest.TestCase):
     """Spec 5: Unreleased docs entry."""
 

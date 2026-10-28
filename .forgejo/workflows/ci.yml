@@ -1,21 +1,43 @@
 name: CI
 
-# Gates: secret scan -> test -> compile -> dependency audit.
+# Gates: secret scan -> lock sanity -> compile -> shared contract -> install ->
+# tests -> HTTP acceptance -> dependency audit.
 # Implements the Head-of-Security ask (F5, SECURITY-TASK-CI-GATES-2026-09-15):
 # healthcare-adjacent lane; CI must not be the org's lowest gate bar.
+#
+# Efficiency notes (2026-10-28, measured):
+#  * Docs-only changes skip the dependency install and the suites. The suites need
+#    torch, and PyPI's `torch==2.14.0` is the CUDA build: cudnn 553 MB + triton
+#    248 MB + nccl 216 MB + cusparselt 170 MB + nvshmem 60 MB on top of a 555 MB
+#    wheel (~1.8 GB per run) for a CPU-only, loopback-only test suite. The CPU
+#    wheel from the PyTorch index is 196 MB and pulls no CUDA packages.
+#  * `pytest tests/` already collects `tests/acceptance/`; the acceptance gate now
+#    runs that directory once instead of the whole suite twice.
+#  * Superseded runs on the same ref are cancelled instead of queueing.
 on:
   push:
     branches: [master]
   pull_request:
+  workflow_dispatch:
+  schedule:
+    # Weekly drift audit: dependency advisories and the full gate chain, with no
+    # code change required to trigger it.
+    - cron: "0 6 * * 1"
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   gates:
+    name: gates
     runs-on: docker
-    timeout-minutes: 30
+    timeout-minutes: 25
     container:
       # Proven pattern from KyaniteLabs/kinocut CI: ubuntu:24.04 apt+pip are
       # reachable from the runner; actions/checkout is NOT (runner cannot
       # reach gitea.com), so the checkout below is a manual clone.
+      # Pinned by digest (PR #53): a tag can be repointed, a digest cannot.
       image: ubuntu:24.04@sha256:24737cef17f4e22b1977df7d9a05e77c4e28b7da5b8911f8d8ccda136bf3573c
     steps:
       - name: Install tooling (git, python3, gitleaks)
@@ -29,6 +51,8 @@ jobs:
           JOB_TOKEN_FALLBACK: ${{ github.token }}
           REPO: ${{ github.repository }}
           SHA: ${{ github.sha }}
+          PR_BASE: ${{ github.event.pull_request.base.sha }}
+          PUSH_BEFORE: ${{ github.event.before }}
         run: |
           set -eu
           export GIT_TERMINAL_PROMPT=0
@@ -43,6 +67,56 @@ jobs:
           else
             git checkout --detach "$SHA"
           fi
+          # The scope classifier diffs against the base commit, so pull it in when
+          # the event carries one (PR/push). Failure here is not fatal: the
+          # classifier falls back to a full run.
+          BASE="${PR_BASE:-}"
+          [ -n "$BASE" ] || BASE="${PUSH_BEFORE:-}"
+          if [ -n "$BASE" ] && [ "$BASE" != "0000000000000000000000000000000000000000" ]; then
+            git fetch --depth 1 origin "$BASE" || echo "base fetch failed; classifier will fall back to a full run"
+          fi
+
+      # --- Scope: a documentation-only change must not download torch -------
+      - name: Classify change scope
+        id: scope
+        shell: bash
+        env:
+          PR_BASE: ${{ github.event.pull_request.base.sha }}
+          PUSH_BEFORE: ${{ github.event.before }}
+        run: |
+          set -uo pipefail
+          base="${PR_BASE:-}"
+          [ -n "$base" ] || base="${PUSH_BEFORE:-}"
+          changed=""
+          if [ -n "$base" ] && [ "$base" != "0000000000000000000000000000000000000000" ] \
+             && git cat-file -e "${base}^{commit}" 2>/dev/null; then
+            changed=$(git diff --name-only "$base" HEAD || true)
+          fi
+          if [ -z "${changed:-}" ]; then
+            echo "scope: no usable base commit — running every gate (fail safe)"
+            echo "docs_only=0" >> "$GITHUB_OUTPUT"
+            echo "deps_changed=1" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          docs_only=1
+          deps_changed=0
+          while IFS= read -r f; do
+            [ -z "$f" ] && continue
+            case "$f" in
+              docs/*|*.md|llms.txt|LICENSE|NOTICE|.gitleaksignore) ;;
+              *) docs_only=0 ;;
+            esac
+            case "$f" in
+              requirements.lock.txt|healthadvocate/requirements.txt) deps_changed=1 ;;
+            esac
+          done <<< "$changed"
+          echo "scope: $(printf '%s\n' "$changed" | wc -l | tr -d ' ') changed file(s); docs_only=$docs_only deps_changed=$deps_changed"
+          if [ "$docs_only" = "1" ]; then
+            printf '%s\n' "$changed" | sed 's/^/  /'
+            echo "scope: documentation-only change — dependency gates skipped"
+          fi
+          echo "docs_only=$docs_only" >> "$GITHUB_OUTPUT"
+          echo "deps_changed=$deps_changed" >> "$GITHUB_OUTPUT"
 
       # --- Gate 1: secret scan (gitleaks, full cloned history) ---
       # Allowlist mechanism: a `.gitleaksignore` file at repo root
@@ -54,6 +128,8 @@ jobs:
 
       # --- Gate 1.5: lock sanity (audit finding 2026-09-24: a header-only
       # lock merged green because nothing checked it) ---
+      # NOTE: this counts pins only. The lock carries no `--hash` lines today, so
+      # "hash-exact" would be an overstatement — the pin count is what is enforced.
       - name: Dependency lock sanity
         run: |
           pins=$(grep -c '==' requirements.lock.txt || true)
@@ -61,27 +137,9 @@ jobs:
             echo "requirements.lock.txt has only $pins pins (expected >= 60) — regenerate per its header"; exit 1
           fi
 
-      # --- Gate 2: synthetic test suite ---
-      - name: Install dependencies (from the hash-exact lock)
-        run: |
-          python3 -m venv .venv
-          .venv/bin/pip install --quiet --upgrade pip
-          .venv/bin/pip install --quiet -r requirements.lock.txt pytest httpx
-      - name: Test (synthetic suite)
-        run: .venv/bin/python -m pytest tests/ -q
-
-      # --- Gate 2.5: clean-room HTTP acceptance (audit 2026-09-24,
-      # remediation 4: "drive every named feature through HTTP in BOTH
-      # model-success and model-failure modes; mandatory in CI"). The
-      # module boots the documented runtime and runs real ASGI round
-      # trips per surface, with an in-process loopback OpenAI-compatible
-      # fake for model-success mode. No new dependencies. ---
-      - name: Acceptance gate (HTTP, model-failure + model-success)
-        run: .venv/bin/python -m pytest tests/acceptance/ -q
-
-      # --- Gate 3: compile ---
+      # --- Gate 2: compile (stdlib only, so it runs before any install) ---
       - name: Compile
-        run: .venv/bin/python -m compileall -q healthadvocate
+        run: python3 -m compileall -q healthadvocate
 
       # --- Shared CI contract (KyaniteLabs/.github, pinned) ---
       # Layers 3, 5 and 6 from the org contract. The contract repo needs an
@@ -138,11 +196,58 @@ jobs:
             echo "structure signals: not measured on this run (advisory)"
           fi
 
+      # --- Everything below needs the dependency stack (torch and friends) ---
+      - name: Install dependencies (from the pinned lock, CPU torch)
+        if: steps.scope.outputs.docs_only != '1'
+        run: |
+          set -eu
+          python3 -m venv .venv
+          .venv/bin/pip install --quiet --upgrade pip
+          # PyPI's linux torch==2.14.0 is the CUDA build: a 555 MB wheel plus
+          # cudnn 553 MB, triton 248 MB, nccl 216 MB, cusparselt 170 MB and
+          # nvshmem 60 MB (~1.8 GB) for a suite that uses CPU loopback only.
+          # The CPU index carries the same version as `2.14.0+cpu` (196 MB, no
+          # CUDA deps); a local version satisfies the lock's `torch==2.14.0`.
+          #
+          # Scoped to this one install on purpose: putting the CPU index in
+          # --extra-index-url for the whole lock would let it satisfy *any*
+          # package in the lock, which is a supply-path widening we do not need.
+          if ! .venv/bin/pip install --quiet \
+                 --index-url https://download.pytorch.org/whl/cpu \
+                 --extra-index-url https://pypi.org/simple \
+                 "torch==2.14.0"; then
+            echo "CPU index unavailable — the lock install will pull the CUDA wheel (larger, same version)"
+          fi
+          .venv/bin/pip install --quiet -r requirements.lock.txt pytest httpx
+
+      # --- Gate 3: synthetic suite (acceptance has its own step below, so it is
+      # excluded here: `pytest tests/` would otherwise collect it twice) ---
+      - name: Test (synthetic suite)
+        if: steps.scope.outputs.docs_only != '1'
+        run: .venv/bin/python -m pytest tests/ -q --ignore=tests/acceptance
+
+      # --- Gate 3.5: clean-room HTTP acceptance (audit 2026-09-24,
+      # remediation 4: "drive every named feature through HTTP in BOTH
+      # model-success and model-failure modes; mandatory in CI"). The
+      # module boots the documented runtime and runs real ASGI round
+      # trips per surface, with an in-process loopback OpenAI-compatible
+      # fake for model-success mode. No new dependencies. ---
+      - name: Acceptance gate (HTTP, model-failure + model-success)
+        if: steps.scope.outputs.docs_only != '1'
+        run: .venv/bin/python -m pytest tests/acceptance/ -q
+
       # --- Gate 4: dependency audit (pip-audit) ---
       # Reviewer-approved allowlist: add `--ignore-vuln <ID>` lines below ONLY
       # with a justification comment; every entry is reviewed like code.
+      # Runs when the dependency set can change (lock/requirements edits), on
+      # every non-PR run (post-merge truth + the weekly schedule), and in the
+      # manual dispatch.
       - name: Dependency audit (pip-audit)
+        if: steps.scope.outputs.docs_only != '1' && (steps.scope.outputs.deps_changed == '1' || github.event_name != 'pull_request')
         run: |
           .venv/bin/pip install --quiet pip-audit
-          # Audit what is actually installed (the lock), plus the intent file.
+          # Audits the *declared* versions in the lock, which pip-audit resolves
+          # through the index. Deliberate: advisories are keyed to the public
+          # version, so `torch==2.14.0` is audited as 2.14.0 even when the wheel
+          # installed here is the `+cpu` local build.
           .venv/bin/pip-audit -r requirements.lock.txt

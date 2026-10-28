@@ -31,6 +31,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   README claims the licence the file carries, that there is exactly one licence section, that the
   Apache text's wording is unchanged, that `NOTICE` exists with the holder, and that the image copies
   both files. The governance gate never covered this — it inventories dependencies only.
+- **The public face points at the trunk of record.** `README.md` told readers to `git clone` the
+  GitHub mirror — a copy that has carried no tested master push since 2026-06-04 — while the
+  `Source` row listed GitHub first. The install instruction and the `Source` row now name canonical
+  Forgejo, the GitHub copy is labelled a read-only mirror, and the stars badge that advertised the
+  mirror is gone. The dead mirror-only `.github/workflows/ci.yml` (zero master-push runs since
+  2026-06-04) and its `.github/dependabot.yml` PR factory are deleted; Renovate already owns
+  dependency hygiene on canonical.
+- **Six committed merge-conflict markers were stripped from the public docs** — five in `README.md`,
+  one in `CHANGELOG.md`, public since 2026-09-24 — plus a duplicated `HEALTHADVOCATE_ALLOW_ORIGINS`
+  row in the configuration table. Pin: `tests/test_docs_honesty.py`'s
+  `PublicFacePointsAtCanonicalTests` fails on a new marker, on an install instruction that clones
+  the mirror, or on a `Source` row that names the mirror first.
 
 ### Added — 2026-09-24/25 ship
 - **Appeal-letter generator** (F1a): denial + records → complete appeal letter via the
@@ -215,7 +227,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `tests/test_symptom_triage_jev.py` (contract updated),
   `tests/test_docs_honesty.py` (README claim now pinned to code, not
   prose), `tests/test_frontend_model_off_honesty.js`.
-- **Insurance denial-reason classification routes through the HA-JEV>>>>>>> ed14a17 (fix(honesty): model-off urgency is an honest 'unavailable', not an alarm; NEEDS_HUMAN wrapper rendered; 2 XSS escapes; docs complete)
+- **Insurance denial-reason classification routes through the HA-JEV
   typed-decision layer** (J2-b; design
   `docs/HA-JEV-TYPED-DECISIONS-DESIGN-2026-09-22.md` §5). The free-text
   `denial_reason` the structured model returns is normalized by a

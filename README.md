@@ -37,7 +37,6 @@ Navigate the medical system. Fight insurance denials. Decode bills. Understand y
 
 [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
 [![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
-[![GitHub stars](https://img.shields.io/github/stars/simongonzalezdc/healthadvocate?style=social)](https://github.com/simongonzalezdc/healthadvocate)
 
 [Features](#features) · [How It Works](#how-it-works) · [Quick Start](#quick-start) · [API](#api-reference) · [Credits](#credits)
 
@@ -178,16 +177,19 @@ The optional open-data adapters (RxNorm, DailyMed, openFDA, NPPES, NADAC, DrugCe
 
 - **Python 3.11+**
 - **[OpenMed](https://github.com/maziyarpanahi/openmed)** — medical NLP toolkit (installed automatically). Runs locally; powers the always-on entity extraction.
-- **Optional: an OpenAI-compatible local model runtime** — e.g. [LM Studio](https://lmstudio.ai/) or Ollama, loaded with a model like [Meditron3-8B](https://huggingface.co/epfl-llm/meditron-3). Needed only for the generative half of the features; everything in the deterministic column of [What works without a model](#what-works-without-a-model) runs without it.>>>>>>> 4c38f56 (docs(honesty): README tells one true story — no-model table, real env vars, why-this-exists (Lane C))
+- **Optional: an OpenAI-compatible local model runtime** — e.g. [LM Studio](https://lmstudio.ai/) or Ollama, loaded with a model like [Meditron3-8B](https://huggingface.co/epfl-llm/meditron-3). Needed only for the generative half of the features; everything in the deterministic column of [What works without a model](#what-works-without-a-model) runs without it.
 
 ### Install
 
 ```bash
-git clone https://github.com/simongonzalezdc/healthadvocate.git
+git clone https://git.kyanitelabs.tech/simon/healthadvocate.git
 cd healthadvocate
 pip install -r healthadvocate/requirements.txt
 pip install openmed[hf]
 ```
+
+Canonical is the Forgejo remote above — it is where tested merges land. The GitHub copy is a
+read-only mirror of it, not a second source.
 
 ### Run
 
@@ -209,7 +211,7 @@ export MEDICAL_LLM_MODEL=meditron3-8b                       # the name of the mo
 
 `LM_STUDIO_URL` still works as a deprecated alias for `HEALTHADVOCATE_MODEL_URL`. The model URL must be loopback (`127.0.0.1`/`localhost`) — anything else is rejected fail-closed, and the runtime stays off until you set `HEALTHADVOCATE_MODEL_ENABLED=1`.
 
-That's it. No sign-up, no API keys, no cloud.>>>>>>> 4c38f56 (docs(honesty): README tells one true story — no-model table, real env vars, why-this-exists (Lane C))
+That's it. No sign-up, no API keys, no cloud.
 
 ### CLI, MCP, and Agent Skill
 
@@ -248,12 +250,11 @@ Example MCP config:
 | `HEALTHADVOCATE_MODEL_URL` | `http://127.0.0.1:11434/v1` | Base URL of the OpenAI-compatible local model runtime. Must be loopback (`127.0.0.1`/`localhost`); non-loopback hosts and HTTP redirects are rejected fail-closed. |
 | `LM_STUDIO_URL` | unset | Deprecated alias for `HEALTHADVOCATE_MODEL_URL`, kept for compatibility. |
 | `MEDICAL_LLM_MODEL` | `local-model` | Model name sent to the runtime — set it to the model you actually loaded (e.g. `meditron3-8b`). |
-| `HEALTHADVOCATE_ALLOW_ORIGINS` | `http://127.0.0.1:8080,http://localhost:8080` | Comma-separated browser origins allowed by CORS |>>>>>>> 4c38f56 (docs(honesty): README tells one true story — no-model table, real env vars, why-this-exists (Lane C))
 | `HEALTHADVOCATE_ALLOW_ORIGINS` | `http://127.0.0.1:8080,http://localhost:8080` | Comma-separated browser origins allowed by CORS |
 | `HEALTHADVOCATE_BIND_HOST` | `127.0.0.1` | Host the app binds to. Validated at startup: anything that is not a loopback name/address makes the process refuse to start (fail-closed), which is what enforces the loopback-deployment default. |
 | `HEALTHADVOCATE_CASE_DIR` | unset → `~/Library/Application Support/HealthAdvocate/cases` | Directory for encrypted Coverage Case storage (key stays in your OS credential store). |
 | `HEALTHADVOCATE_CMS_TIC_ENABLED` | `0` (off) | Feature flag for the optional CMS Transparency in Coverage research adapter — disabled until measured resource budgets replace the placeholder limits. |
-| `HEALTHADVOCATE_POLICYENGINE_ENABLED` | `0` (off) | Feature flag for the unofficial, local-only PolicyEngine-style eligibility estimate (deterministic stub; no network, no submission). |>>>>>>> ed14a17 (fix(honesty): model-off urgency is an honest 'unavailable', not an alarm; NEEDS_HUMAN wrapper rendered; 2 XSS escapes; docs complete)
+| `HEALTHADVOCATE_POLICYENGINE_ENABLED` | `0` (off) | Feature flag for the unofficial, local-only PolicyEngine-style eligibility estimate (deterministic stub; no network, no submission). |
 
 ---
 
@@ -452,7 +453,7 @@ healthadvocate/
 
 - **In-memory storage**: Family profiles and health tracks live in memory and are lost on server restart. This is intentional — no persistent data means no data to breach.
 - **Generative features are opt-in**: without `HEALTHADVOCATE_MODEL_ENABLED=1` and a loopback model runtime, generative surfaces return the honest unavailable fallback — never a raw error, never a guessed answer — while deterministic preparation (entity extraction, bill charge extraction, Coverage workflow, CLI, MCP) keeps working. See [What works without a model](#what-works-without-a-model).
-- **LLM output quality**: Results depend on the model you choose and run locally. Meditron3-8B is a reasonable open clinical-reasoning model, but no LLM is a substitute for a real doctor, and nothing here is verified medical advice.>>>>>>> 4c38f56 (docs(honesty): README tells one true story — no-model table, real env vars, why-this-exists (Lane C))
+- **LLM output quality**: Results depend on the model you choose and run locally. Meditron3-8B is a reasonable open clinical-reasoning model, but no LLM is a substitute for a real doctor, and nothing here is verified medical advice.
 
 ---
 
@@ -515,7 +516,7 @@ Contributions are accepted under the same licence.
 | **Best for** | people navigating healthcare systems and builders of advocacy tools |
 | **Not** | a medical device or clinical diagnosis product |
 | **Price** | Free, open source (Apache-2.0); runs local-first on your machine |
-| **Source** | [GitHub](https://github.com/simongonzalezdc/healthadvocate) · [Forgejo](https://git.kyanitelabs.tech/simon/healthadvocate) |
+| **Source** | [Canonical (Forgejo)](https://git.kyanitelabs.tech/simon/healthadvocate) · [GitHub read-only mirror](https://github.com/simongonzalezdc/healthadvocate) |
 | **Keywords** | health advocate, patient navigation tool |
 
 ## Who it's for
